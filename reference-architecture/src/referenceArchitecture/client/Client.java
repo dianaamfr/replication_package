@@ -13,6 +13,9 @@ public class Client {
     public static final String writeNodeId = "write-node";
     public static final String readNodeId = "read-node";
     
+    private static ReadRemoteInterface readStub;
+    private static WriteRemoteInterface writeStub;
+    
     enum Operation {
         ROT,
         WRITE,
@@ -20,29 +23,41 @@ public class Client {
 
     public static void main(String[] args) {
 
-        Registry registry;
         try {
-            registry = LocateRegistry.getRegistry();
-            ReadRemoteInterface readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
-            WriteRemoteInterface writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
+            Registry registry = LocateRegistry.getRegistry();
+            readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
+            writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
 
             // Test RMI
-            Map<String, Integer> readResponse = readStub.rot(null);
-            Integer writeResponse = writeStub.write(null);
-
-            System.out.println("Client: " + readResponse.toString());
-            System.out.println("Client: " + writeResponse.toString());
-
+            requestOperation(Operation.ROT);
+            requestOperation(Operation.WRITE);
         } catch (RemoteException | NotBoundException e) {
             System.err.println("Could not get registry");
         }
     }
 
-    public void requestOperation(Operation operation) {
+    public static void requestOperation(Operation operation) {
+
         switch (operation) {
             case ROT:
+                Map<String, Integer> readResponse;
+                try {
+                    readResponse = readStub.rot(null);
+                    System.out.println("Client: " + readResponse.toString());
+                } catch (RemoteException e) {
+                    System.err.println("Client: ROT operation failed");
+                    e.printStackTrace();
+                }
                 break;
             case WRITE:
+                Integer writeResponse;
+                try {
+                    writeResponse = writeStub.write(null);
+                    System.out.println("Client: " + writeResponse.toString());
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    System.err.println("Client: Write operation failed");
+                }
                 break;
             default:
                 break;
