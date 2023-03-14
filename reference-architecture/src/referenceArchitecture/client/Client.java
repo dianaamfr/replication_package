@@ -4,7 +4,9 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
@@ -42,7 +44,10 @@ public class Client {
             case ROT:
                 Map<String, Integer> readResponse;
                 try {
-                    readResponse = readStub.rot(null);
+                    Set<String> keys = new HashSet<String>();
+                    keys.add("x");
+                    keys.add("y");
+                    readResponse = readStub.rot(keys);
                     System.out.println("Client: " + readResponse.toString());
                 } catch (RemoteException e) {
                     System.err.println("Client: ROT operation failed");

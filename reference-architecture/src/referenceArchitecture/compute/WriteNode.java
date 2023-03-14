@@ -5,14 +5,23 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import referenceArchitecture.compute.storage.Storage;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
 
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {  
     public static final String id = "write-node";
     public static final String timestamp = "RANDOM_TIMESTAMP";
+
+    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
+        super(storage, scheduler);
+    }
+
     public static void main(String[] args) {
-        WriteNode writeNode = new WriteNode();
+        Storage storage = new Storage();
+        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
+        WriteNode writeNode = new WriteNode(storage, scheduler);
 
         // Bind the remote object's stub in the registry
         try {

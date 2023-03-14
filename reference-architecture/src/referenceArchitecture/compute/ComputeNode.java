@@ -1,7 +1,15 @@
 package referenceArchitecture.compute;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 import referenceArchitecture.compute.storage.Storage;
 
 public abstract class ComputeNode {
-    Storage storage = new Storage();
+    protected Storage storage;
+    protected ScheduledThreadPoolExecutor scheduler;
+
+    public ComputeNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
+        this.storage = storage;
+        this.scheduler = scheduler;
+    }
 }

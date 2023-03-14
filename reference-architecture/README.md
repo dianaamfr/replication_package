@@ -1,9 +1,11 @@
 ## Reference Architecture
 
 ## Tasks
-- Server storage (map of key values)
-- Write key in storage
-- Request key from storage
+- HLC (timestamp events)
+- Simulate storage push in writeNode and pull in readNode
+- Think if it makes sense to separate read and write storage
+- Client with operation parameters
+- Server parameters
 - Have a map of remoteInterfaces identified by partition  for read interfaces and write interface
 - Have a mapping between keys and partition
 - Client cache

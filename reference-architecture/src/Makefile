@@ -7,11 +7,13 @@ clear:
 	rm ./referenceArchitecture/client/*.class
 	rm ./referenceArchitecture/compute/*.class
 	rm ./referenceArchitecture/remoteInterface/*.class
-	killall rmiregistry
 
 rmi:
 	rmiregistry &
 	sleep 0.5
+
+stop-rmi:
+	killall rmiregistry
 
 client:
 	java referenceArchitecture.client.Client
