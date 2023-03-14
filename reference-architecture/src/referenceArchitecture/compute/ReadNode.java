@@ -1,6 +1,6 @@
 package referenceArchitecture.compute;
 
-import java.nio.channels.AlreadyBoundException;
+import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -26,9 +26,7 @@ public class ReadNode implements ReadRemoteInterface {
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
-        } catch (java.rmi.AlreadyBoundException e) {
-            System.err.println("Could not bind to registry");            
-        }
+        } 
     }
 
     @Override

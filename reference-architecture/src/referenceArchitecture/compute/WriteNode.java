@@ -14,10 +14,9 @@ public class WriteNode implements WriteRemoteInterface {
         WriteNode writeNode = new WriteNode();
 
         // Bind the remote object's stub in the registry
-        Registry registry;
         try {
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
-            registry = LocateRegistry.getRegistry();
+            Registry registry = LocateRegistry.getRegistry();
             registry.bind(id, stub);
         } catch (RemoteException e) {
             System.err.println("Could not get registry");
