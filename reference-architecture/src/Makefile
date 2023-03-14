@@ -4,9 +4,10 @@ all:
 	./referenceArchitecture/remoteInterface/*.java
 
 clear:
-	del ./referenceArchitecture/client/*/*.class && \
-	./referenceArchitecture/compute/*.class && \
-	./referenceArchitecture/remoteInterface/*.class
+	rm ./referenceArchitecture/client/*.class
+	rm ./referenceArchitecture/compute/*.class
+	rm ./referenceArchitecture/remoteInterface/*.class
+	killall rmiregistry
 
 rmi:
 	rmiregistry &

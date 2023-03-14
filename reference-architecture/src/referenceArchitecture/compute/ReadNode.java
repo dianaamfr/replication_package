@@ -15,13 +15,12 @@ public class ReadNode implements ReadRemoteInterface {
     public static final String id = "read-node";
     
     public static void main(String[] args) {
-        WriteNode writeNode = new WriteNode();
+        ReadNode readNode = new ReadNode();
 
         // Bind the remote object's stub in the registry
-        Registry registry;
         try {
-            ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
-            registry = LocateRegistry.getRegistry();
+            ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);
+            Registry registry = LocateRegistry.getRegistry();
             registry.bind(id, stub);
         } catch (RemoteException e) {
             System.err.println("Could not get registry");
