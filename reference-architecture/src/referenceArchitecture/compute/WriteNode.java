@@ -8,8 +8,9 @@ import java.rmi.server.UnicastRemoteObject;
 
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
 
-public class WriteNode implements WriteRemoteInterface {  
+public class WriteNode extends ComputeNode implements WriteRemoteInterface {  
     public static final String id = "write-node";
+    public static final String timestamp = "RANDOM_TIMESTAMP";
     public static void main(String[] args) {
         WriteNode writeNode = new WriteNode();
 
@@ -26,7 +27,8 @@ public class WriteNode implements WriteRemoteInterface {
     }
 
     @Override
-    public Integer write(String key) {
-        return 0;
+    public String write(String key, Integer value, String lastWriteTimestamp) {
+        storage.put(key, timestamp, value);
+        return timestamp;
     }
 }

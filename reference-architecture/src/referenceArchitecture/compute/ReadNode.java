@@ -11,7 +11,7 @@ import java.util.Set;
 
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 
-public class ReadNode implements ReadRemoteInterface {
+public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     public static final String id = "read-node";
     
     public static void main(String[] args) {

@@ -50,10 +50,10 @@ public class Client {
                 }
                 break;
             case WRITE:
-                Integer writeResponse;
+                String writeResponse;
                 try {
-                    writeResponse = writeStub.write(null);
-                    System.out.println("Client: " + writeResponse.toString());
+                    writeResponse = writeStub.write("x", 2, null);
+                    System.out.println("Client: " + writeResponse);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                     System.err.println("Client: Write operation failed");
