@@ -25,9 +25,9 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
         this.scheduler.scheduleWithFixedDelay(new StorageUpdater(storage), 500, 500, TimeUnit.MILLISECONDS);
         
         // Test ROT
-        storage.put("x", "1", 4);
-        storage.put("y", "2", 5);
-        storage.put("x", "3", 6);
+        storage.put("x", 1, 4);
+        storage.put("y", 2, 5);
+        storage.put("x", 3, 6);
     }
     
     public static void main(String[] args) {
@@ -50,11 +50,11 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     @Override
     public Map<String, Integer> rot(Set<String> readSet) {
         Map<String, Integer> values = new HashMap<>(readSet.size());
-        String stableTime = storage.getStableTime();
+        long stableTime = this.storage.getStableTime();
 
         for (String key: readSet) {
             try {
-                Integer value = storage.get(key, stableTime).getValue();
+                Integer value = this.storage.get(key, stableTime).getValue();
                 values.put(key, value);
             } catch (KeyNotFoundException e) {
                 e.printStackTrace();

@@ -1,7 +1,7 @@
 ## Reference Architecture
 
 ## Tasks
-- HLC (timestamp events)
+- Logical clocks
 - Simulate storage push in writeNode and pull in readNode
 - Think if it makes sense to separate read and write storage
 - Client with operation parameters

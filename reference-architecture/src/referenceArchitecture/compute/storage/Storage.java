@@ -1,5 +1,6 @@
 package referenceArchitecture.compute.storage;
 
+import java.util.Iterator;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,36 +10,50 @@ import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
 
 public class Storage {
-    private ConcurrentMap<String, VersionChain> keyVersions = new ConcurrentHashMap<>();
-    private String stableTime = "0";
+    private ConcurrentMap<String, VersionChain> keyVersions;
+    private long stableTime;
 
-    public void put(String key, String timestamp, Integer value) {
-        if(!keyVersions.containsKey(key)){
-            VersionChain versionChain = new VersionChain(new TreeMap<>());
-            keyVersions.put(key, versionChain);
-        }
-        keyVersions.get(key).put(timestamp, value);
+    public Storage() {
+        this.keyVersions = new ConcurrentHashMap<>();
+        this.stableTime = 0;
     }
 
-    public Entry<String, Integer> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
-        if(!keyVersions.containsKey(key)) {
+    public void put(String key, long timestamp, int value) {
+        if(!this.keyVersions.containsKey(key)){
+            VersionChain versionChain = new VersionChain(new TreeMap<>());
+            this.keyVersions.put(key, versionChain);
+        }
+        this.keyVersions.get(key).put(timestamp, value);
+    }
+
+    public Entry<Long, Integer> get(String key, long maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
+        if(!this.keyVersions.containsKey(key)) {
             throw new KeyNotFoundException();
         }
-        return keyVersions.get(key).get(maxTimestamp);
+        return this.keyVersions.get(key).get(maxTimestamp);
     }
 
     public void setStableTime() {
-        String time = "";
-        for(String key: keyVersions.keySet()) {
-            String ts = keyVersions.get(key).getMaxTimestamp();
-            if(time.equals("") || time.compareTo(ts) > 0){
-                time = ts;
+        long minTime = stableTime;
+        Iterator<String> itr = this.keyVersions.keySet().iterator();
+
+        if(itr.hasNext()) {
+            String key = itr.next();
+            long ts = this.keyVersions.get(key).getMaxTimestamp();
+            minTime = ts;
+        }
+        
+        while(itr.hasNext()) {
+            String key = itr.next();
+            long ts = this.keyVersions.get(key).getMaxTimestamp();
+            if(minTime > ts){
+                minTime = ts;
             }
         }
-        stableTime = time;
+        this.stableTime = minTime;
     }
 
-    public String getStableTime() {
-        return stableTime;
+    public long getStableTime() {
+        return this.stableTime;
     }
 }

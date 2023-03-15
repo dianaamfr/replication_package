@@ -55,7 +55,7 @@ public class Client {
                 }
                 break;
             case WRITE:
-                String writeResponse;
+                long writeResponse;
                 try {
                     writeResponse = writeStub.write("x", 2, null);
                     System.out.println("Client: " + writeResponse);

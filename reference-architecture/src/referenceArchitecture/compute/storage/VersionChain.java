@@ -6,24 +6,25 @@ import java.util.Map.Entry;
 import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
 
 public class VersionChain {
-    private TreeMap<String, Integer> versions;
-    private String maxTimestamp;
+    private TreeMap<Long, Integer> versions;
+    private long maxTimestamp;
 
-    public VersionChain(TreeMap<String, Integer> versions) {
+    public VersionChain(TreeMap<Long, Integer> versions) {
         this.versions = versions;
-        maxTimestamp = "0";
+        maxTimestamp = 0;
     }
 
-    public void put(String timestamp, Integer value) {
-        if(maxTimestamp.compareTo(timestamp) < 0) {
+    public void put(long timestamp, int value) {
+        // Assumes we receive operations in order (we will need to update this when we have the full log)
+        if(maxTimestamp < timestamp) {
             maxTimestamp = timestamp;
         }
         versions.put(timestamp, value);
     }
 
-    public Entry<String, Integer> get(String maxTimestamp) throws KeyVersionNotFoundException {
+    public Entry<Long, Integer> get(long maxTimestamp) throws KeyVersionNotFoundException {
         try {
-            Entry<String, Integer> entry = versions.floorEntry(maxTimestamp);
+            Entry<Long, Integer> entry = versions.floorEntry(maxTimestamp);
             if(entry == null) {
                 throw new KeyVersionNotFoundException();
             }
@@ -33,7 +34,7 @@ public class VersionChain {
         }
     }
 
-    public String getMaxTimestamp() {
+    public long getMaxTimestamp() {
         return maxTimestamp;
     }
 }

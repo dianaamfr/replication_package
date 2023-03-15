@@ -9,7 +9,7 @@ public class StorageUpdater implements Runnable {
 
     @Override
     public void run() {
-        storage.setStableTime();
+        this.storage.setStableTime();
     }
     
 }
