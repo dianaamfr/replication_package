@@ -15,4 +15,10 @@ public class LogicalClock {
         tick();
         return this.clock;
     }
+
+    @Override
+    public String toString() {
+        return String.valueOf(clock);
+    }
+    
 }

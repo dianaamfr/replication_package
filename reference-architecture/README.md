@@ -2,8 +2,11 @@
 
 ## Tasks
 - Simulate storage push in writeNode and pull in readNode
+    - Change unsafe conversion (maybe convert to json)
+    - Do pull part
 - Client with operation parameters
 - Server parameters (to support a server per partition)
+- Change key name in data store to represent the partition
 - Have a map of remoteInterfaces identified by partition  for read interfaces and write interface
 - Have a mapping between keys and partition
 - Client cache

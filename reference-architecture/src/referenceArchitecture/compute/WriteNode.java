@@ -1,6 +1,7 @@
 package referenceArchitecture.compute;
 
 import java.rmi.AlreadyBoundException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -11,16 +12,21 @@ import java.util.concurrent.TimeUnit;
 import referenceArchitecture.compute.clock.LogicalClock;
 import referenceArchitecture.compute.storage.Storage;
 import referenceArchitecture.compute.storage.StoragePusher;
+import referenceArchitecture.datastore.DataStoreInterface;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
 
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {  
-    public static final String id = "write-node";
-    public LogicalClock logicalClock;
+    private LogicalClock logicalClock;
+    private static DataStoreInterface dataStoreStub;
+    private static final String dataStoreId = "data-store";
 
     public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
-        super(storage, scheduler);
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage), 500, 500, TimeUnit.MILLISECONDS);
+        super(storage, scheduler, "write-node");
         this.logicalClock = new LogicalClock();
+    }
+
+    public void init() {
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock), 500, 500, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -28,15 +34,21 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
         WriteNode writeNode = new WriteNode(storage, scheduler);
 
-        // Bind the remote object's stub in the registry
         try {
+            // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind(id, stub);
+            registry.bind(writeNode.getId(), stub);
+
+            // Get reference of data store
+            dataStoreStub = (DataStoreInterface) registry.lookup(dataStoreId);
+            writeNode.init();
         } catch (RemoteException e) {
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
+        } catch (NotBoundException e) {
+            System.err.println("Could not find the registry of the data store");
         }
     }
 

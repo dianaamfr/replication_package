@@ -5,12 +5,13 @@ all:
 clear:
 	rm ./referenceArchitecture/*/*.class
 	rm ./referenceArchitecture/*/*/*.class
+	make rmiStop
 
 rmi:
 	rmiregistry &
 	sleep 0.5
 
-stop-rmi:
+rmiStop:
 	killall rmiregistry
 
 client:
@@ -21,3 +22,6 @@ readNode:
 
 writeNode:
 	java referenceArchitecture.compute.WriteNode
+
+datastore:
+	java referenceArchitecture.datastore.DataStore

@@ -1,9 +1,18 @@
 package referenceArchitecture.compute.storage;
 
-public class StoragePusher extends StorageHandler {
+import java.rmi.RemoteException;
 
-    public StoragePusher(Storage storage) {
+import referenceArchitecture.compute.clock.LogicalClock;
+import referenceArchitecture.datastore.DataStoreInterface;
+
+public class StoragePusher extends StorageHandler {
+    DataStoreInterface dataStoreStub;
+    LogicalClock logicalClock;
+
+    public StoragePusher(Storage storage, DataStoreInterface dataStoreStub, LogicalClock logicalClock) {
         super(storage);
+        this.dataStoreStub = dataStoreStub;
+        this.logicalClock = logicalClock;
     }
 
     @Override
@@ -13,6 +22,13 @@ public class StoragePusher extends StorageHandler {
     }
 
     private void push() {
-        // TODO: push into ECDS
+        try {
+            // TODO: change key to identify the correct region and partition
+            // TODO: condition to only store when logical clock value has changed
+            System.out.println(this.logicalClock.toString());
+            this.dataStoreStub.write(this.logicalClock.toString(), this.storage.getState());
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 }
