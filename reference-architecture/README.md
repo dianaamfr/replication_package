@@ -1,14 +1,13 @@
 ## Reference Architecture
 
 ## Tasks
-- Logical clocks
 - Simulate storage push in writeNode and pull in readNode
-- Think if it makes sense to separate read and write storage
 - Client with operation parameters
-- Server parameters
+- Server parameters (to support a server per partition)
 - Have a map of remoteInterfaces identified by partition  for read interfaces and write interface
 - Have a mapping between keys and partition
 - Client cache
+- Think if it makes sense to separate read and write storage
 
 ## Folder Structure
 

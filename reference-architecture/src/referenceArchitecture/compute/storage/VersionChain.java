@@ -37,4 +37,10 @@ public class VersionChain {
     public long getMaxTimestamp() {
         return maxTimestamp;
     }
+
+    @Override
+    public String toString() {
+        return "VersionChain [versions=" + versions + ", maxTimestamp=" + maxTimestamp + "]";
+    }
+
 }

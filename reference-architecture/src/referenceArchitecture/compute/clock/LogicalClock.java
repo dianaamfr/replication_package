@@ -1,4 +1,4 @@
-package referenceArchitecture.clock;
+package referenceArchitecture.compute.clock;
 
 public class LogicalClock {
     private long clock;

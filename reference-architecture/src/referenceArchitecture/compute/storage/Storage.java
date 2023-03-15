@@ -56,4 +56,13 @@ public class Storage {
     public long getStableTime() {
         return this.stableTime;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(stableTime);
+        builder.append(keyVersions.toString());
+        return builder.toString();
+    }
+    
 }

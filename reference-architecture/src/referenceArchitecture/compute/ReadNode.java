@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
 import referenceArchitecture.compute.storage.Storage;
-import referenceArchitecture.compute.storage.StorageUpdater;
+import referenceArchitecture.compute.storage.StoragePuller;
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
@@ -22,12 +22,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
 
     public ReadNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
         super(storage, scheduler);
-        this.scheduler.scheduleWithFixedDelay(new StorageUpdater(storage), 500, 500, TimeUnit.MILLISECONDS);
-        
-        // Test ROT
-        storage.put("x", 1, 4);
-        storage.put("y", 2, 5);
-        storage.put("x", 3, 6);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(storage), 500, 500, TimeUnit.MILLISECONDS);
     }
     
     public static void main(String[] args) {

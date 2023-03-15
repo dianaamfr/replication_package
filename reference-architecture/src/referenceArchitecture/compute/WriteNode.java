@@ -6,19 +6,21 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-import referenceArchitecture.clock.LogicalClock;
+import referenceArchitecture.compute.clock.LogicalClock;
 import referenceArchitecture.compute.storage.Storage;
+import referenceArchitecture.compute.storage.StoragePusher;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
 
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {  
     public static final String id = "write-node";
-    public static final String timestamp = "RANDOM_TIMESTAMP";
     public LogicalClock logicalClock;
 
     public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
         super(storage, scheduler);
-        logicalClock = new LogicalClock();
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage), 500, 500, TimeUnit.MILLISECONDS);
+        this.logicalClock = new LogicalClock();
     }
 
     public static void main(String[] args) {
@@ -41,8 +43,8 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     @Override
     public long write(String key, Integer value, Long lastWriteTimestamp) {
         // TODO: to support multiple writers,use lastWriteTimestamp (it can be null)
-        long timestamp = logicalClock.internalEvent();
-        storage.put(key, timestamp, value);
+        long timestamp = this.logicalClock.internalEvent();
+        this.storage.put(key, timestamp, value);
         return timestamp;
     }
 }

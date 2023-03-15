@@ -1,12 +1,10 @@
 all:
-	javac ./referenceArchitecture/client/*.java \
-	./referenceArchitecture/compute/*.java \
-	./referenceArchitecture/remoteInterface/*.java
+	javac ./referenceArchitecture/*/*.java
+	javac ./referenceArchitecture/*/*/*.java
 
 clear:
-	rm ./referenceArchitecture/client/*.class
-	rm ./referenceArchitecture/compute/*.class
-	rm ./referenceArchitecture/remoteInterface/*.class
+	rm ./referenceArchitecture/*/*.class
+	rm ./referenceArchitecture/*/*/*.class
 
 rmi:
 	rmiregistry &
