@@ -1,6 +1,10 @@
 package referenceArchitecture.compute.storage;
 
-import java.rmi.RemoteException;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import referenceArchitecture.compute.clock.LogicalClock;
 import referenceArchitecture.datastore.DataStoreInterface;
@@ -18,17 +22,40 @@ public class StoragePusher extends StorageHandler {
     @Override
     public void run() {
         this.push();
-        this.storage.setStableTime();
     }
 
     private void push() {
         try {
             // TODO: change key to identify the correct region and partition
             // TODO: condition to only store when logical clock value has changed
-            System.out.println(this.logicalClock.toString());
-            this.dataStoreStub.write(this.logicalClock.toString(), this.storage.getState());
-        } catch (RemoteException e) {
+            JSONObject json = toJson(this.storage.getState());
+            this.dataStoreStub.write(this.logicalClock.toString(), json.toString());
+        } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private JSONObject toJson(ConcurrentMap<String, VersionChain> state) {
+        JSONObject stateJson = new JSONObject();
+        JSONArray versionChainsJson = new JSONArray();
+
+        // For each key
+        for(Entry<String, VersionChain> versionChain: state.entrySet()) {
+            JSONObject versionChainJson = new JSONObject(); // Version chain of the key
+            JSONArray versionsJson = new JSONArray(); // Array of versions of a key
+            // For each version in the key
+            for(Entry<Long, Integer> version: versionChain.getValue().getVersionChain().entrySet()) {
+                JSONObject versionJson = new JSONObject();
+                versionJson.put("key", version.getKey().toString());
+                versionJson.put("value", version.getValue());
+                versionsJson.put(versionJson);
+            }
+            versionChainJson.put("key", versionChain.getKey());
+            versionChainJson.put("value", versionsJson);
+            versionChainsJson.put(versionChainJson);
+        }
+
+        stateJson.put("state", versionChainsJson);
+        return stateJson;
     }
 }
