@@ -1,6 +1,5 @@
 package referenceArchitecture.compute.storage;
 
-import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 
@@ -23,7 +22,6 @@ public class StoragePusher extends StorageHandler {
     @Override
     public void run() {
         this.push();
-        this.storage.setStableTime();
     }
 
     private void push() {
@@ -31,7 +29,6 @@ public class StoragePusher extends StorageHandler {
             // TODO: change key to identify the correct region and partition
             // TODO: condition to only store when logical clock value has changed
             JSONObject json = toJson(this.storage.getState());
-            System.out.println(json.toString());
             this.dataStoreStub.write(this.logicalClock.toString(), json.toString());
         } catch (Exception e) {
             e.printStackTrace();

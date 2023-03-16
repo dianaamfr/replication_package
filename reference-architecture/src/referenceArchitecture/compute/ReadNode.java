@@ -64,9 +64,11 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
                 Integer value = this.storage.get(key, stableTime).getValue();
                 values.put(key, value);
             } catch (KeyNotFoundException e) {
-                e.printStackTrace();
+                values.put(key, null);
+                System.err.println(String.format("Key %s not found", key));
             } catch (KeyVersionNotFoundException e) {
-                e.printStackTrace();
+                values.put(key, null);
+                System.err.println(String.format("Key %s has not been written to yet", key));
             }    
         }
         return values;

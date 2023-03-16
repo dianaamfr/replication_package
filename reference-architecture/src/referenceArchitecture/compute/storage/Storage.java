@@ -1,7 +1,6 @@
 package referenceArchitecture.compute.storage;
 
 import java.util.Iterator;
-import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -20,7 +19,7 @@ public class Storage {
 
     public void put(String key, long timestamp, int value) {
         if(!this.keyVersions.containsKey(key)){
-            VersionChain versionChain = new VersionChain(new TreeMap<>());
+            VersionChain versionChain = new VersionChain();
             this.keyVersions.put(key, versionChain);
         }
         this.keyVersions.get(key).put(timestamp, value);
@@ -34,6 +33,7 @@ public class Storage {
     }
 
     public void setStableTime() {
+        // TODO: Assumes that every key is in a different partition
         long minTime = stableTime;
         Iterator<String> itr = this.keyVersions.keySet().iterator();
 
@@ -50,6 +50,7 @@ public class Storage {
                 minTime = ts;
             }
         }
+
         this.stableTime = minTime;
     }
 

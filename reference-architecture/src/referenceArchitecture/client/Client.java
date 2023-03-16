@@ -27,12 +27,12 @@ public class Client {
 
         try {
             Registry registry = LocateRegistry.getRegistry();
-            //readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
+            readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
             writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
 
             // Test RMI
-            // requestOperation(Operation.ROT);
             requestOperation(Operation.WRITE);
+            requestOperation(Operation.ROT);
         } catch (RemoteException | NotBoundException e) {
             System.err.println("Could not get registry");
         }
@@ -58,6 +58,7 @@ public class Client {
                 long writeResponse;
                 try {
                     writeResponse = writeStub.write("x", 2, null);
+                    writeResponse = writeStub.write("y", 3, null);
                     System.out.println("Client: " + writeResponse);
                 } catch (RemoteException e) {
                     e.printStackTrace();

@@ -1,10 +1,5 @@
 package referenceArchitecture.compute.storage;
 
-import java.io.IOException;
-import java.lang.Runtime.Version;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -41,8 +36,7 @@ public class StoragePuller extends StorageHandler {
     private ConcurrentMap<String, VersionChain> parseJson(String json) {
         ConcurrentMap<String, VersionChain> state = new ConcurrentHashMap<>();
         JSONObject response = new JSONObject(json);
-        System.out.println(response.toString());
-
+    
         // Log Timestamp
         // response.getString("key"); 
 
@@ -53,12 +47,11 @@ public class StoragePuller extends StorageHandler {
         for(int i = 0; i < versionChainsJson.length(); i++) {
             JSONObject versionChainJson = versionChainsJson.getJSONObject(i);
             JSONArray versionChainArray = versionChainJson.getJSONArray("value");
-            TreeMap<Long, Integer> versions = new TreeMap<>();
+            VersionChain versionChain = new VersionChain();
             for(int j = 0; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
-                versions.put(Long.parseLong(versionJson.getString("key")), versionJson.getInt("value"));
+                versionChain.put(Long.parseLong(versionJson.getString("key")), versionJson.getInt("value"));
             }
-            VersionChain versionChain = new VersionChain(versions);
             state.put(versionChainJson.getString("key"), versionChain);
         }
 

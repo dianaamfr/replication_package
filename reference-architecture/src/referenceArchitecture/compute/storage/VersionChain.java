@@ -11,13 +11,12 @@ public class VersionChain implements Serializable {
     private TreeMap<Long, Integer> versions;
     private long maxTimestamp;
 
-    public VersionChain(TreeMap<Long, Integer> versions) {
-        this.versions = versions;
-        maxTimestamp = 0;
+    public VersionChain() {
+        this.maxTimestamp = 0;
+        this.versions = new TreeMap<>();
     }
 
-    public void put(long timestamp, int value) {
-        // Assumes we receive operations in order (we will need to update this when we have the full log)
+    public void put(Long timestamp, Integer value) {
         if(maxTimestamp < timestamp) {
             maxTimestamp = timestamp;
         }
