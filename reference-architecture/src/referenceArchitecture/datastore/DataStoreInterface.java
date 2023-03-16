@@ -5,7 +5,7 @@ import java.rmi.RemoteException;
 
 public interface DataStoreInterface extends Remote {
 
-    public void write(String key, Object value) throws RemoteException;
+    public void write(String key, String string) throws RemoteException;
     
-    public Object read(String key) throws RemoteException;
+    public String read(String key) throws RemoteException;
 }

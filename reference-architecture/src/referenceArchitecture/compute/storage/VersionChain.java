@@ -45,4 +45,7 @@ public class VersionChain implements Serializable {
         return "VersionChain [versions=" + versions + ", maxTimestamp=" + maxTimestamp + "]";
     }
 
+    public TreeMap<Long, Integer> getVersionChain() {
+        return this.versions;
+    }
 }

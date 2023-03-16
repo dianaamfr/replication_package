@@ -1,4 +1,5 @@
 all:
+	jar xf ./lib/json-20140107.jar
 	javac ./referenceArchitecture/*/*.java
 	javac ./referenceArchitecture/*/*/*.java
 

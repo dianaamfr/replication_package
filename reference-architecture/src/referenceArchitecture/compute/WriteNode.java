@@ -26,7 +26,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock), 500, 500, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {

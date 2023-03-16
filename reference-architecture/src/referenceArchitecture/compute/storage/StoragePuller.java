@@ -1,7 +1,9 @@
 package referenceArchitecture.compute.storage;
 
-import java.rmi.RemoteException;
+import java.io.IOException;
 import java.util.concurrent.ConcurrentMap;
+
+import org.json.JSONObject;
 
 import referenceArchitecture.datastore.DataStoreInterface;
 
@@ -21,14 +23,21 @@ public class StoragePuller extends StorageHandler {
 
     private void pull() {
         try {
-            Object obj = this.dataStoreStub.read(null);
-            if(obj != null && obj instanceof ConcurrentMap<?, ?>) {
-                storage.setState((ConcurrentMap<String, VersionChain>)obj);
-            }
-        } catch (RemoteException e) {
+            String jsonString = this.dataStoreStub.read(null);
+            System.out.println(jsonString);
+            // if(json != null) {
+            //     storage.setState(parseJson(json));
+            // }
+        } catch (IOException e) {
             e.printStackTrace();
         }
-        storage.put(null, 0, 0);
+    }
+
+    private ConcurrentMap<String, VersionChain> parseJson(JSONObject json) {
+        JSONObject response = json.getJSONObject("response");
+        // response.getString("timestamp");
+        response.getJSONObject("versionChains");
+        return null;
     }
     
 }

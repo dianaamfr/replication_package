@@ -58,14 +58,14 @@ public class Storage {
     }
 
     public ConcurrentMap<String,VersionChain> getState() {
-        return keyVersions;
+        return this.keyVersions;
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append(stableTime);
-        builder.append(keyVersions.toString());
+        builder.append(this.stableTime);
+        builder.append(this.keyVersions.toString());
         return builder.toString();
     }
 

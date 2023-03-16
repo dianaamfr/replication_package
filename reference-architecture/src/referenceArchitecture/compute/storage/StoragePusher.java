@@ -1,6 +1,10 @@
 package referenceArchitecture.compute.storage;
 
-import java.rmi.RemoteException;
+import java.io.IOException;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentMap;
+
+import org.json.JSONObject;
 
 import referenceArchitecture.compute.clock.LogicalClock;
 import referenceArchitecture.datastore.DataStoreInterface;
@@ -25,10 +29,21 @@ public class StoragePusher extends StorageHandler {
         try {
             // TODO: change key to identify the correct region and partition
             // TODO: condition to only store when logical clock value has changed
-            System.out.println(this.logicalClock.toString());
-            this.dataStoreStub.write(this.logicalClock.toString(), this.storage.getState());
-        } catch (RemoteException e) {
+            JSONObject json = toJson(this.storage.getState());
+            System.out.println(this.storage.getState());
+            System.out.println(json.toString());
+            this.dataStoreStub.write(this.logicalClock.toString(), json.toString());
+        } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private JSONObject toJson(ConcurrentMap<String, VersionChain> state) {
+        JSONObject json = new JSONObject();
+        for(Entry<String, VersionChain> entry: state.entrySet()) {
+            JSONObject value = new JSONObject(entry.getValue().getVersionChain());
+            json.put(entry.getKey(), value);
+        }
+        return json;
     }
 }

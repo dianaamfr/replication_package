@@ -6,10 +6,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.TreeMap;
+import java.util.Map.Entry;
+
+import org.json.JSONObject;
 
 public class DataStore implements DataStoreInterface {
     private final String id;
-    private TreeMap<String, Object> objects;
+    private TreeMap<String, String> objects;
     
     public DataStore() {
         this.objects = new TreeMap<>();
@@ -32,23 +35,27 @@ public class DataStore implements DataStoreInterface {
     }
 
     @Override
-    public Object read(String key) throws RemoteException {
+    public String read(String key) throws RemoteException {
+        JSONObject json = new JSONObject();
         if(key == null) {
-            return objects.lastEntry();
-        } 
+            Entry<String, String> lastEntry = objects.lastEntry();
+            json.put(lastEntry.getKey(), lastEntry.getValue());
+        } else {
+            Entry<String, String> higherEntry = objects.higherEntry(key);
+            json.put(higherEntry.getKey(), higherEntry.getValue());
+        }
 
-        return objects.higherEntry(key); 
+        return json.toString(); 
     }
 
     @Override
-    public void write(String key, Object value) throws RemoteException {
+    public void write(String key, String value) throws RemoteException {
         if(objects.containsKey(key)){
             //System.err.println("Warning: storing duplicate key");
             return;
         }
-        System.out.println("HERE");
+        System.out.println(value);
         objects.put(key, value);
-        System.out.println(objects.toString());
     }
 
     public String getId() {
