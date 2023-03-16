@@ -1,8 +1,14 @@
 package referenceArchitecture.compute.storage;
 
 import java.io.IOException;
+import java.lang.Runtime.Version;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import referenceArchitecture.datastore.DataStoreInterface;
@@ -24,20 +30,39 @@ public class StoragePuller extends StorageHandler {
     private void pull() {
         try {
             String jsonString = this.dataStoreStub.read(null);
-            System.out.println(jsonString);
-            // if(json != null) {
-            //     storage.setState(parseJson(json));
-            // }
-        } catch (IOException e) {
+            if(jsonString != null) {
+                storage.setState(parseJson(jsonString));
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private ConcurrentMap<String, VersionChain> parseJson(JSONObject json) {
-        JSONObject response = json.getJSONObject("response");
-        // response.getString("timestamp");
-        response.getJSONObject("versionChains");
-        return null;
+    private ConcurrentMap<String, VersionChain> parseJson(String json) {
+        ConcurrentMap<String, VersionChain> state = new ConcurrentHashMap<>();
+        JSONObject response = new JSONObject(json);
+        System.out.println(response.toString());
+
+        // Log Timestamp
+        // response.getString("key"); 
+
+        // Log/State
+        JSONObject responseJson = new JSONObject(response.getString("value"));
+        JSONArray versionChainsJson = responseJson.getJSONArray("state");
+
+        for(int i = 0; i < versionChainsJson.length(); i++) {
+            JSONObject versionChainJson = versionChainsJson.getJSONObject(i);
+            JSONArray versionChainArray = versionChainJson.getJSONArray("value");
+            TreeMap<Long, Integer> versions = new TreeMap<>();
+            for(int j = 0; j < versionChainArray.length(); j++) {
+                JSONObject versionJson = versionChainArray.getJSONObject(j);
+                versions.put(Long.parseLong(versionJson.getString("key")), versionJson.getInt("value"));
+            }
+            VersionChain versionChain = new VersionChain(versions);
+            state.put(versionChainJson.getString("key"), versionChain);
+        }
+
+        return state;
     }
     
 }

@@ -36,13 +36,18 @@ public class DataStore implements DataStoreInterface {
 
     @Override
     public String read(String key) throws RemoteException {
+        if(objects.isEmpty()) return null;
+
         JSONObject json = new JSONObject();
+
         if(key == null) {
             Entry<String, String> lastEntry = objects.lastEntry();
-            json.put(lastEntry.getKey(), lastEntry.getValue());
+            json.put("key", lastEntry.getKey());
+            json.put("value", lastEntry.getValue());
         } else {
             Entry<String, String> higherEntry = objects.higherEntry(key);
-            json.put(higherEntry.getKey(), higherEntry.getValue());
+            json.put("key", higherEntry.getKey());
+            json.put("value", higherEntry.getValue());
         }
 
         return json.toString(); 
@@ -54,7 +59,6 @@ public class DataStore implements DataStoreInterface {
             //System.err.println("Warning: storing duplicate key");
             return;
         }
-        System.out.println(value);
         objects.put(key, value);
     }
 

@@ -28,7 +28,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(storage, dataStoreStub), 500, 500, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(storage, dataStoreStub), 5000, 5000, TimeUnit.MILLISECONDS);
     }
     
     public static void main(String[] args) {
