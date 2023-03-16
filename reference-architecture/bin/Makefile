@@ -1,12 +1,23 @@
 all:
-	javac referenceArchitecture/*.java
+	javac ./referenceArchitecture/client/*.java \
+	./referenceArchitecture/compute/*.java \
+	./referenceArchitecture/remoteInterface/*.java
+
+clear:
+	rm ./referenceArchitecture/client/*.class
+	rm ./referenceArchitecture/compute/*.class
+	rm ./referenceArchitecture/remoteInterface/*.class
+	killall rmiregistry
 
 rmi:
 	rmiregistry &
 	sleep 0.5
 
 client:
-	java referenceArchitecture.Client
+	java referenceArchitecture.client.Client
 
-server:
-	java referenceArchitecture.Server
+readNode:
+	java referenceArchitecture.compute.ReadNode
+
+writeNode:
+	java referenceArchitecture.compute.WriteNode

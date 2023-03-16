@@ -4,7 +4,9 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
@@ -29,8 +31,8 @@ public class Client {
             writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
 
             // Test RMI
-            requestOperation(Operation.ROT);
             requestOperation(Operation.WRITE);
+            requestOperation(Operation.ROT);
         } catch (RemoteException | NotBoundException e) {
             System.err.println("Could not get registry");
         }
@@ -42,7 +44,10 @@ public class Client {
             case ROT:
                 Map<String, Integer> readResponse;
                 try {
-                    readResponse = readStub.rot(null);
+                    Set<String> keys = new HashSet<String>();
+                    keys.add("x");
+                    keys.add("y");
+                    readResponse = readStub.rot(keys);
                     System.out.println("Client: " + readResponse.toString());
                 } catch (RemoteException e) {
                     System.err.println("Client: ROT operation failed");
@@ -50,10 +55,11 @@ public class Client {
                 }
                 break;
             case WRITE:
-                Integer writeResponse;
+                long writeResponse;
                 try {
-                    writeResponse = writeStub.write(null);
-                    System.out.println("Client: " + writeResponse.toString());
+                    writeResponse = writeStub.write("x", 2, null);
+                    writeResponse = writeStub.write("y", 3, null);
+                    System.out.println("Client: " + writeResponse);
                 } catch (RemoteException e) {
                     e.printStackTrace();
                     System.err.println("Client: Write operation failed");

@@ -1,17 +1,19 @@
 all:
-	javac ./referenceArchitecture/client/*.java \
-	./referenceArchitecture/compute/*.java \
-	./referenceArchitecture/remoteInterface/*.java
+	jar xf ./lib/json-20140107.jar
+	javac ./referenceArchitecture/*/*.java
+	javac ./referenceArchitecture/*/*/*.java
 
 clear:
-	rm ./referenceArchitecture/client/*.class
-	rm ./referenceArchitecture/compute/*.class
-	rm ./referenceArchitecture/remoteInterface/*.class
-	killall rmiregistry
+	rm ./referenceArchitecture/*/*.class
+	rm ./referenceArchitecture/*/*/*.class
+	make rmiStop
 
 rmi:
 	rmiregistry &
 	sleep 0.5
+
+rmiStop:
+	killall rmiregistry
 
 client:
 	java referenceArchitecture.client.Client
@@ -21,3 +23,6 @@ readNode:
 
 writeNode:
 	java referenceArchitecture.compute.WriteNode
+
+datastore:
+	java referenceArchitecture.datastore.DataStore
