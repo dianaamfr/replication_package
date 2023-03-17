@@ -20,8 +20,8 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
 
-    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
-        super(storage, scheduler, "write-node");
+    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String region, Integer partition) {
+        super(storage, scheduler, String.format("w%s%d", region, partition), region);
         this.logicalClock = new LogicalClock();
     }
 
@@ -30,15 +30,20 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public static void main(String[] args) {
+        if(args.length < 2) {
+            System.err.println("Usage: java WriteNode <region:String> <partition:Integer>");   
+            return;
+        }
+
         Storage storage = new Storage();
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
-        WriteNode writeNode = new WriteNode(storage, scheduler);
+        WriteNode writeNode = new WriteNode(storage, scheduler, args[0], Integer.parseInt(args[1]));
 
         try {
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind(writeNode.getId(), stub);
+            registry.bind(writeNode.id, stub);
 
             // Get reference of data store
             dataStoreStub = (DataStoreInterface) registry.lookup(dataStoreId);
@@ -49,6 +54,9 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             System.err.println("Could not bind to registry");
         } catch (NotBoundException e) {
             System.err.println("Could not find the registry of the data store");
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid partition");
+            System.err.println("Usage: java WriteNode <region:String> <partion:Integer>");   
         }
     }
 

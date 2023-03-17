@@ -15,14 +15,23 @@ rmi:
 rmiStop:
 	killall rmiregistry
 
-client:
-	java referenceArchitecture.client.Client
+clientA:
+	java referenceArchitecture.client.Client A
 
-readNode:
-	java referenceArchitecture.compute.ReadNode
+readNodeA:
+	java referenceArchitecture.compute.ReadNode A
 
-writeNode:
-	java referenceArchitecture.compute.WriteNode
+writeNodeA1:
+	java referenceArchitecture.compute.WriteNode A 1
+
+writeNodeA2:
+	java referenceArchitecture.compute.WriteNode A 2
+
+readNodeB:
+	java referenceArchitecture.compute.ReadNode B
+
+writeNodeB1:
+	java referenceArchitecture.compute.WriteNode B 1
 
 datastore:
 	java referenceArchitecture.datastore.DataStore

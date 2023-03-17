@@ -23,8 +23,9 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
     
-    public ReadNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
-        super(storage, scheduler, "read-node");
+    public ReadNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String region) {
+        super(storage, scheduler, String.format("r%s", region), region);
+        System.out.println(this.id);
     }
 
     public void init() {
@@ -32,15 +33,20 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     }
     
     public static void main(String[] args) {
-        Storage storage = new Storage();
-        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-        ReadNode readNode = new ReadNode(storage, scheduler);
+        if(args.length < 1) {
+            System.err.println("Usage: java ReadNode <region:String>");   
+            return;
+        }
 
-        // Bind the remote object's stub in the registry
         try {
+            Storage storage = new Storage();
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+            ReadNode readNode = new ReadNode(storage, scheduler, args[0]);
+
+            // Bind the remote object's stub in the registry
             ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind(readNode.getId(), stub);
+            registry.bind(readNode.id, stub);
 
             // Get reference of data store
             dataStoreStub = (DataStoreInterface) registry.lookup(dataStoreId);
@@ -51,7 +57,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             System.err.println("Could not bind to registry");
         } catch (NotBoundException e) {
             System.err.println("Could not find the registry of the data store");
-        } 
+        }
     }
 
     @Override
