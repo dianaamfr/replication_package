@@ -9,27 +9,32 @@ import org.json.JSONObject;
 import referenceArchitecture.compute.clock.LogicalClock;
 import referenceArchitecture.datastore.DataStoreInterface;
 
-public class StoragePusher extends StorageHandler {
+public class StoragePusher implements Runnable {
+    Storage storage;
     DataStoreInterface dataStoreStub;
     LogicalClock logicalClock;
+    Integer partition;
 
-    public StoragePusher(Storage storage, DataStoreInterface dataStoreStub, LogicalClock logicalClock) {
-        super(storage);
+    public StoragePusher(Storage storage, DataStoreInterface dataStoreStub, LogicalClock logicalClock, Integer partition) {
         this.dataStoreStub = dataStoreStub;
+        this.storage = storage;
         this.logicalClock = logicalClock;
+        this.partition = partition;
     }
 
-    @Override
     public void run() {
         this.push();
     }
 
     private void push() {
+        if(this.logicalClock.isStateSaved()) {
+            return;
+        };
+
         try {
-            // TODO: change key to identify the correct region and partition
-            // TODO: condition to only store when logical clock value has changed
             JSONObject json = toJson(this.storage.getState());
-            this.dataStoreStub.write(this.logicalClock.toString(), json.toString());
+            this.dataStoreStub.write(this.logicalClock.toString(), json.toString(), this.partition);
+            this.logicalClock.stateSaved();
         } catch (Exception e) {
             e.printStackTrace();
         }

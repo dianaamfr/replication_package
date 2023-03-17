@@ -1,12 +1,10 @@
 ## Reference Architecture
 
 ## Tasks
-- Client with operation parameters
-- Server parameters (to support a server per partition)
-- Change key name in data store to represent the partition
-- Have a map of remoteInterfaces identified by partition  for read interfaces and write interface
-- Have a mapping between keys and partition
+- Make write node perist periodically in the abscence of updates to ensure progress
 - Client cache
+- Support multiple writers (send lastWriteTimestamp)
+- ReadNode send stableTime back for client to prune cache and decide which version to show
 
 ## Folder Structure
 

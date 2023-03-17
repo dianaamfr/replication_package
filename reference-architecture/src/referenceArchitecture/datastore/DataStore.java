@@ -10,13 +10,22 @@ import java.util.Map.Entry;
 
 import org.json.JSONObject;
 
+import referenceArchitecture.config.Config;
+
 public class DataStore implements DataStoreInterface {
     private final String id;
-    private TreeMap<String, String> objects;
+    private TreeMap<Integer, TreeMap<String, String>> objects;
     
     public DataStore() {
         this.objects = new TreeMap<>();
         this.id = "data-store";
+        this.init();
+    }
+
+    private void init() {
+        for(Integer partition: Config.getPartitions()) {
+            objects.put(partition, new TreeMap<>());
+        }
     }
 
     public static void main(String[] args) {
@@ -35,31 +44,47 @@ public class DataStore implements DataStoreInterface {
     }
 
     @Override
-    public String read(String key) throws RemoteException {
-        if(objects.isEmpty()) return null;
+    public String read(String key, Integer partition) throws RemoteException {
+        if(!this.objects.containsKey(partition)){
+            System.err.println("Error: Invalid partition");
+            return null;
+        } 
+
+        if(this.objects.get(partition).isEmpty()) {
+            //System.err.println("Error: Empty partition");
+            return null;
+        }
 
         JSONObject json = new JSONObject();
 
         if(key == null) {
-            Entry<String, String> lastEntry = objects.lastEntry();
+            Entry<String, String> lastEntry = objects.get(partition).lastEntry();
             json.put("key", lastEntry.getKey());
             json.put("value", lastEntry.getValue());
         } else {
-            Entry<String, String> higherEntry = objects.higherEntry(key);
-            json.put("key", higherEntry.getKey());
-            json.put("value", higherEntry.getValue());
+            Entry<String, String> higherEntry = objects.get(partition).higherEntry(key);
+            if(higherEntry != null) {
+                json.put("key", higherEntry.getKey());
+                json.put("value", higherEntry.getValue());
+            }
         }
 
         return json.toString(); 
     }
 
     @Override
-    public void write(String key, String value) throws RemoteException {
-        if(objects.containsKey(key)){
-            //System.err.println("Warning: storing duplicate key");
+    public void write(String key, String value, Integer partition) throws RemoteException {
+        if(!this.objects.containsKey(partition)){
+            System.err.println("Error: Invalid partition");
             return;
         }
-        objects.put(key, value);
+
+        if(this.objects.get(partition).containsKey(key)) {
+            //System.err.println("Warning: Repeated key");
+            return;
+        }
+
+        this.objects.get(partition).put(key, value);
     }
 
     public String getId() {

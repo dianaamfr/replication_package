@@ -14,33 +14,48 @@ import java.util.concurrent.TimeUnit;
 
 import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
-import referenceArchitecture.compute.storage.Storage;
+import referenceArchitecture.compute.storage.ReaderStorage;
 import referenceArchitecture.compute.storage.StoragePuller;
+import referenceArchitecture.config.Config;
 import referenceArchitecture.datastore.DataStoreInterface;
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
+    private ReaderStorage storage; 
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
     
-    public ReadNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
-        super(storage, scheduler, "read-node");
+    public ReadNode(ReaderStorage storage, ScheduledThreadPoolExecutor scheduler, String region) {
+        super(scheduler, String.format("r%s", region), region);
+        this.storage = storage;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(storage, dataStoreStub), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, dataStoreStub), 5000, 5000, TimeUnit.MILLISECONDS);
     }
     
     public static void main(String[] args) {
-        Storage storage = new Storage();
-        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-        ReadNode readNode = new ReadNode(storage, scheduler);
+        if(args.length < 1) {
+            System.err.println("Usage: java ReadNode <region:String>");   
+            return;
+        }
 
-        // Bind the remote object's stub in the registry
+        String region = args[0];
+        if(!Config.isRegion(region)) {
+            System.err.println("Error: Invalid Region");   
+            return;
+        }
+
         try {
+            ReaderStorage storage = new ReaderStorage(region);
+            storage.init();
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+            ReadNode readNode = new ReadNode(storage, scheduler, region);
+
+            // Bind the remote object's stub in the registry
             ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind(readNode.getId(), stub);
+            registry.bind(readNode.id, stub);
 
             // Get reference of data store
             dataStoreStub = (DataStoreInterface) registry.lookup(dataStoreId);
@@ -51,7 +66,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             System.err.println("Could not bind to registry");
         } catch (NotBoundException e) {
             System.err.println("Could not find the registry of the data store");
-        } 
+        }
     }
 
     @Override

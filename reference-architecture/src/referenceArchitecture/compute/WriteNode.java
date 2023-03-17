@@ -10,35 +10,60 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import referenceArchitecture.compute.clock.LogicalClock;
+import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.compute.storage.Storage;
 import referenceArchitecture.compute.storage.StoragePusher;
+import referenceArchitecture.config.Config;
 import referenceArchitecture.datastore.DataStoreInterface;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
 
-public class WriteNode extends ComputeNode implements WriteRemoteInterface {  
+public class WriteNode extends ComputeNode implements WriteRemoteInterface {
+    private Storage storage;  
     private LogicalClock logicalClock;
+    private Integer partition;
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
 
-    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler) {
-        super(storage, scheduler, "write-node");
+    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String region, Integer partition) {
+        super(scheduler, String.format("w%s%d", region, partition), region);
+        this.storage = storage;
         this.logicalClock = new LogicalClock();
+        this.partition = partition;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
-        Storage storage = new Storage();
-        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
-        WriteNode writeNode = new WriteNode(storage, scheduler);
+        if(args.length < 2) {
+            System.err.println("Usage: java WriteNode <region:String> <partition:Integer>");   
+            return;
+        }
 
         try {
+            String region = args[0];
+            Integer partition = Integer.parseInt(args[1]);
+
+            if(!Config.isRegion(region)) {
+                System.err.println("Error: Invalid Region");   
+                return;
+            } 
+
+            if(!Config.isPartitionInRegion(region, partition)) {
+                System.err.println(String.format("Error: Region %s does not store partition %d", region, partition));   
+                return;
+            }
+    
+            Storage storage = new Storage();
+            storage.init(Config.getKeys(partition));
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
+            WriteNode writeNode = new WriteNode(storage, scheduler, region, partition);
+
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind(writeNode.getId(), stub);
+            registry.bind(writeNode.id, stub);
 
             // Get reference of data store
             dataStoreStub = (DataStoreInterface) registry.lookup(dataStoreId);
@@ -49,14 +74,29 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             System.err.println("Could not bind to registry");
         } catch (NotBoundException e) {
             System.err.println("Could not find the registry of the data store");
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid partition");
+            System.err.println("Usage: java WriteNode <region:String> <partion:Integer>");   
         }
     }
 
     @Override
     public long write(String key, Integer value, Long lastWriteTimestamp) {
         // TODO: to support multiple writers,use lastWriteTimestamp (it can be null)
-        long timestamp = this.logicalClock.internalEvent();
-        this.storage.put(key, timestamp, value);
-        return timestamp;
+       
+        if(!Config.isKeyInPartition(this.partition, key)) {
+            System.err.println(String.format("Error: Key %s not found", key));
+            return -1;
+        }
+
+        try {
+            long timestamp = this.logicalClock.internalEvent();
+            this.storage.put(key, timestamp, value);
+            this.logicalClock.tick();
+            return timestamp;
+        } catch (KeyNotFoundException e) {
+            System.err.println(String.format("Error: Key %s not found", key));
+            return -1;
+        }
     }
 }
