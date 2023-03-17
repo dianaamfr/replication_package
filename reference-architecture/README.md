@@ -1,11 +1,10 @@
 ## Reference Architecture
 
 ## Tasks
-- Change key name in data store to represent the partition
-- Make write node write state only when it has something
-- Make write node persist the log per partion
 - Make write node perist periodically in the abscence of updates to ensure progress
 - Client cache
+- Support multiple writers (send lastWriteTimestamp)
+- ReadNode send stableTime back for client to prune cache and decide which version to show
 
 ## Folder Structure
 

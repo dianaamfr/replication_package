@@ -1,5 +1,6 @@
 package referenceArchitecture.compute.storage;
 
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -14,6 +15,7 @@ public class StoragePuller implements Runnable {
 
     public StoragePuller(ReaderStorage storage, DataStoreInterface dataStoreStub) {
         this.dataStoreStub = dataStoreStub;
+        this.storage = storage;
     }
 
     @Override
@@ -23,23 +25,29 @@ public class StoragePuller implements Runnable {
     }
 
     private void pull() {
-        try {
-            String jsonString = this.dataStoreStub.read(null);
-            if(jsonString != null) {
-                storage.setState(parseJson(jsonString));
+        for(Entry<Integer, Long> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
+            try {
+                String jsonString = this.dataStoreStub.read(String.valueOf(entry.getValue()), entry.getKey());
+                if(jsonString != null) {
+                    parseJson(jsonString, entry.getKey());
+                }
+            } catch (Exception e) {
+                System.err.println(String.format("Error: Error when pulling from partition %d", entry.getKey()));
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
-    private ConcurrentMap<String, VersionChain> parseJson(String json) {
-        ConcurrentMap<String, VersionChain> state = new ConcurrentHashMap<>();
+    private void parseJson(String json, Integer partition) throws Exception {
         JSONObject response = new JSONObject(json);
-    
-        // Log Timestamp
-        // response.getString("key"); 
 
+        if(!response.has("key")) {
+            return;
+        }
+
+        // Log Timestamp
+        long timestamp = Long.valueOf(response.getString("key"));
+        this.storage.setPartitionMaxTimestamp(partition, timestamp);
+        
         // Log/State
         JSONObject responseJson = new JSONObject(response.getString("value"));
         JSONArray versionChainsJson = responseJson.getJSONArray("state");
@@ -47,15 +55,11 @@ public class StoragePuller implements Runnable {
         for(int i = 0; i < versionChainsJson.length(); i++) {
             JSONObject versionChainJson = versionChainsJson.getJSONObject(i);
             JSONArray versionChainArray = versionChainJson.getJSONArray("value");
-            VersionChain versionChain = new VersionChain();
             for(int j = 0; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
-                versionChain.put(Long.parseLong(versionJson.getString("key")), versionJson.getInt("value"));
+                this.storage.put(versionChainJson.getString("key"), Long.parseLong(versionJson.getString("key")), versionJson.getInt("value"));
             }
-            state.put(versionChainJson.getString("key"), versionChain);
         }
-
-        return state;
     }
     
 }

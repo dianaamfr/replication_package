@@ -32,7 +32,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(storage, dataStoreStub, logicalClock, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -41,11 +41,25 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             return;
         }
 
-        Storage storage = new Storage();
-        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
-        WriteNode writeNode = new WriteNode(storage, scheduler, args[0], Integer.parseInt(args[1]));
-
         try {
+            String region = args[0];
+            Integer partition = Integer.parseInt(args[1]);
+
+            if(!Config.isRegion(region)) {
+                System.err.println("Error: Invalid Region");   
+                return;
+            } 
+
+            if(!Config.isPartitionInRegion(region, partition)) {
+                System.err.println(String.format("Error: Region %s does not store partition %d", region, partition));   
+                return;
+            }
+    
+            Storage storage = new Storage();
+            storage.init(Config.getKeys(partition));
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
+            WriteNode writeNode = new WriteNode(storage, scheduler, region, partition);
+
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
             Registry registry = LocateRegistry.getRegistry();

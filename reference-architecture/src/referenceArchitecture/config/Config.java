@@ -3,8 +3,10 @@ package referenceArchitecture.config;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 
@@ -75,4 +77,11 @@ public final class Config {
         return partitionKeys.get(partition);
     }
 
+    public static boolean isPartitionInRegion(String region, Integer partition) {
+        return partitionsPerRegion.get(region).contains(partition);
+    }
+
+    public static Set<Integer> getPartitions() {
+        return new HashSet<>(keysPartition.values());
+    }
 }

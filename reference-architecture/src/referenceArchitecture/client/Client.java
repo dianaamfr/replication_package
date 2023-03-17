@@ -1,6 +1,5 @@
 package referenceArchitecture.client;
 
-import java.io.Writer;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;

@@ -18,7 +18,6 @@ public class ReaderStorage extends Storage {
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
         this.stableTime = 0;
         this.region = region;
-        init();
     }
 
     public void init() {
@@ -52,4 +51,15 @@ public class ReaderStorage extends Storage {
         builder.append(this.keyVersions.toString());
         return builder.toString();
     }
+
+    public ConcurrentMap<Integer, Long> getPartitionsMaxTimestamp() {
+        return this.partitionsMaxTimestamp;
+    }
+
+    public void setPartitionMaxTimestamp(Integer partition, long timestamp) {
+        if(timestamp > this.partitionsMaxTimestamp.get(partition)) {
+            this.partitionsMaxTimestamp.put(partition, timestamp);
+        }
+    }
+
 }
