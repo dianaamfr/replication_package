@@ -14,18 +14,20 @@ import java.util.concurrent.TimeUnit;
 
 import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
-import referenceArchitecture.compute.storage.Storage;
+import referenceArchitecture.compute.storage.ReaderStorage;
 import referenceArchitecture.compute.storage.StoragePuller;
+import referenceArchitecture.config.Config;
 import referenceArchitecture.datastore.DataStoreInterface;
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
+    private ReaderStorage storage; 
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
     
-    public ReadNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String region) {
-        super(storage, scheduler, String.format("r%s", region), region);
-        System.out.println(this.id);
+    public ReadNode(ReaderStorage storage, ScheduledThreadPoolExecutor scheduler, String region) {
+        super(scheduler, String.format("r%s", region), region);
+        this.storage = storage;
     }
 
     public void init() {
@@ -38,10 +40,16 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             return;
         }
 
+        String region = args[0];
+        if(!Config.isRegion(region)) {
+            System.err.println("Error: Invalid Region");   
+            return;
+        }
+
         try {
-            Storage storage = new Storage();
+            ReaderStorage storage = new ReaderStorage(region);
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-            ReadNode readNode = new ReadNode(storage, scheduler, args[0]);
+            ReadNode readNode = new ReadNode(storage, scheduler, region);
 
             // Bind the remote object's stub in the registry
             ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);

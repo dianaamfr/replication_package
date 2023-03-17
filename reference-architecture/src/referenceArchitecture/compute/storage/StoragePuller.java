@@ -8,11 +8,11 @@ import org.json.JSONObject;
 
 import referenceArchitecture.datastore.DataStoreInterface;
 
-public class StoragePuller extends StorageHandler {
+public class StoragePuller implements Runnable {
     DataStoreInterface dataStoreStub;
+    ReaderStorage storage;
 
-    public StoragePuller(Storage storage, DataStoreInterface dataStoreStub) {
-        super(storage);
+    public StoragePuller(ReaderStorage storage, DataStoreInterface dataStoreStub) {
         this.dataStoreStub = dataStoreStub;
     }
 

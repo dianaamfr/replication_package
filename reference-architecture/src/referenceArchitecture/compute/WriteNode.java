@@ -10,19 +10,25 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import referenceArchitecture.compute.clock.LogicalClock;
+import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.compute.storage.Storage;
 import referenceArchitecture.compute.storage.StoragePusher;
+import referenceArchitecture.config.Config;
 import referenceArchitecture.datastore.DataStoreInterface;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
 
-public class WriteNode extends ComputeNode implements WriteRemoteInterface {  
+public class WriteNode extends ComputeNode implements WriteRemoteInterface {
+    private Storage storage;  
     private LogicalClock logicalClock;
+    private Integer partition;
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
 
     public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String region, Integer partition) {
-        super(storage, scheduler, String.format("w%s%d", region, partition), region);
+        super(scheduler, String.format("w%s%d", region, partition), region);
+        this.storage = storage;
         this.logicalClock = new LogicalClock();
+        this.partition = partition;
     }
 
     public void init() {
@@ -63,8 +69,20 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     @Override
     public long write(String key, Integer value, Long lastWriteTimestamp) {
         // TODO: to support multiple writers,use lastWriteTimestamp (it can be null)
-        long timestamp = this.logicalClock.internalEvent();
-        this.storage.put(key, timestamp, value);
-        return timestamp;
+       
+        if(!Config.isKeyInPartition(this.partition, key)) {
+            System.err.println(String.format("Error: Key %s not found", key));
+            return -1;
+        }
+
+        try {
+            long timestamp = this.logicalClock.internalEvent();
+            this.storage.put(key, timestamp, value);
+            this.logicalClock.tick();
+            return timestamp;
+        } catch (KeyNotFoundException e) {
+            System.err.println(String.format("Error: Key %s not found", key));
+            return -1;
+        }
     }
 }

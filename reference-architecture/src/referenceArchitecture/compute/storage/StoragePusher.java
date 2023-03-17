@@ -9,17 +9,17 @@ import org.json.JSONObject;
 import referenceArchitecture.compute.clock.LogicalClock;
 import referenceArchitecture.datastore.DataStoreInterface;
 
-public class StoragePusher extends StorageHandler {
+public class StoragePusher implements Runnable {
+    Storage storage;
     DataStoreInterface dataStoreStub;
     LogicalClock logicalClock;
 
     public StoragePusher(Storage storage, DataStoreInterface dataStoreStub, LogicalClock logicalClock) {
-        super(storage);
         this.dataStoreStub = dataStoreStub;
+        this.storage = storage;
         this.logicalClock = logicalClock;
     }
 
-    @Override
     public void run() {
         this.push();
     }

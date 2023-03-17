@@ -2,8 +2,6 @@
 
 ## Tasks
 - Change key name in data store to represent the partition
-- Fix stable time in read node
-- Init keys in write node
 - Make write node write state only when it has something
 - Make write node persist the log per partion
 - Make write node perist periodically in the abscence of updates to ensure progress

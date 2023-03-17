@@ -30,20 +30,20 @@ public class Client {
     }
 
     public static void main(String[] args) {
- 
+        if(args.length < 1) {
+            System.err.println("Usage: java Client <region:String>");   
+            return;
+        }
+
+        String region = args[0];
+        if(!Config.isRegion(region)) {
+            System.err.println("Error: Invalid Region");   
+            return;
+        }
+
         try {
-            if(args.length < 1) {
-                System.err.println("Usage: java Client <region:String>");   
-                return;
-            }
-
+            
             Registry registry = LocateRegistry.getRegistry();
-
-            String region = args[0];
-            if(!Config.isRegion(region)) {
-                System.err.println("Error: Invalid Region");   
-                return;
-            }
             String readNodeId = String.format("r%s", region);
             ReadRemoteInterface readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
 

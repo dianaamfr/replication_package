@@ -9,17 +9,12 @@ import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
 public class VersionChain implements Serializable {
     private static final long serialVersionUID = 1L;
     private TreeMap<Long, Integer> versions;
-    private long maxTimestamp;
 
     public VersionChain() {
-        this.maxTimestamp = 0;
         this.versions = new TreeMap<>();
     }
 
     public void put(Long timestamp, Integer value) {
-        if(maxTimestamp < timestamp) {
-            maxTimestamp = timestamp;
-        }
         versions.put(timestamp, value);
     }
 
@@ -35,13 +30,9 @@ public class VersionChain implements Serializable {
         }
     }
 
-    public long getMaxTimestamp() {
-        return maxTimestamp;
-    }
-
     @Override
     public String toString() {
-        return "VersionChain [versions=" + versions + ", maxTimestamp=" + maxTimestamp + "]";
+        return versions.toString();
     }
 
     public TreeMap<Long, Integer> getVersionChain() {

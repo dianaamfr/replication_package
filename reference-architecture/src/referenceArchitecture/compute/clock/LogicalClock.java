@@ -7,13 +7,12 @@ public class LogicalClock {
         this.clock = 0;
     }
 
-    private void tick() {
+    public void tick() {
         this.clock++;
     }
 
     public long internalEvent() {
-        tick();
-        return this.clock;
+        return this.clock + 1;
     }
 
     @Override
