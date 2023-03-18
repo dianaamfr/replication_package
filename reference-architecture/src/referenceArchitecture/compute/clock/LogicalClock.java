@@ -9,13 +9,13 @@ public class LogicalClock {
         this.stateSaved = true;
     }
 
-    public void tick() {
-        this.clock++;
+    public void tick(long lastWriteTimestamp) {
+        this.clock = Math.max(this.clock, lastWriteTimestamp) + 1;
         this.stateSaved = false;
     }
 
-    public long internalEvent() {
-        return this.clock + 1;
+    public long internalEvent(long lastWriteTimestamp) {
+        return Math.max(this.clock, lastWriteTimestamp) + 1;
     }
 
     public void stateSaved() {

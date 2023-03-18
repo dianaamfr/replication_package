@@ -11,7 +11,6 @@ import java.util.Set;
 import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 
 public final class Config {
-    // TODO: improve, maybe with key being a class with the region and partion
     private static Map<String, List<Integer>> partitionsPerRegion;
     private static Map<String, Integer> keysPartition;
     private static Map<Integer, List<String>> partitionKeys;

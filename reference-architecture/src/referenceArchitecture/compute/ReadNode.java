@@ -18,6 +18,7 @@ import referenceArchitecture.compute.storage.ReaderStorage;
 import referenceArchitecture.compute.storage.StoragePuller;
 import referenceArchitecture.config.Config;
 import referenceArchitecture.datastore.DataStoreInterface;
+import referenceArchitecture.remoteInterface.ROTResponse;
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
@@ -70,7 +71,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     }
 
     @Override
-    public Map<String, Integer> rot(Set<String> readSet) {
+    public ROTResponse rot(Set<String> readSet) {
         Map<String, Integer> values = new HashMap<>(readSet.size());
         long stableTime = this.storage.getStableTime();
 
@@ -83,10 +84,9 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
                 System.err.println(String.format("Key %s not found", key));
             } catch (KeyVersionNotFoundException e) {
                 values.put(key, null);
-                System.err.println(String.format("Key %s has not been written to yet", key));
             }    
         }
-        return values;
+        return new ROTResponse(values, stableTime);
     }
   
 }
