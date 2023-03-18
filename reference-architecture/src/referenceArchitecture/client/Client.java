@@ -4,6 +4,7 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,14 +12,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import referenceArchitecture.compute.exceptions.KeyNotFoundException;
 import referenceArchitecture.config.Config;
+import referenceArchitecture.remoteInterface.ROTResponse;
 import referenceArchitecture.remoteInterface.ReadRemoteInterface;
 import referenceArchitecture.remoteInterface.WriteRemoteInterface;
   
 public class Client {
     private final Map<Integer, WriteRemoteInterface> writeStubs;
+    private Map<String, Version> cache;
+    private long lastWriteTimestamp;
     private final ReadRemoteInterface readStub;
     private String region;
 
@@ -26,6 +31,8 @@ public class Client {
         this.writeStubs = writeStubs;
         this.readStub = readStub;
         this.region = region;
+        this.cache = new HashMap<>();
+        this.lastWriteTimestamp = 0L;
     }
 
     public static void main(String[] args) {
@@ -68,7 +75,7 @@ public class Client {
         do {   
             System.out.println("Enter an operation:");
             System.out.println("\tROT: R <key:String>+");
-            System.out.println("\tWrite: W <key:String> <value:Integer>");
+            System.out.println("\tWrite: W <key:String> <value:Int>");
             input = scanner.nextLine();
             String[] commands = input.split(" ");
 
@@ -97,9 +104,8 @@ public class Client {
         scanner.close();
     }
 
-    public void requestROT(String[] commands) {
+    private void requestROT(String[] commands) {
         Set<String> keys = new HashSet<String>();
-        Map<String, Integer> readResponse;
         try {
             for(String command: commands) {
                 keys.add(command);
@@ -107,22 +113,25 @@ public class Client {
                     throw new KeyNotFoundException();
                 }
             }
-            readResponse = this.readStub.rot(keys);
-            System.out.println("ROT response: " + readResponse.toString());
+            ROTResponse rotResponse = this.readStub.rot(keys);
+            pruneCache(rotResponse.getStableTime());
+            System.out.println(String.format("ROT response: %s at %d", getReadResponse(rotResponse.getValues()).toString(), rotResponse.getStableTime()));
         } catch (RemoteException e) {
             System.err.println("Error: Could not connect with server");
         } catch (KeyNotFoundException e) {
-            System.err.println(String.format("Error: Key is not available in region %s", this.region));
+            System.err.println(String.format("Error: Not all keys are available in region %s", this.region));
         }
     }
 
-    public void requestWrite(String[] commands) {
-        long writeResponse;
+    private void requestWrite(String[] commands) {
         try {
-            Integer partition = Config.getKeyPartition(this.region, commands[0]);
+            String key = commands[0];
+            Integer value = Integer.parseInt(commands[1]);
+            Integer partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
-            writeResponse = writeStub.write(commands[0], Integer.parseInt(commands[1]), null);
-            System.out.println("Write response: " + writeResponse);
+            this.lastWriteTimestamp = writeStub.write(key, value, lastWriteTimestamp);
+            cache.put(key, new Version(key, value, this.lastWriteTimestamp));
+            System.out.println(String.format("Write response: %s = %d at %d ", key, value, this.lastWriteTimestamp));
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key is not available in region %s", this.region));
         } catch (NumberFormatException e) {
@@ -130,5 +139,30 @@ public class Client {
         } catch (RemoteException e) {
             System.err.println("Error: Could not connect with server");
         }
+    }
+
+    private void pruneCache(Long stableTime) {
+        List<String> toPrune = new ArrayList<>();
+        for(Entry<String,Version> entry :this.cache.entrySet()) {
+            if(entry.getValue().getTimestamp() <= stableTime) {
+                toPrune.add(entry.getKey());
+            }   
+        }
+        this.cache.keySet().removeAll(toPrune);
+    }
+
+    private Map<String, Integer> getReadResponse(Map<String, Integer> response) {
+        Map<String, Integer> values = new HashMap<>();
+
+        for(Entry<String, Integer> entry: response.entrySet()) {
+            Version v = this.cache.getOrDefault(entry.getKey(), null);
+            if(v != null) {
+                values.put(entry.getKey(), v.getValue());
+            } else {
+                values.put(entry.getKey(), entry.getValue());
+            }
+        }
+        
+        return values;
     }
 }

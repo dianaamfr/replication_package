@@ -2,9 +2,6 @@
 
 ## Tasks
 - Make write node perist periodically in the abscence of updates to ensure progress
-- Client cache
-- Support multiple writers (send lastWriteTimestamp)
-- ReadNode send stableTime back for client to prune cache and decide which version to show
 
 ## Folder Structure
 

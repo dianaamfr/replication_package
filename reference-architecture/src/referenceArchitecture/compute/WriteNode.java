@@ -37,7 +37,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
     public static void main(String[] args) {
         if(args.length < 2) {
-            System.err.println("Usage: java WriteNode <region:String> <partition:Integer>");   
+            System.err.println("Usage: java WriteNode <region:String> <partition:Int>");   
             return;
         }
 
@@ -76,23 +76,21 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             System.err.println("Could not find the registry of the data store");
         } catch (NumberFormatException e) {
             System.err.println("Invalid partition");
-            System.err.println("Usage: java WriteNode <region:String> <partion:Integer>");   
+            System.err.println("Usage: java WriteNode <region:String> <partion:Int>");   
         }
     }
 
     @Override
-    public long write(String key, Integer value, Long lastWriteTimestamp) {
-        // TODO: to support multiple writers,use lastWriteTimestamp (it can be null)
-       
+    public long write(String key, Integer value, long lastWriteTimestamp) {  
         if(!Config.isKeyInPartition(this.partition, key)) {
             System.err.println(String.format("Error: Key %s not found", key));
             return -1;
         }
 
         try {
-            long timestamp = this.logicalClock.internalEvent();
+            long timestamp = this.logicalClock.internalEvent(lastWriteTimestamp);
             this.storage.put(key, timestamp, value);
-            this.logicalClock.tick();
+            this.logicalClock.tick(lastWriteTimestamp);
             return timestamp;
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key %s not found", key));
