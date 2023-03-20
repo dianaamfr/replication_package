@@ -27,7 +27,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private static final String dataStoreId = "data-store";
     
     public ReadNode(ReaderStorage storage, ScheduledThreadPoolExecutor scheduler, String region) {
-        super(scheduler, String.format("r%s", region), region);
+        super(scheduler, String.format("r%s", region));
         this.storage = storage;
     }
 

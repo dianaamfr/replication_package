@@ -35,6 +35,10 @@ public final class Config {
         return partitionsPerRegion.containsKey(region);
     }
 
+    public static boolean isPartition(Integer partition) {
+        return partitionKeys.containsKey(partition);
+    }
+
     public static Integer getKeyPartition(String region, String key) throws KeyNotFoundException {
         if(!keysPartition.containsKey(key)){
             throw new KeyNotFoundException();

@@ -56,7 +56,7 @@ public class Client {
             Map<Integer, WriteRemoteInterface> writeStubs = new HashMap<>();
             List<Integer> partitions = Config.getPartitions(region);
             for(Integer partition: partitions) {
-                String writeNodeId = String.format("w%s%d", region, partition);
+                String writeNodeId = String.format("w%d", partition);
                 WriteRemoteInterface writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
                 writeStubs.put(partition, writeStub);
             }
