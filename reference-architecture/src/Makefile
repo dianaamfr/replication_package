@@ -18,20 +18,20 @@ rmiStop:
 clientA:
 	java referenceArchitecture.client.Client A
 
+clientB:
+	java referenceArchitecture.client.Client B
+
 readNodeA:
 	java referenceArchitecture.compute.ReadNode A
 
-writeNodeA1:
-	java referenceArchitecture.compute.WriteNode A 1
+writeNode1:
+	java referenceArchitecture.compute.WriteNode 1
 
-writeNodeA2:
-	java referenceArchitecture.compute.WriteNode A 2
+writeNode2:
+	java referenceArchitecture.compute.WriteNode 2
 
 readNodeB:
 	java referenceArchitecture.compute.ReadNode B
-
-writeNodeB1:
-	java referenceArchitecture.compute.WriteNode B 1
 
 datastore:
 	java referenceArchitecture.datastore.DataStore

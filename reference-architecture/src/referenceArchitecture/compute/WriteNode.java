@@ -24,8 +24,8 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private static DataStoreInterface dataStoreStub;
     private static final String dataStoreId = "data-store";
 
-    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String region, Integer partition) {
-        super(scheduler, String.format("w%s%d", region, partition), region);
+    public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, Integer partition) {
+        super(scheduler, String.format("w%d", partition));
         this.storage = storage;
         this.logicalClock = new LogicalClock();
         this.partition = partition;
@@ -36,29 +36,23 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public static void main(String[] args) {
-        if(args.length < 2) {
-            System.err.println("Usage: java WriteNode <region:String> <partition:Int>");   
+        if(args.length < 1) {
+            System.err.println("Usage: java WriteNode <partition:Int>");   
             return;
         }
 
         try {
-            String region = args[0];
-            Integer partition = Integer.parseInt(args[1]);
+            Integer partition = Integer.parseInt(args[0]);
 
-            if(!Config.isRegion(region)) {
-                System.err.println("Error: Invalid Region");   
-                return;
-            } 
-
-            if(!Config.isPartitionInRegion(region, partition)) {
-                System.err.println(String.format("Error: Region %s does not store partition %d", region, partition));   
+            if(!Config.isPartition(partition)) {
+                System.err.println(String.format("Error: Partition %p does not exist", partition));   
                 return;
             }
     
             Storage storage = new Storage();
             storage.init(Config.getKeys(partition));
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(0);
-            WriteNode writeNode = new WriteNode(storage, scheduler, region, partition);
+            WriteNode writeNode = new WriteNode(storage, scheduler, partition);
 
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
