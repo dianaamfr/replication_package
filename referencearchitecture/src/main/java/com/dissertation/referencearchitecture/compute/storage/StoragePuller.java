@@ -1,11 +1,11 @@
-package referenceArchitecture.compute.storage;
+package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.Map.Entry;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import referenceArchitecture.datastore.DataStoreInterface;
+import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
 
 public class StoragePuller implements Runnable {
     DataStoreInterface dataStoreStub;
@@ -30,6 +30,7 @@ public class StoragePuller implements Runnable {
                     parseJson(jsonString, entry.getKey());
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                 System.err.println(String.format("Error: Error when pulling from partition %d", entry.getKey()));
             }
         }

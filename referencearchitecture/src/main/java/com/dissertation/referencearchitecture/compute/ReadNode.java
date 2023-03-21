@@ -1,4 +1,4 @@
-package referenceArchitecture.compute;
+package com.dissertation.referencearchitecture.compute;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -12,14 +12,14 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import referenceArchitecture.compute.exceptions.KeyNotFoundException;
-import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
-import referenceArchitecture.compute.storage.ReaderStorage;
-import referenceArchitecture.compute.storage.StoragePuller;
-import referenceArchitecture.config.Config;
-import referenceArchitecture.datastore.DataStoreInterface;
-import referenceArchitecture.remoteInterface.ROTResponse;
-import referenceArchitecture.remoteInterface.ReadRemoteInterface;
+import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.compute.exceptions.KeyVersionNotFoundException;
+import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
+import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
+import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
+import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
+import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private ReaderStorage storage; 

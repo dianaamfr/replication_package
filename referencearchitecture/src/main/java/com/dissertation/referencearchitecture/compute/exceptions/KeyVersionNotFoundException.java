@@ -1,4 +1,4 @@
-package referenceArchitecture.compute.exceptions;
+package com.dissertation.referencearchitecture.compute.exceptions;
 
 public class KeyVersionNotFoundException extends Exception {
     public KeyVersionNotFoundException(){

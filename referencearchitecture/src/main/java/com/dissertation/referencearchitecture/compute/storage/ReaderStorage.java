@@ -1,12 +1,12 @@
-package referenceArchitecture.compute.storage;
+package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import referenceArchitecture.compute.exceptions.KeyNotFoundException;
-import referenceArchitecture.config.Config;
+import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.config.Config;
 
 public class ReaderStorage extends Storage {
     private ConcurrentMap<Integer, Long> partitionsMaxTimestamp;

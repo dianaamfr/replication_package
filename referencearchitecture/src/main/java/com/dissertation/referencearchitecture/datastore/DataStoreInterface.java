@@ -1,4 +1,4 @@
-package referenceArchitecture.datastore;
+package com.dissertation.referencearchitecture.datastore;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

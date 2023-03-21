@@ -1,4 +1,4 @@
-package referenceArchitecture.datastore;
+package com.dissertation.referencearchitecture.datastore;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 
 import org.json.JSONObject;
 
-import referenceArchitecture.config.Config;
+import com.dissertation.referencearchitecture.config.Config;
 
 public class DataStore implements DataStoreInterface {
     private final String id;
@@ -28,7 +28,7 @@ public class DataStore implements DataStoreInterface {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         DataStore dataStore = new DataStore();
 
         // Bind the remote object's stub in the registry
@@ -37,10 +37,12 @@ public class DataStore implements DataStoreInterface {
             Registry registry = LocateRegistry.getRegistry();
             registry.bind(dataStore.getId(), stub);
         } catch (RemoteException e) {
+            e.printStackTrace();
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
         } 
+        Thread.currentThread().join();
     }
 
     @Override

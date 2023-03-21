@@ -1,4 +1,4 @@
-package referenceArchitecture.compute.storage;
+package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import referenceArchitecture.compute.clock.LogicalClock;
-import referenceArchitecture.datastore.DataStoreInterface;
+import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
+import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
 
 public class StoragePusher implements Runnable {
     Storage storage;

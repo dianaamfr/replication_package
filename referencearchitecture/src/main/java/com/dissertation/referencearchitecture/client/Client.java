@@ -1,4 +1,4 @@
-package referenceArchitecture.client;
+package com.dissertation.referencearchitecture.client;
 
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -14,12 +14,12 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import referenceArchitecture.compute.exceptions.KeyNotFoundException;
-import referenceArchitecture.config.Config;
-import referenceArchitecture.remoteInterface.ROTResponse;
-import referenceArchitecture.remoteInterface.ReadRemoteInterface;
-import referenceArchitecture.remoteInterface.WriteRemoteInterface;
-  
+import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
+import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
+import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
+
 public class Client {
     private final Map<Integer, WriteRemoteInterface> writeStubs;
     private Map<String, Version> cache;

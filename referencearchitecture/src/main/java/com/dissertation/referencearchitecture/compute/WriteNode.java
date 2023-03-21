@@ -1,4 +1,4 @@
-package referenceArchitecture.compute;
+package com.dissertation.referencearchitecture.compute;
 
 import java.rmi.AlreadyBoundException;
 import java.rmi.NotBoundException;
@@ -9,13 +9,13 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import referenceArchitecture.compute.clock.LogicalClock;
-import referenceArchitecture.compute.exceptions.KeyNotFoundException;
-import referenceArchitecture.compute.storage.Storage;
-import referenceArchitecture.compute.storage.StoragePusher;
-import referenceArchitecture.config.Config;
-import referenceArchitecture.datastore.DataStoreInterface;
-import referenceArchitecture.remoteInterface.WriteRemoteInterface;
+import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
+import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.compute.storage.Storage;
+import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
+import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
+import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
 
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private Storage storage;  

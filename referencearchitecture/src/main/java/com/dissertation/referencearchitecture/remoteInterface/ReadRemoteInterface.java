@@ -1,4 +1,4 @@
-package referenceArchitecture.remoteInterface;
+package com.dissertation.referencearchitecture.remoteInterface;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

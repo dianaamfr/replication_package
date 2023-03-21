@@ -1,4 +1,4 @@
-package referenceArchitecture.config;
+package com.dissertation.referencearchitecture.config;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import referenceArchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
 
 public final class Config {
     private static Map<String, List<Integer>> partitionsPerRegion;

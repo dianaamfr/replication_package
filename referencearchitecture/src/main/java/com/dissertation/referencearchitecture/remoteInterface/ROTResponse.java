@@ -1,4 +1,4 @@
-package referenceArchitecture.remoteInterface;
+package com.dissertation.referencearchitecture.remoteInterface;
 
 import java.io.Serializable;
 import java.util.Map;

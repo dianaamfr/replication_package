@@ -1,10 +1,10 @@
-package referenceArchitecture.compute.storage;
+package com.dissertation.referencearchitecture.compute.storage;
 
 import java.io.Serializable;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import referenceArchitecture.compute.exceptions.KeyVersionNotFoundException;
+import com.dissertation.referencearchitecture.compute.exceptions.KeyVersionNotFoundException;
 
 public class VersionChain implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -1,4 +1,4 @@
-package referenceArchitecture.client;
+package com.dissertation.referencearchitecture.client;
 
 public class Version {
     private String key;
@@ -54,3 +54,4 @@ public class Version {
         return true;
     }
 }
+
