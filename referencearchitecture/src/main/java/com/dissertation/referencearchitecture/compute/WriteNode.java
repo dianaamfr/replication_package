@@ -22,7 +22,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private String partition;
 
     public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String partition) throws URISyntaxException {
-        super(scheduler, String.format("w%d", partition));
+        super(scheduler, String.format("w%s", partition));
         this.storage = storage;
         this.logicalClock = new LogicalClock();
         this.partition = partition;

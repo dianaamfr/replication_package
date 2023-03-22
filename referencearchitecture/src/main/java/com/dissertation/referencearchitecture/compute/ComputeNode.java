@@ -3,7 +3,7 @@ package com.dissertation.referencearchitecture.compute;
 import java.net.URISyntaxException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import com.dissertation.referencearchitecture.S3Helper;
+import com.dissertation.s3.S3Helper;
 
 public abstract class ComputeNode {
     protected S3Helper s3helper;
