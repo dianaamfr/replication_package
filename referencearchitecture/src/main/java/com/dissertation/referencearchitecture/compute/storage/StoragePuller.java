@@ -5,8 +5,8 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.dissertation.s3.S3Helper;
-import com.dissertation.s3.S3ReadResponse;
+import com.dissertation.referencearchitecture.s3.S3Helper;
+import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 
 public class StoragePuller implements Runnable {
     S3Helper s3Helper;

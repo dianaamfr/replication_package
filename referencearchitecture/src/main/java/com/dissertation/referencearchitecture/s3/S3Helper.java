@@ -1,5 +1,5 @@
 
-package com.dissertation.s3;
+package com.dissertation.referencearchitecture.s3;
 
 import java.net.URI;
 import java.net.URISyntaxException;
