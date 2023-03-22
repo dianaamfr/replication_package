@@ -6,20 +6,20 @@ import java.util.concurrent.ConcurrentMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.dissertation.referencearchitecture.S3Helper;
 import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
-import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
 
 public class StoragePusher implements Runnable {
     Storage storage;
-    DataStoreInterface dataStoreStub;
     LogicalClock logicalClock;
-    Integer partition;
+    S3Helper s3Helper;
+    String partition;
 
-    public StoragePusher(Storage storage, DataStoreInterface dataStoreStub, LogicalClock logicalClock, Integer partition) {
-        this.dataStoreStub = dataStoreStub;
+    public StoragePusher(Storage storage, LogicalClock logicalClock, S3Helper s3Helper, String partition) {
         this.storage = storage;
         this.logicalClock = logicalClock;
         this.partition = partition;
+        this.s3Helper = s3Helper;
     }
 
     public void run() {
@@ -33,7 +33,7 @@ public class StoragePusher implements Runnable {
 
         try {
             JSONObject json = toJson(this.storage.getState());
-            this.dataStoreStub.write(this.logicalClock.toString(), json.toString(), this.partition);
+            this.s3Helper.createObject(this.partition, this.logicalClock.toString(), json.toString());
             this.logicalClock.stateSaved();
         } catch (Exception e) {
             e.printStackTrace();

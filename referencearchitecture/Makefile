@@ -19,23 +19,23 @@ rmi:
 rmiStop:
 	killall rmiregistry
 
-clientA:
-	$(run)="$(classPath).client.Client" $(args)="A"
+clientWest:
+	$(run)="$(classPath).client.Client" $(args)="us-west-1"
 
-clientB:
-	$(run)="$(classPath).client.Client" $(args)="B"
+clientEast:
+	$(run)="$(classPath).client.Client" $(args)="us-east-1"
 
-readNodeA:
-	$(run)="$(classPath).compute.ReadNode" $(args)="A"
+readNodeWest:
+	$(run)="$(classPath).compute.ReadNode"  $(args)="us-west-1" -e
 
-readNodeB:
-	$(run)="$(classPath).compute.ReadNode" $(args)="B"
+readNodeEast:
+	$(run)="$(classPath).compute.ReadNode"  $(args)="us-east-1" -e
 
 writeNode1:
-	$(run)="$(classPath).compute.WriteNode" $(args)="1"
+	$(run)="$(classPath).compute.WriteNode" $(args)="partition1" -e
 
 writeNode2:
-	$(run)="$(classPath).compute.WriteNode" $(args)="2"
+	$(run)="$(classPath).compute.WriteNode" $(args)="partition2" -e
 
-datastore:
-	$(run)="$(classPath).datastore.DataStore"
+writeNode3:
+	$(run)="$(classPath).compute.WriteNode" $(args)="partition3" -e

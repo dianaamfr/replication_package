@@ -11,40 +11,42 @@ import java.util.Set;
 import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
 
 public final class Config {
-    private static Map<String, List<Integer>> partitionsPerRegion;
-    private static Map<String, Integer> keysPartition;
-    private static Map<Integer, List<String>> partitionKeys;
+    private static Map<String, List<String>> partitionsPerRegion;
+    private static Map<String, String> keysPartition;
+    private static Map<String, List<String>> partitionKeys;
 
     static {
         partitionsPerRegion = new HashMap<>();
         keysPartition = new HashMap<>();
         partitionKeys = new HashMap<>();
 
-        partitionsPerRegion.put("A", new ArrayList<>(Arrays.asList(1,2)));
-        partitionsPerRegion.put("B", new ArrayList<>(Arrays.asList(1)));
+        partitionsPerRegion.put("us-east-1", new ArrayList<>(Arrays.asList("partition1","partition2")));
+        partitionsPerRegion.put("us-west-1", new ArrayList<>(Arrays.asList("partition3")));
 
-        keysPartition.put("x", 1);
-        keysPartition.put("y", 1);
-        keysPartition.put("z", 2);
+        keysPartition.put("x", "partition1");
+        keysPartition.put("y", "partition1");
+        keysPartition.put("z", "partition2");
+        keysPartition.put("p", "partition3");
 
-        partitionKeys.put(1, new ArrayList<>(Arrays.asList("x", "y")));
-        partitionKeys.put(2, new ArrayList<>(Arrays.asList("z")));
+        partitionKeys.put("partition1", new ArrayList<>(Arrays.asList("x", "y")));
+        partitionKeys.put("partition2", new ArrayList<>(Arrays.asList("z")));
+        partitionKeys.put("partition3", new ArrayList<>(Arrays.asList("p")));
     }
 
     public static boolean isRegion(String region) {
         return partitionsPerRegion.containsKey(region);
     }
 
-    public static boolean isPartition(Integer partition) {
+    public static boolean isPartition(String partition) {
         return partitionKeys.containsKey(partition);
     }
 
-    public static Integer getKeyPartition(String region, String key) throws KeyNotFoundException {
+    public static String getKeyPartition(String region, String key) throws KeyNotFoundException {
         if(!keysPartition.containsKey(key)){
             throw new KeyNotFoundException();
         }
         
-        Integer partition = keysPartition.get(key);
+        String partition = keysPartition.get(key);
         if(!isRegion(region) || !partitionsPerRegion.get(region).contains(partition)) {
             throw new KeyNotFoundException();
         }
@@ -57,7 +59,7 @@ public final class Config {
             return false;
         }
         
-        Integer partition = keysPartition.get(key);
+        String partition = keysPartition.get(key);
         if(!isRegion(region) || !partitionsPerRegion.get(region).contains(partition)) {
             return false;
         }
@@ -65,26 +67,26 @@ public final class Config {
         return true;
     }
 
-    public static boolean isKeyInPartition(Integer partition, String key) {
+    public static boolean isKeyInPartition(String partition, String key) {
         if(keysPartition.containsKey(key)) {
             return keysPartition.get(key).equals(partition);
         }
         return false;
     }
     
-    public static List<Integer> getPartitions(String region) {
+    public static List<String> getPartitions(String region) {
         return partitionsPerRegion.get(region);
     }   
 
-    public static List<String> getKeys(Integer partition) {
+    public static List<String> getKeys(String partition) {
         return partitionKeys.get(partition);
     }
 
-    public static boolean isPartitionInRegion(String region, Integer partition) {
+    public static boolean isPartitionInRegion(String region, String partition) {
         return partitionsPerRegion.get(region).contains(partition);
     }
 
-    public static Set<Integer> getPartitions() {
+    public static Set<String> getPartitions() {
         return new HashSet<>(keysPartition.values());
     }
 }

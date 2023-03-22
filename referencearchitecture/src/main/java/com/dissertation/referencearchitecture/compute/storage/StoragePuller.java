@@ -5,14 +5,14 @@ import java.util.Map.Entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
+import com.dissertation.referencearchitecture.S3Helper;
 
 public class StoragePuller implements Runnable {
-    DataStoreInterface dataStoreStub;
+    S3Helper s3Helper;
     ReaderStorage storage;
 
-    public StoragePuller(ReaderStorage storage, DataStoreInterface dataStoreStub) {
-        this.dataStoreStub = dataStoreStub;
+    public StoragePuller(ReaderStorage storage, S3Helper s3Helper) {
+        this.s3Helper = s3Helper;
         this.storage = storage;
     }
 
@@ -23,9 +23,9 @@ public class StoragePuller implements Runnable {
     }
 
     private void pull() {
-        for(Entry<Integer, Long> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
+        for(Entry<String, Long> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
-                String jsonString = this.dataStoreStub.read(String.valueOf(entry.getValue()), entry.getKey());
+                String jsonString = this.s3Helper.getObjectAfter(String.valueOf(entry.getValue()), entry.getKey());
                 if(jsonString != null) {
                     parseJson(jsonString, entry.getKey());
                 }
@@ -36,7 +36,7 @@ public class StoragePuller implements Runnable {
         }
     }
 
-    private void parseJson(String json, Integer partition) throws Exception {
+    private void parseJson(String json, String partition) throws Exception {
         JSONObject response = new JSONObject(json);
 
         if(!response.has("key")) {

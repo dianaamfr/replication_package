@@ -1,7 +1,7 @@
 package com.dissertation.referencearchitecture.compute;
 
+import java.net.URISyntaxException;
 import java.rmi.AlreadyBoundException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -17,22 +17,19 @@ import com.dissertation.referencearchitecture.compute.exceptions.KeyVersionNotFo
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
 import com.dissertation.referencearchitecture.config.Config;
-import com.dissertation.referencearchitecture.datastore.DataStoreInterface;
 import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private ReaderStorage storage; 
-    private static DataStoreInterface dataStoreStub;
-    private static final String dataStoreId = "data-store";
     
-    public ReadNode(ReaderStorage storage, ScheduledThreadPoolExecutor scheduler, String region) {
+    public ReadNode(ReaderStorage storage, ScheduledThreadPoolExecutor scheduler, String region) throws URISyntaxException {
         super(scheduler, String.format("r%s", region));
         this.storage = storage;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, dataStoreStub), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3helper), 5000, 5000, TimeUnit.MILLISECONDS);
     }
     
     public static void main(String[] args) {
@@ -46,27 +43,29 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             System.err.println("Error: Invalid Region");   
             return;
         }
-
+        
         try {
             ReaderStorage storage = new ReaderStorage(region);
             storage.init();
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-            ReadNode readNode = new ReadNode(storage, scheduler, region);
 
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+
+            ReadNode readNode = new ReadNode(storage, scheduler, region);
+            
             // Bind the remote object's stub in the registry
             ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);
             Registry registry = LocateRegistry.getRegistry();
             registry.bind(readNode.id, stub);
 
-            // Get reference of data store
-            dataStoreStub = (DataStoreInterface) registry.lookup(dataStoreId);
             readNode.init();
+        } catch (URISyntaxException e) {
+            System.err.println("Could not connect with AWS S3");
         } catch (RemoteException e) {
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
-        } catch (NotBoundException e) {
-            System.err.println("Could not find the registry of the data store");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

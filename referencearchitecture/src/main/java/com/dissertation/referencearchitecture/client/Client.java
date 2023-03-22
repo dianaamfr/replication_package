@@ -21,13 +21,13 @@ import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterfac
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
 
 public class Client {
-    private final Map<Integer, WriteRemoteInterface> writeStubs;
+    private final Map<String, WriteRemoteInterface> writeStubs;
     private Map<String, Version> cache;
     private long lastWriteTimestamp;
     private final ReadRemoteInterface readStub;
     private String region;
 
-    public Client(Map<Integer, WriteRemoteInterface> writeStubs, ReadRemoteInterface readStub, String region) {
+    public Client(Map<String, WriteRemoteInterface> writeStubs, ReadRemoteInterface readStub, String region) {
         this.writeStubs = writeStubs;
         this.readStub = readStub;
         this.region = region;
@@ -53,9 +53,9 @@ public class Client {
             String readNodeId = String.format("r%s", region);
             ReadRemoteInterface readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
 
-            Map<Integer, WriteRemoteInterface> writeStubs = new HashMap<>();
-            List<Integer> partitions = Config.getPartitions(region);
-            for(Integer partition: partitions) {
+            Map<String, WriteRemoteInterface> writeStubs = new HashMap<>();
+            List<String> partitions = Config.getPartitions(region);
+            for(String partition: partitions) {
                 String writeNodeId = String.format("w%d", partition);
                 WriteRemoteInterface writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
                 writeStubs.put(partition, writeStub);
@@ -127,7 +127,7 @@ public class Client {
         try {
             String key = commands[0];
             Integer value = Integer.parseInt(commands[1]);
-            Integer partition = Config.getKeyPartition(this.region, key);
+            String partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
             this.lastWriteTimestamp = writeStub.write(key, value, lastWriteTimestamp);
             cache.put(key, new Version(key, value, this.lastWriteTimestamp));

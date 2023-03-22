@@ -9,7 +9,7 @@ import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundExce
 import com.dissertation.referencearchitecture.config.Config;
 
 public class ReaderStorage extends Storage {
-    private ConcurrentMap<Integer, Long> partitionsMaxTimestamp;
+    private ConcurrentMap<String, Long> partitionsMaxTimestamp;
     private long stableTime;
     private String region;
     
@@ -21,8 +21,8 @@ public class ReaderStorage extends Storage {
     }
 
     public void init() {
-        List<Integer> partitions = Config.getPartitions(this.region);
-        for(Integer partition: partitions) {
+        List<String> partitions = Config.getPartitions(this.region);
+        for(String partition: partitions) {
             this.partitionsMaxTimestamp.put(partition, 0L);
             super.init(Config.getKeys(partition));
         }
@@ -30,7 +30,7 @@ public class ReaderStorage extends Storage {
 
     public void put(String key, long timestamp, int value) throws KeyNotFoundException {
         super.put(key, timestamp, value);
-        Integer partition = Config.getKeyPartition(this.region, key);
+        String partition = Config.getKeyPartition(this.region, key);
         if(timestamp > partitionsMaxTimestamp.get(partition)) {
             this.partitionsMaxTimestamp.put(partition, timestamp);
         }
@@ -52,11 +52,11 @@ public class ReaderStorage extends Storage {
         return builder.toString();
     }
 
-    public ConcurrentMap<Integer, Long> getPartitionsMaxTimestamp() {
+    public ConcurrentMap<String, Long> getPartitionsMaxTimestamp() {
         return this.partitionsMaxTimestamp;
     }
 
-    public void setPartitionMaxTimestamp(Integer partition, long timestamp) {
+    public void setPartitionMaxTimestamp(String partition, long timestamp) {
         if(timestamp > this.partitionsMaxTimestamp.get(partition)) {
             this.partitionsMaxTimestamp.put(partition, timestamp);
         }
