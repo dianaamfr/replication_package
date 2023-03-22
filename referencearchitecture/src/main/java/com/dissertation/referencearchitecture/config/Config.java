@@ -33,7 +33,7 @@ public final class Config {
         partitionKeys.put("partition3", new ArrayList<>(Arrays.asList("p")));
     }
 
-    public static boolean isRegion(String region) {
+    public static boolean isRegion(String region) { 
         return partitionsPerRegion.containsKey(region);
     }
 

@@ -24,7 +24,6 @@ public class ReaderStorage extends Storage {
         List<String> partitions = Config.getPartitions(this.region);
         for(String partition: partitions) {
             this.partitionsMaxTimestamp.put(partition, 0L);
-            super.init(Config.getKeys(partition));
         }
     }
 

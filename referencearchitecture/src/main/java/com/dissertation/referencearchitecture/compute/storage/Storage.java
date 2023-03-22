@@ -1,6 +1,5 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -15,15 +14,9 @@ public class Storage {
         this.keyVersions = new ConcurrentHashMap<>();
     }
 
-    public void init(List<String> keys) {
-        for(String key: keys) {
-            this.keyVersions.put(key, new VersionChain());
-        }
-    }
-
     public void put(String key, long timestamp, int value) throws KeyNotFoundException {
         if(!this.keyVersions.containsKey(key)){
-            throw new KeyNotFoundException();
+            this.keyVersions.put(key, new VersionChain());
         }
         this.keyVersions.get(key).put(timestamp, value);
     }

@@ -80,7 +80,6 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
                 values.put(key, value);
             } catch (KeyNotFoundException e) {
                 values.put(key, null);
-                System.err.println(String.format("Key %s not found", key));
             } catch (KeyVersionNotFoundException e) {
                 values.put(key, null);
             }    

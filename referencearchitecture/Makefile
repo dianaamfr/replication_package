@@ -5,7 +5,7 @@ classPath = com.dissertation.referencearchitecture
 run = mvn -q exec:java -Dexec.mainClass
 
 all:
-	emptyBuckets
+	make emptyBuckets
 	mvn clean install
 	make rmi
 

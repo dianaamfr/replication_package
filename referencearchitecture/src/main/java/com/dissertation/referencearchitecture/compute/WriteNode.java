@@ -46,7 +46,6 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
         try {
             Storage storage = new Storage();
-            storage.init(Config.getKeys(partition));
 
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
 
