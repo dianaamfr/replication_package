@@ -1,4 +1,4 @@
-package com.dissertation.s3;
+package com.dissertation.referencearchitecture.s3;
 
 public class S3ReadResponse {
     private Long timestamp;

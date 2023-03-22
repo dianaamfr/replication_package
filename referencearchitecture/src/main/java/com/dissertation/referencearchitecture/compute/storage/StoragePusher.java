@@ -7,7 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
-import com.dissertation.s3.S3Helper;
+import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class StoragePusher implements Runnable {
     Storage storage;
