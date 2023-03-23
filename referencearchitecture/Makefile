@@ -27,9 +27,6 @@ rmi:
 	rmiregistry
 	sleep 0.5
 
-rmiStop:
-	killall rmiregistry
-
 clientWest:
 	$(run)="$(classPath).client.Client" $(args)="us-west-1"
 

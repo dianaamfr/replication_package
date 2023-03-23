@@ -34,7 +34,7 @@ public class StoragePusher implements Runnable {
         try {
             JSONObject json = toJson(this.storage.getState());
             System.out.println(json.toString());
-            this.s3Helper.createObject(this.partition, this.logicalClock.toString(), json.toString());
+            this.s3Helper.persistLog(this.partition, this.logicalClock.toString(), json.toString());
             this.logicalClock.stateSaved();
         } catch (Exception e) {
             e.printStackTrace();
