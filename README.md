@@ -1,20 +1,27 @@
 # Dissertation Work
 
-A prototype implementation of a causally consistent system. 
+A prototype implementation of a cloud-native causally consistent system. 
 
 ## Description
 
-This repository holds an implementation prototype of the candidate reference architecture for a cloud-native causally consistent read-heavy system. With this prototype, we aim to study the feasibility of a candidate reference architecture and identify any impediments and possible improvements at an early stage.
+This repository holds an implementation prototype of the candidate reference architecture for a cloud-native causally consistent read-heavy system. With this prototype, we aim to study the feasibility of the candidate reference architecture and identify any impediments and possible improvements at an early stage.
 
 For a more detailed description of the reference architecture please refer to [Reference Architecture](#candidate-reference-architecture).
 
 
-## Prototype Current Features
-- **ECDS**: Localstack is being used to emulate AWS S3 (without any replication configuration)
-- **Clock**: Logical Clock
+## Prototype Features
+### Current Features
+- **ECDS**: Localstack is being used to emulate AWS S3 (without any replication configuration).
+- **Compute Layer**: provides ROTs and Writes to the Client via RMI and uses AWS S3 for persistance.
+- **Client Layer**: connects with the Compute Layer via RMI.
+- **Clock**: Logical Clock.
+- **Consistency**: stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
+
+### In Progress
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
 
-**Next steps**
+
+### Next steps
 - Implement and use Hybrid Logical Clocks
 - Setup S3 Replication
 - Generate Read/Write Load
