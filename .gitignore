@@ -24,3 +24,5 @@ hs_err_pid*
 .vscode/
 bin/
 META-INF/
+reference-architecture/src/lib/
+referencearchitecture/target
