@@ -8,6 +8,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
@@ -21,9 +22,11 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private Storage storage;  
     private LogicalClock logicalClock;
     private String partition;
+    private ReentrantLock mutex;
 
     public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String partition) throws URISyntaxException {
         super(scheduler, String.format("w%s", partition));
+        this.mutex = new ReentrantLock();
         this.storage = storage;
         this.logicalClock = new LogicalClock();
         this.partition = partition;
@@ -31,7 +34,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
     public void init() {
         this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.storage, this.logicalClock, this.s3helper, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
-        //this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper, this.mutex), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -41,7 +44,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         String partition = args[0];
-        if(!Config.isPartition(partition)) {
+        if(!Config.isPartition(partition)) {    
             System.err.println(String.format("Error: Partition %p does not exist", partition));   
             return;
         }
@@ -75,7 +78,9 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             return -1;
         }
 
-        try {
+    
+        mutex.lock();
+         try {
             long timestamp = this.logicalClock.nextClockValue(lastWriteTimestamp);
             this.storage.put(key, timestamp, value);
             this.logicalClock.tick(lastWriteTimestamp);
@@ -83,6 +88,8 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key %s not found", key));
             return -1;
+        } finally {
+            this.mutex.unlock();
         }
     }
 }

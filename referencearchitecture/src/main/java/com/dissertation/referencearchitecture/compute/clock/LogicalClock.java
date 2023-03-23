@@ -17,10 +17,9 @@ public class LogicalClock {
         this.clockValue = Math.max(this.clockValue, lastWriteTimestamp) + 1;
     }
 
-    // public void sync(long timestamp) {
-    //     this.clock = Math.max(this.clock, timestamp);
-    //     this.stateSaved = false;
-    // }
+    public void sync(long timestamp) {
+        this.clockValue = Math.max(this.clockValue, timestamp);
+    }
 
     public void setLastStateSaved(long timestamp) {
         this.lastStateSaved = timestamp;
@@ -34,9 +33,8 @@ public class LogicalClock {
         return this.clockValue;
     }
 
-    @Override
-    public String toString() {
-        return String.valueOf(this.clockValue);
+    public long getLastStateSaved() {
+        return this.lastStateSaved;
     }
-    
+
 }
