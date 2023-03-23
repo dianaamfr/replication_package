@@ -9,8 +9,8 @@ import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 
 public class StoragePuller implements Runnable {
-    S3Helper s3Helper;
-    ReaderStorage storage;
+    private S3Helper s3Helper;
+    private ReaderStorage storage;
 
     public StoragePuller(ReaderStorage storage, S3Helper s3Helper) {
         this.s3Helper = s3Helper;

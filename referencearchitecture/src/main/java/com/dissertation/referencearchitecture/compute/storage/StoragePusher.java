@@ -10,10 +10,10 @@ import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class StoragePusher implements Runnable {
-    Storage storage;
-    LogicalClock logicalClock;
-    S3Helper s3Helper;
-    String partition;
+    private Storage storage;
+    private LogicalClock logicalClock;
+    private S3Helper s3Helper;
+    private String partition;
 
     public StoragePusher(Storage storage, LogicalClock logicalClock, S3Helper s3Helper, String partition) {
         this.storage = storage;
@@ -22,6 +22,7 @@ public class StoragePusher implements Runnable {
         this.s3Helper = s3Helper;
     }
 
+    @Override
     public void run() {
         this.push();
     }

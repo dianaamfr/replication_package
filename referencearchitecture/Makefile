@@ -13,11 +13,13 @@ createBuckets:
 	awslocal s3api create-bucket --bucket partition1 --region us-east-1
 	awslocal s3api create-bucket --bucket partition2 --region us-east-1
 	awslocal s3api create-bucket --bucket partition3 --region us-west-1 --create-bucket-configuration LocationConstraint=us-west-1
+	awslocal s3api create-bucket --bucket clock --region us-east-1
 
 emptyBuckets:
 	awslocal s3 rm s3://partition1 --recursive
 	awslocal s3 rm s3://partition2 --recursive
 	awslocal s3 rm s3://partition3 --recursive
+	awslocal s3 rm s3://clock --recursive
 
 clear:
 	mvn -q clean

@@ -23,7 +23,8 @@ public class S3Helper {
     private final static String s3Uri = "http://localhost:4566";
     private final static Integer maxKeys = 5;
     private final static String logPrefix = "Logs/";
-    private final static String clockPrefix = "Clocks/";
+    private final static String clockPrefix = "Clock/";
+    private final static String clockBucket = "clock";
 
     public S3Helper() throws URISyntaxException {
         this.s3Client = s3Client();
@@ -49,9 +50,9 @@ public class S3Helper {
         return true;
     }
     
-    public boolean persistClock(String bucketName, String timestamp) {
+    public boolean persistClock(String timestamp) {
         try {   
-            createObject(bucketName, clockPrefix, timestamp, RequestBody.empty());
+            createObject(clockBucket, clockPrefix, timestamp, RequestBody.empty());
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -82,11 +83,11 @@ public class S3Helper {
 
     }
 
-    public String getClocksAfter(String bucketName, String timestamp) {
+    public String getClocksAfter(String timestamp) {
         List<S3Object> objects = new ArrayList<>();
 
         try {
-            objects = getObjectsAfter(bucketName, logPrefix, timestamp);
+            objects = getObjectsAfter(clockBucket, clockPrefix, timestamp);
 
             if (objects.isEmpty()) {
                 return null;

@@ -14,6 +14,11 @@ public class LogicalClock {
         this.stateSaved = false;
     }
 
+    public void sync(long timestamp) {
+        this.clock = Math.max(this.clock, timestamp);
+        this.stateSaved = false;
+    }
+
     public long internalEvent(long lastWriteTimestamp) {
         return Math.max(this.clock, lastWriteTimestamp) + 1;
     }

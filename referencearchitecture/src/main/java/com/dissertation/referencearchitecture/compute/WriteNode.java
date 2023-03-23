@@ -9,6 +9,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
 import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
@@ -30,6 +31,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
     public void init() {
         this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.storage, this.logicalClock, this.s3helper, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -47,7 +49,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         try {
             Storage storage = new Storage();
 
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
 
             WriteNode writeNode = new WriteNode(storage, scheduler, partition);
 
