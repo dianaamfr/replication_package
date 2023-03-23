@@ -14,6 +14,7 @@ public class StoragePusher implements Runnable {
     private LogicalClock logicalClock;
     private S3Helper s3Helper;
     private String partition;
+    private long clockValue;
 
     public StoragePusher(Storage storage, LogicalClock logicalClock, S3Helper s3Helper, String partition) {
         this.storage = storage;
@@ -24,19 +25,20 @@ public class StoragePusher implements Runnable {
 
     @Override
     public void run() {
+        this.clockValue = this.logicalClock.getClockValue();
         this.push();
     }
 
     private void push() {
-        if(this.logicalClock.isStateSaved()) {
+        if(this.logicalClock.isStateSaved(this.clockValue)) {
             return;
         };
 
         try {
             JSONObject json = toJson(this.storage.getState());
             System.out.println(json.toString());
-            this.s3Helper.persistLog(this.partition, this.logicalClock.toString(), json.toString());
-            this.logicalClock.stateSaved();
+            this.s3Helper.persistLog(this.partition, String.valueOf(this.clockValue), json.toString());
+            this.logicalClock.setLastStateSaved(this.clockValue);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -50,8 +52,8 @@ public class StoragePusher implements Runnable {
         for(Entry<String, VersionChain> versionChain: state.entrySet()) {
             JSONObject versionChainJson = new JSONObject(); // Version chain of the key
             JSONArray versionsJson = new JSONArray(); // Array of versions of a key
-            // For each version in the key
-            for(Entry<Long, Integer> version: versionChain.getValue().getVersionChain().entrySet()) {
+            // For each version of the key that belongs to the snapshot defined by clockValue
+            for(Entry<Long, Integer> version: versionChain.getValue().getVersionChain(this.clockValue).entrySet()) {
                 JSONObject versionJson = new JSONObject();
                 versionJson.put("key", version.getKey().toString());
                 versionJson.put("value", version.getValue());

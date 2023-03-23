@@ -1,6 +1,7 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.io.Serializable;
+import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
@@ -35,7 +36,8 @@ public class VersionChain implements Serializable {
         return versions.toString();
     }
 
-    public TreeMap<Long, Integer> getVersionChain() {
-        return this.versions;
+    public SortedMap<Long, Integer> getVersionChain(long maxKey) {
+        System.out.println(this.versions.subMap(0L, true, maxKey, true));
+        return this.versions.subMap(0L, true, maxKey, true);
     }
 }

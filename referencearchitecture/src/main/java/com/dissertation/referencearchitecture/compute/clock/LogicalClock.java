@@ -1,39 +1,42 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
 public class LogicalClock {
-    private long clock;
-    private boolean stateSaved;
+    private long clockValue;
+    private long lastStateSaved;
 
     public LogicalClock() {
-        this.clock = 0;
-        this.stateSaved = true;
+        this.clockValue = 0;
+        this.lastStateSaved = 0;
+    }
+
+    public long nextClockValue(long lastWriteTimestamp) {
+        return Math.max(this.clockValue, lastWriteTimestamp) + 1;
     }
 
     public void tick(long lastWriteTimestamp) {
-        this.clock = Math.max(this.clock, lastWriteTimestamp) + 1;
-        this.stateSaved = false;
+        this.clockValue = Math.max(this.clockValue, lastWriteTimestamp) + 1;
     }
 
-    public void sync(long timestamp) {
-        this.clock = Math.max(this.clock, timestamp);
-        this.stateSaved = false;
+    // public void sync(long timestamp) {
+    //     this.clock = Math.max(this.clock, timestamp);
+    //     this.stateSaved = false;
+    // }
+
+    public void setLastStateSaved(long timestamp) {
+        this.lastStateSaved = timestamp;
     }
 
-    public long internalEvent(long lastWriteTimestamp) {
-        return Math.max(this.clock, lastWriteTimestamp) + 1;
-    }
+    public boolean isStateSaved(long timestamp) {
+        return timestamp <= this.lastStateSaved;
+    } 
 
-    public void stateSaved() {
-        this.stateSaved = true;
+    public long getClockValue() {
+        return this.clockValue;
     }
-
-    public boolean isStateSaved() {
-        return this.stateSaved;
-    }   
 
     @Override
     public String toString() {
-        return String.valueOf(clock);
+        return String.valueOf(this.clockValue);
     }
     
 }

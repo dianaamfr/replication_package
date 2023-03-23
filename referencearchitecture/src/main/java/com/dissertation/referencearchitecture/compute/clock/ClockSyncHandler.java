@@ -13,13 +13,13 @@ public class ClockSyncHandler implements Runnable {
 
     @Override
     public void run() {
-        String lastClock = this.s3Helper.getClocksAfter(this.logicalClock.toString());
-        if(lastClock != null) {
-            System.out.println("MINE: " + this.logicalClock.toString());
-            System.out.println("S3: " + lastClock.split("Clock/")[1]);
-            this.logicalClock.sync(Long.valueOf(lastClock.split("Clock/")[1]));
-        }
-        this.s3Helper.persistClock(this.logicalClock.toString());
+        // String lastClock = this.s3Helper.getClocksAfter(this.logicalClock.toString());
+        // if(lastClock != null) {
+        //     System.out.println("MINE: " + this.logicalClock.toString());
+        //     System.out.println("S3: " + lastClock.split("Clock/")[1]);
+        //     this.logicalClock.sync(Long.valueOf(lastClock.split("Clock/")[1]));
+        // }
+        // this.s3Helper.persistClock(this.logicalClock.toString());
     }
 
 }

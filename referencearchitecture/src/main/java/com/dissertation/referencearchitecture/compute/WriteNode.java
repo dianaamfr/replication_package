@@ -31,7 +31,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
     public void init() {
         this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.storage, this.logicalClock, this.s3helper, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
-        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper), 5000, 5000, TimeUnit.MILLISECONDS);
+        //this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -76,7 +76,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         try {
-            long timestamp = this.logicalClock.internalEvent(lastWriteTimestamp);
+            long timestamp = this.logicalClock.nextClockValue(lastWriteTimestamp);
             this.storage.put(key, timestamp, value);
             this.logicalClock.tick(lastWriteTimestamp);
             return timestamp;
