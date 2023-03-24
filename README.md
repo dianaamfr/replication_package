@@ -16,15 +16,14 @@ For a more detailed description of the reference architecture please refer to [R
 - **Client Layer**: connects with the Compute Layer via RMI.
 - **Clock**: Logical Clock.
 - **Consistency**: stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
-
-### In Progress
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
-
 
 ### Next steps
 - Implement and use Hybrid Logical Clocks
 - Setup S3 Replication
 - Generate Read/Write Load
+- Optimize log persistance and fetching
+- Improve clock synchronization strategy when S3 replication is in place
 
 ## Getting Started
 
@@ -56,8 +55,8 @@ TODO
     - `make writeNode2` (partition2)
     - `make writeNode3` (partition3)
 7. Start the desired number of Clients:
-    - `make clientWest` to access buckets in "us-east-1"
-    - `make clientEast` to access buckets in "us-west-1"
+    - `make clientWest` to access buckets in "us-west-1"
+    - `make clientEast` to access buckets in "us-east-1"
 8. Issue the desired ROT and write requests:
     - ROT example: `R x y` (keys must be available in the region)
     - Write example: `W x 3` (the value must be an integer)
