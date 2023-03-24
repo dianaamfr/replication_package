@@ -4,7 +4,7 @@ A prototype implementation of a cloud-native causally consistent system.
 
 ## Description
 
-This repository holds an implementation prototype of the candidate reference architecture for a cloud-native causally consistent read-heavy system. With this prototype, we aim to study the feasibility of the candidate reference architecture and identify any impediments and possible improvements at an early stage.
+This repository holds a prototype implementation of the candidate reference architecture for a cloud-native causally consistent read-heavy system. With this prototype, we aim to study the feasibility of the candidate reference architecture and identify any impediments and possible improvements at an early stage.
 
 For a more detailed description of the reference architecture please refer to [Reference Architecture](#candidate-reference-architecture).
 
@@ -12,10 +12,10 @@ For a more detailed description of the reference architecture please refer to [R
 ## Prototype Features
 ### Current Features
 - **ECDS**: Localstack is being used to emulate AWS S3 (without any replication configuration).
-- **Compute Layer**: provides ROTs and Writes to the Client via RMI and uses AWS S3 for persistance.
-- **Client Layer**: connects with the Compute Layer via RMI.
+- **Compute Layer**: Provides ROTs and Writes to the Client via RMI and uses AWS S3 for persistance.
+- **Client Layer**: Connects with the Compute Layer via RMI.
 - **Clock**: Logical Clock.
-- **Consistency**: stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
+- **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
 
 ### Next steps
@@ -77,7 +77,8 @@ Logical clock or Hybrid Logical Clock
 - Clients are sticky to a *Read Compute Node* of their region.
 
 **Overview**:
-- The Client Layer forwards writes and ROTs to the Compute Layer through a client library. Writes are forwarded to the *Write Compute Node* of the partition that is resposible for the data item that is written. ROTs are forwarded to the *Read Compute Node* of the nearest region.
+
+- The Client Layer forwards writes and ROTs to the Compute Layer through a client library. Writes are forwarded to the *Write Compute Node* of the partition that is responsible for the data item that is written. ROTs are forwarded to the *Read Compute Node* of the nearest region.
 - The client stores his writes in cache until he knows that they are stable. 
 - There is a *Write Compute Node* per partition that orders the writes to that partition, updates the partition’s log and persists it to the ECDS.
 - Replication is handled by the ECDS, so the *Write Compute Node* just needs to write each log in one region and the ECDS will replicate it to the others.
