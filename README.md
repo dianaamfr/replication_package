@@ -4,7 +4,7 @@ A prototype implementation of a cloud-native causally consistent system.
 
 ## Description
 
-This repository holds a prototype implementation of the candidate reference architecture for a cloud-native causally consistent read-heavy system. With this prototype, we aim to study the feasibility of the candidate reference architecture and identify any impediments and possible improvements at an early stage.
+This repository holds a prototype implementation of a candidate reference architecture for a cloud-native causally consistent read-heavy system that is being designed to prove the dissertation's hypothesis. With this prototype, we aim to study the feasibility of the candidate reference architecture and identify any impediments and possible improvements at an early stage.
 
 For a more detailed description of the reference architecture please refer to [Reference Architecture](#candidate-reference-architecture).
 
