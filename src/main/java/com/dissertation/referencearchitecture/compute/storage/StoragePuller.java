@@ -9,8 +9,8 @@ import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 
 public class StoragePuller implements Runnable {
-    S3Helper s3Helper;
-    ReaderStorage storage;
+    private S3Helper s3Helper;
+    private ReaderStorage storage;
 
     public StoragePuller(ReaderStorage storage, S3Helper s3Helper) {
         this.s3Helper = s3Helper;
@@ -26,7 +26,7 @@ public class StoragePuller implements Runnable {
     private void pull() {
         for(Entry<String, Long> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
-                S3ReadResponse s3Response = this.s3Helper.getObjectAfter(entry.getKey(), String.valueOf(entry.getValue()));
+                S3ReadResponse s3Response = this.s3Helper.getLogAfter(entry.getKey(), String.valueOf(entry.getValue()));
                 if(s3Response.getTimestamp() != null && s3Response.getContent() != null) {
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent(), entry.getKey());

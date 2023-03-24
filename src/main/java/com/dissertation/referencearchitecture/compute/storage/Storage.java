@@ -38,9 +38,5 @@ public class Storage {
         builder.append(this.keyVersions.toString());
         return builder.toString();
     }
-
-    public void setState(ConcurrentMap<String, VersionChain> state) {
-        this.keyVersions = state;
-    }
     
 }
