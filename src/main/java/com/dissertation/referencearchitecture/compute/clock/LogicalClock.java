@@ -1,40 +1,35 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongBinaryOperator;
+
 public class LogicalClock {
-    private long clockValue;
-    private long lastStateSaved;
+    private AtomicLong clockValue;
+    private AtomicBoolean newUpdates;
+    private LongBinaryOperator maxIncrementOp = (x, y) -> Math.max(x, y) + 1;
+    private LongBinaryOperator maxOp = (x, y) -> Math.max(x, y);
 
     public LogicalClock() {
-        this.clockValue = 0;
-        this.lastStateSaved = 0;
+        this.clockValue = new AtomicLong(0);
+        this.newUpdates = new AtomicBoolean(false);
     }
 
-    public long nextClockValue(long lastWriteTimestamp) {
-        return Math.max(this.clockValue, lastWriteTimestamp) + 1;
+    public long tick(long lastWriteTimestamp) {
+        this.newUpdates.set(true);
+        return this.clockValue.accumulateAndGet(lastWriteTimestamp, maxIncrementOp);
     }
 
-    public void tick(long lastWriteTimestamp) {
-        this.clockValue = Math.max(this.clockValue, lastWriteTimestamp) + 1;
+    public long sync(long timestamp) {
+        return this.clockValue.accumulateAndGet(timestamp, maxOp);
     }
 
-    public void sync(long timestamp) {
-        this.clockValue = Math.max(this.clockValue, timestamp);
+    public boolean hasNewUpdatesAndReset() {
+        return this.newUpdates.compareAndSet(true, false);
     }
-
-    public void setLastStateSaved(long timestamp) {
-        this.lastStateSaved = timestamp;
-    }
-
-    public boolean isStateSaved(long timestamp) {
-        return timestamp <= this.lastStateSaved;
-    } 
 
     public long getClockValue() {
-        return this.clockValue;
+        return this.clockValue.get();
     }
-
-    public long getLastStateSaved() {
-        return this.lastStateSaved;
-    }
-
 }
+    

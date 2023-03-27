@@ -8,13 +8,14 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
+
+import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
 import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.compute.storage.LogUtils;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
-import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
 
@@ -22,29 +23,26 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private Storage storage;  
     private LogicalClock logicalClock;
     private String partition;
-    private ReentrantLock mutex;
 
     public WriteNode(Storage storage, ScheduledThreadPoolExecutor scheduler, String partition) throws URISyntaxException {
         super(scheduler, String.format("w%s", partition));
-        this.mutex = new ReentrantLock();
         this.storage = storage;
         this.logicalClock = new LogicalClock();
         this.partition = partition;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.storage, this.logicalClock, this.s3helper, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
-        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper, this.mutex), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper, this.storage, this.partition), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
         if(args.length < 1) {
             System.err.println("Usage: java WriteNode <partition:String>");   
-            return;
+            return; 
         }
 
         String partition = args[0];
-        if(!Config.isPartition(partition)) {    
+        if(!Config.isPartition(partition)) {       
             System.err.println(String.format("Error: Partition %p does not exist", partition));   
             return;
         }
@@ -77,19 +75,20 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             System.err.println(String.format("Error: Key %s not found", key));
             return -1;
         }
-
     
-        mutex.lock();
-         try {
-            long timestamp = this.logicalClock.nextClockValue(lastWriteTimestamp);
+        try {
+            long timestamp = this.logicalClock.tick(lastWriteTimestamp);
             this.storage.put(key, timestamp, value);
-            this.logicalClock.tick(lastWriteTimestamp);
+            JSONObject json = LogUtils.toJson(this.storage.getState(), timestamp);
+            System.out.println(json.toString());
+            this.s3helper.persistLog(this.partition, String.valueOf(timestamp), json.toString());
             return timestamp;
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key %s not found", key));
             return -1;
-        } finally {
-            this.mutex.unlock();
+        } catch (Exception e) {
+            System.err.println(String.format("Error: %s", e.getMessage()));
+            return -1;
         }
     }
 }
