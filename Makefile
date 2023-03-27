@@ -4,6 +4,9 @@ args = -Dexec.args
 classPath = com.dissertation.referencearchitecture
 run = mvn -q exec:java -Dexec.mainClass
 
+test:
+	$(run)="$(classPath).compute.TestClock" -e
+
 all:
 	make emptyBuckets
 	mvn clean install
