@@ -1,11 +1,11 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
-public class Timestamp {
+public class HybridTimestamp {
     private long logicalTime;      
     private long logicalCount;
     private long physicalTime;
 
-    public Timestamp(long physicalTime) {
+    public HybridTimestamp(long physicalTime) {
         this.logicalTime = 0;
         this.logicalCount = 0;
         this.physicalTime = physicalTime;
@@ -39,10 +39,10 @@ public class Timestamp {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof Timestamp)) {
+        if(!(o instanceof HybridTimestamp)) {
             return false;
         }
-        Timestamp timestamp = (Timestamp) o;
+        HybridTimestamp timestamp = (HybridTimestamp) o;
         return this.logicalTime == timestamp.getLogicalTime();
     }
 

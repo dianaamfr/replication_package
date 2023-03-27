@@ -18,9 +18,7 @@ public class SystemTimeProvider implements TimeProvider {
     private class TimeRetriever implements Runnable {
         @Override
         public void run() {
-            System.out.println("Run");
             currentTime = System.nanoTime(); 
-            System.out.println("Done");
         }
     }
 

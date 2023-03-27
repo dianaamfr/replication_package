@@ -4,25 +4,38 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.compute.clock.SystemTimeProvider;
-import com.dissertation.referencearchitecture.compute.clock.Timestamp;
 
 public class TestClock {
     public static void main(String[] args) {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-        SystemTimeProvider provider = new SystemTimeProvider(scheduler, 10000);
-        HLC hlc = new HLC(provider);
-        System.out.println(hlc.getTimestamp());
-        hlc.localEvent();
-        System.out.println(hlc.getTimestamp());
-        hlc.localEvent();
-        System.out.println(hlc.getTimestamp());
-        hlc.localEvent();
-        System.out.println(hlc.getTimestamp());
+        SystemTimeProvider provider1 = new SystemTimeProvider(scheduler, 15000);
+        SystemTimeProvider provider2 = new SystemTimeProvider(scheduler, 5000);
+        HLC hlc1 = new HLC(provider1);
+        HLC hlc2 = new HLC(provider2);
 
-        long aux = System.nanoTime();
-        Timestamp externalEvent = new Timestamp(aux);
-        externalEvent.setLogicalTime(aux + 20);
-        hlc.receiveEvent(externalEvent);
-        System.out.println(hlc.getTimestamp());
+        hlc1.localEvent();
+        System.out.println(hlc1.getTimestamp());
+        hlc1.localEvent();
+        System.out.println(hlc1.getTimestamp());
+        hlc1.localEvent();
+        System.out.println(hlc1.getTimestamp());
+
+        System.out.println();
+
+        hlc2.localEvent();
+        System.out.println(hlc2.getTimestamp());
+        hlc2.localEvent();
+        System.out.println(hlc2.getTimestamp());
+        hlc2.localEvent();
+        System.out.println(hlc2.getTimestamp());
+        hlc2.localEvent();
+        System.out.println(hlc2.getTimestamp());
+        hlc2.localEvent();
+        System.out.println(hlc2.getTimestamp());
+
+        System.out.println();
+        
+        hlc1.externalEvent(hlc2.getTimestamp());
+        System.out.println(hlc1.getTimestamp());
     }
 }
