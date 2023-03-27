@@ -6,8 +6,7 @@ public class HLC {
 
     public HLC(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
-        long physicalTime = timeProvider.getTime();
-        this.currentTime = new Timestamp(physicalTime);
+        this.currentTime = new Timestamp(timeProvider.getTime());
     }
 
     public void localEvent() {
@@ -25,6 +24,7 @@ public class HLC {
     }
 
     public void receiveEvent(Timestamp recvTime) {
+        System.out.println("RECV");
         long physicalTime = timeProvider.getTime();
         Timestamp newTime = new Timestamp(physicalTime);
         newTime.setLogicalTime(
