@@ -1,7 +1,7 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -21,7 +21,7 @@ public class ReaderStorage extends Storage {
     }
 
     public void init() {
-        List<String> partitions = Config.getPartitions(this.region);
+        Set<String> partitions = Config.getPartitions(this.region);
         for(String partition: partitions) {
             this.partitionsMaxTimestamp.put(partition, "0.0");
         }
