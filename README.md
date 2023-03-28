@@ -19,11 +19,11 @@ For a more detailed description of the reference architecture please refer to [R
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
 
 ### Next steps
-- Implement and use Hybrid Logical Clocks
-- Setup S3 Replication
 - Generate Read/Write Load
+- Setup S3 Replication
 - Optimize log persistance and fetching
 - Improve clock synchronization strategy when S3 replication is in place
+- Avoid locks if possible
 
 ## Getting Started
 
