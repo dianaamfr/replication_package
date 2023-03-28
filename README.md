@@ -14,7 +14,7 @@ For a more detailed description of the reference architecture please refer to [R
 - **ECDS**: Localstack is being used to emulate AWS S3 (without any replication configuration).
 - **Compute Layer**: Provides ROTs and Writes to the Client via RMI and uses AWS S3 for persistance.
 - **Client Layer**: Connects with the Compute Layer via RMI.
-- **Clock**: Logical Clock.
+- **Clock**: Hybrid Logical Clock.
 - **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
 
@@ -31,7 +31,6 @@ For a more detailed description of the reference architecture please refer to [R
 TODO
 
 ### Dependencies
-*(TODO: setup up docker-compose)*
 - [Localstack](https://docs.localstack.cloud/getting-started/installation/)
 - OpenJDK
 - Maven
