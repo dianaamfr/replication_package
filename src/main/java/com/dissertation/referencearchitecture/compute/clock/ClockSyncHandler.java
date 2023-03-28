@@ -29,12 +29,13 @@ public class ClockSyncHandler implements Runnable {
         String recentClock = this.s3Helper.getClocksAfter(clockValue);
         if(recentClock == null) {
             return;
-        }      
+        }
+        recentClock = recentClock.split("Clock/")[1];      
 
         System.out.println("Current clock " + clockValue + ", recv clock " + recentClock);
         HybridTimestamp recentTimestamp;
         try {
-            recentTimestamp = HybridTimestamp.fromString(recentClock.split("Clock/")[1]);
+            recentTimestamp = HybridTimestamp.fromString(recentClock);
         } catch (InvalidTimestampException e) {
             System.err.println(String.format("Error: Invalid recent timestamp"));
             return;
