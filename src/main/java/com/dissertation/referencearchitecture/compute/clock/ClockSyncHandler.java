@@ -2,37 +2,57 @@ package com.dissertation.referencearchitecture.compute.clock;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
+import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class ClockSyncHandler implements Runnable {
-    private LogicalClock logicalClock;
+    private HLC hlc;
     private S3Helper s3Helper;
-    private ReentrantLock mutex;    
-    private long clockValue;
+    private ReentrantLock mutex;   
+    private StoragePusher storagePusher; 
 
-    public ClockSyncHandler(LogicalClock logicalClock, S3Helper s3Helper, ReentrantLock mutex) {
-        this.logicalClock = logicalClock;
+    public ClockSyncHandler(HLC hlc, S3Helper s3Helper, StoragePusher storagePusher, ReentrantLock mutex) {
+        this.hlc = hlc;
         this.s3Helper = s3Helper;
+        this.storagePusher = storagePusher;
         this.mutex = mutex;
     }
 
     @Override
     public void run() {
-        this.clockValue = this.logicalClock.getClockValue();
-        String lastClock = this.s3Helper.getClocksAfter(String.valueOf(this.clockValue));
-        if(lastClock != null) {
-            System.out.println("Sync clock: is " + this.clockValue + " received " + lastClock.split("Clock/")[1]);
+        if(this.hlc.hasNewUpdates()) {
+            return;
+        }
+        
+        String clockValue = this.hlc.getTimestamp().toString();
+        String recentClock = this.s3Helper.getClocksAfter(clockValue);
+        if(recentClock == null) {
+            return;
+        }
+        recentClock = recentClock.split("Clock/")[1];      
 
-            mutex.lock();
-            try {
-                this.logicalClock.sync(Long.valueOf(lastClock.split("Clock/")[1]));
-                lastClock = String.valueOf(this.logicalClock);
-            } finally {
-                mutex.unlock();
-            }
+        System.out.println("Current clock " + clockValue + ", recv clock " + recentClock);
+        HybridTimestamp recentTimestamp;
+        try {
+            recentTimestamp = HybridTimestamp.fromString(recentClock);
+        } catch (InvalidTimestampException e) {
+            System.err.println(String.format("Error: Invalid recent timestamp"));
+            return;
         }
 
-        this.s3Helper.persistClock(String.valueOf(this.logicalClock.getLastStateSaved()));
+        mutex.lock();
+        try {
+            this.hlc.syncEvent(recentTimestamp);
+            String newTimestamp = this.hlc.getTimestamp().toString();
+            this.s3Helper.persistClock(newTimestamp);
+            boolean result = this.storagePusher.push(newTimestamp);
+            if(result == false) {
+                // TODO: reset timestamp (?)
+            }
+        } finally {
+            mutex.unlock();
+        }
     }
 
 }

@@ -5,32 +5,32 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 
 public class ReaderStorage extends Storage {
-    private ConcurrentMap<String, Long> partitionsMaxTimestamp;
-    private long stableTime;
+    private ConcurrentMap<String, String> partitionsMaxTimestamp;
+    private String stableTime;
     private String region;
     
     public ReaderStorage(String region) {
         super();
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
-        this.stableTime = 0;
+        this.stableTime = "0.0";
         this.region = region;
     }
 
     public void init() {
         List<String> partitions = Config.getPartitions(this.region);
         for(String partition: partitions) {
-            this.partitionsMaxTimestamp.put(partition, 0L);
+            this.partitionsMaxTimestamp.put(partition, "0.0");
         }
     }
 
-    public void put(String key, long timestamp, int value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, int value) throws KeyNotFoundException {
         super.put(key, timestamp, value);
         String partition = Config.getKeyPartition(this.region, key);
-        if(timestamp > partitionsMaxTimestamp.get(partition)) {
+        if(timestamp.compareTo(partitionsMaxTimestamp.get(partition)) > 0) {
             this.partitionsMaxTimestamp.put(partition, timestamp);
         }
     }
@@ -39,7 +39,7 @@ public class ReaderStorage extends Storage {
         this.stableTime = Collections.min(this.partitionsMaxTimestamp.values());
     }
 
-    public long getStableTime() {
+    public String getStableTime() {
         return this.stableTime;
     }
 
@@ -51,12 +51,12 @@ public class ReaderStorage extends Storage {
         return builder.toString();
     }
 
-    public ConcurrentMap<String, Long> getPartitionsMaxTimestamp() {
+    public ConcurrentMap<String, String> getPartitionsMaxTimestamp() {
         return this.partitionsMaxTimestamp;
     }
 
-    public void setPartitionMaxTimestamp(String partition, long timestamp) {
-        if(timestamp > this.partitionsMaxTimestamp.get(partition)) {
+    public void setPartitionMaxTimestamp(String partition, String timestamp) {
+        if(timestamp.compareTo(this.partitionsMaxTimestamp.get(partition)) > 0) {
             this.partitionsMaxTimestamp.put(partition, timestamp);
         }
     }

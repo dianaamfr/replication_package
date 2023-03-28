@@ -2,10 +2,10 @@ package com.dissertation.referencearchitecture.client;
 
 public class Version {
     private String key;
-    private Long timestamp;
+    private String timestamp;
     private Integer value;
 
-    Version(String key, Integer value, Long timestamp) {
+    Version(String key, Integer value, String timestamp) {
         this.key = key;
         this.value = value;
         this.timestamp = timestamp;
@@ -19,7 +19,7 @@ public class Version {
         return this.value;
     }
 
-    public Long getTimestamp() {
+    public String getTimestamp() {
         return this.timestamp;
     }
 

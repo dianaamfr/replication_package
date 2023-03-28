@@ -6,45 +6,32 @@ import java.util.concurrent.ConcurrentMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 
-public class StoragePusher implements Runnable {
+public class StoragePusher {
     private Storage storage;
-    private LogicalClock logicalClock;
     private S3Helper s3Helper;
     private String partition;
-    private long clockValue;
 
-    public StoragePusher(Storage storage, LogicalClock logicalClock, S3Helper s3Helper, String partition) {
+    public StoragePusher(Storage storage, S3Helper s3Helper, String partition) {
         this.storage = storage;
-        this.logicalClock = logicalClock;
         this.partition = partition;
         this.s3Helper = s3Helper;
     }
 
-    @Override
-    public void run() {
-        this.clockValue = this.logicalClock.getClockValue();
-        this.push();
-    }
-
-    private void push() {
-        if(this.logicalClock.isStateSaved(this.clockValue)) {
-            return;
-        };
-
+    public boolean push(String timestamp) {
         try {
-            JSONObject json = toJson(this.storage.getState());
-            System.out.println(json.toString());
-            this.s3Helper.persistLog(this.partition, String.valueOf(this.clockValue), json.toString());
-            this.logicalClock.setLastStateSaved(this.clockValue);
+            System.out.println(this.storage.getState());
+            JSONObject json = toJson(this.storage.getState(), timestamp);
+            this.s3Helper.persistClock(timestamp);
+            return this.s3Helper.persistLog(this.partition, timestamp, json.toString());
         } catch (Exception e) {
             e.printStackTrace();
+            return false;
         }
     }
 
-    private JSONObject toJson(ConcurrentMap<String, VersionChain> state) {
+    private JSONObject toJson(ConcurrentMap<String, VersionChain> state, String timestamp) {
         JSONObject stateJson = new JSONObject();
         JSONArray versionChainsJson = new JSONArray();
 
@@ -53,9 +40,9 @@ public class StoragePusher implements Runnable {
             JSONObject versionChainJson = new JSONObject(); // Version chain of the key
             JSONArray versionsJson = new JSONArray(); // Array of versions of a key
             // For each version of the key that belongs to the snapshot defined by clockValue
-            for(Entry<Long, Integer> version: versionChain.getValue().getVersionChain(this.clockValue).entrySet()) {
+            for(Entry<String, Integer> version: versionChain.getValue().getVersionChain(timestamp).entrySet()) {
                 JSONObject versionJson = new JSONObject();
-                versionJson.put("key", version.getKey().toString());
+                versionJson.put("key", version.getKey());
                 versionJson.put("value", version.getValue());
                 versionsJson.put(versionJson);
             }

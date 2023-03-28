@@ -24,7 +24,7 @@ public class StoragePuller implements Runnable {
     }
 
     private void pull() {
-        for(Entry<String, Long> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
+        for(Entry<String, String> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(entry.getKey(), String.valueOf(entry.getValue()));
                 if(s3Response.getTimestamp() != null && s3Response.getContent() != null) {
@@ -48,7 +48,7 @@ public class StoragePuller implements Runnable {
             JSONArray versionChainArray = versionChainJson.getJSONArray("value");
             for(int j = 0; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
-                this.storage.put(versionChainJson.getString("key"), Long.parseLong(versionJson.getString("key")), versionJson.getInt("value"));
+                this.storage.put(versionChainJson.getString("key"), versionJson.getString("key"), versionJson.getInt("value"));
             }
         }
     }

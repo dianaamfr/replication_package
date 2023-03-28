@@ -30,10 +30,10 @@ rmi:
 	sleep 0.5
 
 clientWest:
-	$(run)="$(classPath).client.Client" $(args)="us-west-1"
+	$(run)="$(classPath).client.Client" $(args)="us-west-1" -e
 
 clientEast:
-	$(run)="$(classPath).client.Client" $(args)="us-east-1"
+	$(run)="$(classPath).client.Client" $(args)="us-east-1" -e
 
 readNodeWest:
 	$(run)="$(classPath).compute.ReadNode"  $(args)="us-west-1" -e
