@@ -7,8 +7,10 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.compute.clock.HybridTimestamp;
 import com.dissertation.referencearchitecture.compute.clock.SystemTimeProvider;
@@ -37,7 +39,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public void init() {
-        //this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper, this.mutex), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher, this.mutex), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -53,8 +55,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         try {
-            // TODO: number of threads
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
             S3Helper s3Helper = new S3Helper();
             Storage storage = new Storage();
             StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
@@ -101,11 +102,10 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             this.storage.put(key, writeTimestamp, value);
             boolean result = this.storagePusher.push(writeTimestamp);
             if(result == false) {
-                writeTimestamp = null;
                 // TODO: reset timestamp and storage (?)
             }
         } catch (KeyNotFoundException e) {
-            // TODO: reset timestamp
+            // TODO: reset timestamp (?)
             System.err.println(String.format("Error: Key %s not found", key));
         } finally {
             this.mutex.unlock();

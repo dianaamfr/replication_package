@@ -21,8 +21,9 @@ public class StoragePusher {
 
     public boolean push(String timestamp) {
         try {
+            System.out.println(this.storage.getState());
             JSONObject json = toJson(this.storage.getState(), timestamp);
-            System.out.println(json.toString());
+            this.s3Helper.persistClock(timestamp);
             return this.s3Helper.persistLog(this.partition, timestamp, json.toString());
         } catch (Exception e) {
             e.printStackTrace();
