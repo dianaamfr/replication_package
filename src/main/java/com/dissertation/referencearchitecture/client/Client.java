@@ -129,9 +129,15 @@ public class Client {
             Integer value = Integer.parseInt(commands[1]);
             String partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
-            this.lastWriteTimestamp = writeStub.write(key, value, this.lastWriteTimestamp);
-            cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-            System.out.println(String.format("Write response: %s = %d at %s ", key, value, this.lastWriteTimestamp));
+            String response = writeStub.write(key, value, this.lastWriteTimestamp);
+
+            if(response != null) {
+                this.lastWriteTimestamp = response;
+                this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
+                System.out.println(String.format("Write response: %s = %d at %s ", key, value, this.lastWriteTimestamp));
+            } else {
+                System.out.println("Error: Write request failed");
+            }
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key is not available in region %s", this.region));
         } catch (NumberFormatException e) {

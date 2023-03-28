@@ -37,6 +37,6 @@ public class VersionChain implements Serializable {
     }
 
     public SortedMap<String, Integer> getVersionChain(String maxKey) {
-        return this.versions.subMap("0", true, maxKey, true);
+        return this.versions.subMap("0.0", true, maxKey, true);
     }
 }
