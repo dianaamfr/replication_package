@@ -7,7 +7,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.dissertation.referencearchitecture.compute.clock.HLC;
@@ -19,26 +18,25 @@ import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
+import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private Storage storage;  
+    private StoragePusher storagePusher;
     private HLC hlc;
     private String partition;
     private ReentrantLock mutex;
 
-    public WriteNode(ScheduledThreadPoolExecutor scheduler, Storage storage, String partition, ReentrantLock mutex, HLC hlc) throws URISyntaxException {
-        super(scheduler, String.format("w%s", partition));
-        this.storage = storage;
-        this.hlc = hlc;
+    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc, ReentrantLock mutex) throws URISyntaxException {
+        super(scheduler, s3Helper, String.format("w%s", partition));
         this.partition = partition;
+        this.storage = storage;        
+        this.storagePusher = storagePusher;
+        this.hlc = hlc;
         this.mutex = mutex;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(
-            new StoragePusher(this.storage, this.hlc, 
-            this.s3helper, this.partition), 
-            5000, 5000, TimeUnit.MILLISECONDS);
         //this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.logicalClock, this.s3helper, this.mutex), 5000, 5000, TimeUnit.MILLISECONDS);
     }
 
@@ -55,12 +53,15 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         try {
-            Storage storage = new Storage();
+            // TODO: number of threads
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
-            ReentrantLock mutex = new ReentrantLock();
+            S3Helper s3Helper = new S3Helper();
+            Storage storage = new Storage();
+            StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
             HLC hlc = new HLC(new SystemTimeProvider(scheduler, 10000));
-
-            WriteNode writeNode = new WriteNode(scheduler, storage, partition, mutex, hlc);
+            ReentrantLock mutex = new ReentrantLock();
+        
+            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, storagePusher, hlc, mutex);
 
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
@@ -98,7 +99,13 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             this.hlc.writeEvent(lastTimestamp);
             writeTimestamp = this.hlc.getTimestamp().toString();
             this.storage.put(key, writeTimestamp, value);
+            boolean result = this.storagePusher.push(writeTimestamp);
+            if(result == false) {
+                writeTimestamp = null;
+                // TODO: reset timestamp and storage (?)
+            }
         } catch (KeyNotFoundException e) {
+            // TODO: reset timestamp
             System.err.println(String.format("Error: Key %s not found", key));
         } finally {
             this.mutex.unlock();

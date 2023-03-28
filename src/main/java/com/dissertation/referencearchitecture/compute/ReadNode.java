@@ -19,17 +19,18 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
+import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private ReaderStorage storage; 
     
-    public ReadNode(ReaderStorage storage, ScheduledThreadPoolExecutor scheduler, String region) throws URISyntaxException {
-        super(scheduler, String.format("r%s", region));
+    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String region, ReaderStorage storage) throws URISyntaxException {
+        super(scheduler, s3Helper, String.format("r%s", region));
         this.storage = storage;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3helper), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), 5000, 5000, TimeUnit.MILLISECONDS);
     }
     
     public static void main(String[] args) {
@@ -45,12 +46,12 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
         }
         
         try {
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+            S3Helper s3Helper = new S3Helper();
             ReaderStorage storage = new ReaderStorage(region);
             storage.init();
 
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-
-            ReadNode readNode = new ReadNode(storage, scheduler, region);
+            ReadNode readNode = new ReadNode(scheduler, s3Helper, region, storage);
             
             // Bind the remote object's stub in the registry
             ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);
@@ -86,5 +87,4 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
         }
         return new ROTResponse(values, stableTime);
     }
-  
 }
