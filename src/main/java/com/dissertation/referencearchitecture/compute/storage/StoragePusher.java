@@ -6,39 +6,42 @@ import java.util.concurrent.ConcurrentMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.dissertation.referencearchitecture.compute.clock.LogicalClock;
+import com.dissertation.referencearchitecture.compute.clock.HLC;
+import com.dissertation.referencearchitecture.compute.clock.HybridTimestamp;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class StoragePusher implements Runnable {
     private Storage storage;
-    private LogicalClock logicalClock;
+    private HLC hlc;
     private S3Helper s3Helper;
     private String partition;
-    private long clockValue;
+    private HybridTimestamp clockValue;
 
-    public StoragePusher(Storage storage, LogicalClock logicalClock, S3Helper s3Helper, String partition) {
+    public StoragePusher(Storage storage, HLC hlc, S3Helper s3Helper, String partition) {
         this.storage = storage;
-        this.logicalClock = logicalClock;
+        this.hlc = hlc;
         this.partition = partition;
         this.s3Helper = s3Helper;
     }
 
     @Override
     public void run() {
-        this.clockValue = this.logicalClock.getClockValue();
+        this.clockValue = this.hlc.getTimestamp();
         this.push();
     }
 
     private void push() {
-        if(this.logicalClock.isStateSaved(this.clockValue)) {
-            return;
-        };
+        // TODO
+        // if(this.logicalClock.isStateSaved(this.clockValue)) {
+        //     return;
+        // };
 
         try {
             JSONObject json = toJson(this.storage.getState());
             System.out.println(json.toString());
-            this.s3Helper.persistLog(this.partition, String.valueOf(this.clockValue), json.toString());
-            this.logicalClock.setLastStateSaved(this.clockValue);
+            this.s3Helper.persistLog(this.partition, this.clockValue.toString(), json.toString());
+            //this.logicalClock.setLastStateSaved(this.clockValue);
+            // TODO
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -53,9 +56,9 @@ public class StoragePusher implements Runnable {
             JSONObject versionChainJson = new JSONObject(); // Version chain of the key
             JSONArray versionsJson = new JSONArray(); // Array of versions of a key
             // For each version of the key that belongs to the snapshot defined by clockValue
-            for(Entry<Long, Integer> version: versionChain.getValue().getVersionChain(this.clockValue).entrySet()) {
+            for(Entry<String, Integer> version: versionChain.getValue().getVersionChain(this.clockValue.toString()).entrySet()) {
                 JSONObject versionJson = new JSONObject();
-                versionJson.put("key", version.getKey().toString());
+                versionJson.put("key", version.getKey());
                 versionJson.put("value", version.getValue());
                 versionsJson.put(versionJson);
             }

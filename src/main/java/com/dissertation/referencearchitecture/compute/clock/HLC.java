@@ -9,21 +9,29 @@ public class HLC {
         this.currentTime = new HybridTimestamp(timeProvider.getTime());
     }
 
-    public void localEvent() {
+    public void writeEvent(HybridTimestamp recvTime) {
         long physicalTime = timeProvider.getTime();
         HybridTimestamp newTime = new HybridTimestamp(physicalTime);
         newTime.setLogicalTime(
             Math.max(this.currentTime.getLogicalTime(), 
-            physicalTime));
+            Math.max(physicalTime, recvTime.getLogicalTime())));
         
-        if(newTime.equals(this.currentTime)) {
+        boolean isLocalTimeEqual = newTime.equals(this.currentTime);
+        boolean isRecvTimeEqual = newTime.equals(recvTime);
+        if(isLocalTimeEqual && isRecvTimeEqual) {
+            newTime.setLogicalCount(Math.max(
+                this.currentTime.getLogicalCount(), 
+                recvTime.getLogicalCount()) + 1);
+        } else if(isLocalTimeEqual) {
             newTime.setLogicalCount(this.currentTime.getLogicalCount() + 1);
+        } else if(isRecvTimeEqual) {
+            newTime.setLogicalCount(recvTime.getLogicalCount() + 1);
         }
 
         this.currentTime = newTime;
     }
 
-    public void externalEvent(HybridTimestamp recvTime) {
+    public void syncEvent(HybridTimestamp recvTime) {
         long physicalTime = timeProvider.getTime();
         HybridTimestamp newTime = new HybridTimestamp(physicalTime);
         newTime.setLogicalTime(

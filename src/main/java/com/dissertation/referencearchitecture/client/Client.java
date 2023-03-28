@@ -14,8 +14,8 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
@@ -23,7 +23,7 @@ import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterfa
 public class Client {
     private final Map<String, WriteRemoteInterface> writeStubs;
     private Map<String, Version> cache;
-    private long lastWriteTimestamp;
+    private String lastWriteTimestamp;
     private final ReadRemoteInterface readStub;
     private String region;
 
@@ -32,7 +32,7 @@ public class Client {
         this.readStub = readStub;
         this.region = region;
         this.cache = new HashMap<>();
-        this.lastWriteTimestamp = 0L;
+        this.lastWriteTimestamp = "0.0";
     }
 
     public static void main(String[] args) {
@@ -115,7 +115,7 @@ public class Client {
             }
             ROTResponse rotResponse = this.readStub.rot(keys);
             pruneCache(rotResponse.getStableTime());
-            System.out.println(String.format("ROT response: %s at %d", getReadResponse(rotResponse.getValues()).toString(), rotResponse.getStableTime()));
+            System.out.println(String.format("ROT response: %s at %s", getReadResponse(rotResponse.getValues()).toString(), rotResponse.getStableTime()));
         } catch (RemoteException e) {
             System.err.println("Error: Could not connect with server");
         } catch (KeyNotFoundException e) {
@@ -129,9 +129,9 @@ public class Client {
             Integer value = Integer.parseInt(commands[1]);
             String partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
-            this.lastWriteTimestamp = writeStub.write(key, value, lastWriteTimestamp);
+            this.lastWriteTimestamp = writeStub.write(key, value, this.lastWriteTimestamp);
             cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-            System.out.println(String.format("Write response: %s = %d at %d ", key, value, this.lastWriteTimestamp));
+            System.out.println(String.format("Write response: %s = %d at %s ", key, value, this.lastWriteTimestamp));
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key is not available in region %s", this.region));
         } catch (NumberFormatException e) {
@@ -141,10 +141,10 @@ public class Client {
         }
     }
 
-    private void pruneCache(Long stableTime) {
+    private void pruneCache(String stableTime) {
         List<String> toPrune = new ArrayList<>();
         for(Entry<String,Version> entry :this.cache.entrySet()) {
-            if(entry.getValue().getTimestamp() <= stableTime) {
+            if(entry.getValue().getTimestamp().compareTo(stableTime) <= 0) {
                 toPrune.add(entry.getKey());
             }   
         }

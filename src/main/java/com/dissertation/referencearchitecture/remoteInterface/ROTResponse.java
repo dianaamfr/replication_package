@@ -6,9 +6,9 @@ import java.util.Map;
 public class ROTResponse implements Serializable {
     private static final long serialVersionUID = 2L;
     private Map<String, Integer> values;
-    private long stableTime;
+    private String stableTime;
 
-    public ROTResponse(Map<String, Integer> values, long stableTime) {
+    public ROTResponse(Map<String, Integer> values, String stableTime) {
         this.values = values;
         this.stableTime = stableTime;
     }
@@ -17,7 +17,7 @@ public class ROTResponse implements Serializable {
         return this.values;
     }
 
-    public long getStableTime() {
+    public String getStableTime() {
         return this.stableTime;
     }
 }

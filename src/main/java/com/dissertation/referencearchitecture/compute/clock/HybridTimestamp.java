@@ -1,5 +1,7 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
+import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
+
 public class HybridTimestamp {
     private long logicalTime;      
     private long logicalCount;
@@ -9,6 +11,12 @@ public class HybridTimestamp {
         this.logicalTime = 0;
         this.logicalCount = 0;
         this.physicalTime = physicalTime;
+    }
+
+    public HybridTimestamp(long logicalTime, long logicalCount) {
+        this.logicalTime = logicalTime;
+        this.logicalCount = logicalCount;
+        this.physicalTime = 0;
     }
 
     public void setLogicalTime(long logicalTime) {
@@ -31,10 +39,17 @@ public class HybridTimestamp {
         return this.physicalTime;
     }
 
+    public static HybridTimestamp fromString(String timestamp) throws InvalidTimestampException {
+        String[] parts = timestamp.split("\\.");  
+        if(parts.length != 2) {
+            throw new InvalidTimestampException();
+        }
+        return new HybridTimestamp(Long.valueOf(parts[0]), Long.valueOf(parts[1]));
+    }
+
     @Override
     public String toString() {
-        return "Timestamp [logicalTime=" + logicalTime + ", logicalCount=" + logicalCount + ", physicalTime="
-                + physicalTime + "]";
+        return logicalTime + "." + logicalCount;
     }
 
     @Override

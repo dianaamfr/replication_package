@@ -5,23 +5,23 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 
-import com.dissertation.referencearchitecture.compute.exceptions.KeyVersionNotFoundException;
+import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 
 public class VersionChain implements Serializable {
     private static final long serialVersionUID = 1L;
-    private TreeMap<Long, Integer> versions;
+    private TreeMap<String, Integer> versions;
 
     public VersionChain() {
         this.versions = new TreeMap<>();
     }
 
-    public void put(Long timestamp, Integer value) {
+    public void put(String timestamp, Integer value) {
         versions.put(timestamp, value);
     }
 
-    public Entry<Long, Integer> get(long maxTimestamp) throws KeyVersionNotFoundException {
+    public Entry<String, Integer> get(String maxTimestamp) throws KeyVersionNotFoundException {
         try {
-            Entry<Long, Integer> entry = versions.floorEntry(maxTimestamp);
+            Entry<String, Integer> entry = versions.floorEntry(maxTimestamp);
             if(entry == null) {
                 throw new KeyVersionNotFoundException();
             }
@@ -36,8 +36,8 @@ public class VersionChain implements Serializable {
         return versions.toString();
     }
 
-    public SortedMap<Long, Integer> getVersionChain(long maxKey) {
-        System.out.println(this.versions.subMap(0L, true, maxKey, true));
-        return this.versions.subMap(0L, true, maxKey, true);
+    public SortedMap<String, Integer> getVersionChain(String maxKey) {
+        System.out.println(this.versions.subMap("0", true, maxKey, true));
+        return this.versions.subMap("0", true, maxKey, true);
     }
 }

@@ -4,8 +4,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.compute.exceptions.KeyVersionNotFoundException;
+import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 
 public class Storage {
     protected ConcurrentMap<String, VersionChain> keyVersions;
@@ -14,14 +14,14 @@ public class Storage {
         this.keyVersions = new ConcurrentHashMap<>();
     }
 
-    public void put(String key, long timestamp, int value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, int value) throws KeyNotFoundException {
         if(!this.keyVersions.containsKey(key)){
             this.keyVersions.put(key, new VersionChain());
         }
         this.keyVersions.get(key).put(timestamp, value);
     }
 
-    public Entry<Long, Integer> get(String key, long maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
+    public Entry<String, Integer> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
         if(!this.keyVersions.containsKey(key)) {
             throw new KeyNotFoundException();
         }

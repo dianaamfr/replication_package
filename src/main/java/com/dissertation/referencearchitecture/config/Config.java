@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 
 public final class Config {
     private static Map<String, List<String>> partitionsPerRegion;

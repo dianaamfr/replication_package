@@ -12,11 +12,11 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.dissertation.referencearchitecture.compute.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.compute.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
 import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
+import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 
@@ -72,7 +72,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     @Override
     public ROTResponse rot(Set<String> readSet) {
         Map<String, Integer> values = new HashMap<>(readSet.size());
-        long stableTime = this.storage.getStableTime();
+        String stableTime = this.storage.getStableTime();
 
         for (String key: readSet) {
             try {
