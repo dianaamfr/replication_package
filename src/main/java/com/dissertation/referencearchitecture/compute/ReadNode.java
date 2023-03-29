@@ -72,17 +72,17 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
 
     @Override
     public ROTResponse rot(Set<String> readSet) {
-        Map<String, Integer> values = new HashMap<>(readSet.size());
+        Map<String, byte[]> values = new HashMap<>(readSet.size());
         String stableTime = this.storage.getStableTime();
 
         for (String key: readSet) {
             try {
-                Integer value = this.storage.get(key, stableTime).getValue();
+                byte[] value = this.storage.get(key, stableTime).getValue();
                 values.put(key, value);
             } catch (KeyNotFoundException e) {
-                values.put(key, null);
+                values.put(key, new byte[0]);
             } catch (KeyVersionNotFoundException e) {
-                values.put(key, null);
+                values.put(key, new byte[0]);
             }    
         }
         return new ROTResponse(values, stableTime);

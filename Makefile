@@ -2,8 +2,10 @@
 
 args = -Dexec.args
 classPath = com.dissertation.referencearchitecture
+validationPath = com.dissertation.validation
 run = mvn -q exec:java -Dexec.mainClass
 
+# Setup
 all:
 	make emptyBuckets
 	mvn clean install
@@ -29,12 +31,7 @@ rmi:
 	rmiregistry
 	sleep 0.5
 
-clientWest:
-	$(run)="$(classPath).client.Client" $(args)="us-west-1" -e
-
-clientEast:
-	$(run)="$(classPath).client.Client" $(args)="us-east-1" -e
-
+# Compute Nodes
 readNodeWest:
 	$(run)="$(classPath).compute.ReadNode"  $(args)="us-west-1" -e
 
@@ -49,3 +46,10 @@ writeNode2:
 
 writeNode3:
 	$(run)="$(classPath).compute.WriteNode" $(args)="partition3" -e
+
+# Validation
+clientWest:
+	$(run)="$(validationPath).ClientInterface" $(args)="us-west-1" -e
+
+clientEast:
+	$(run)="$(validationPath).ClientInterface" $(args)="us-east-1" -e

@@ -11,10 +11,12 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 public final class Config {
     private static Set<String> partitions;
     private static Map<String, Set<String>> partitionsPerRegion;
+    private static Map<String, Set<String>> regionsWithPartition;
 
     static {
         partitions = new HashSet<>();
         partitionsPerRegion = new HashMap<>();
+        regionsWithPartition = new HashMap<>();
         init();
     }
 
@@ -25,6 +27,11 @@ public final class Config {
 
         partitionsPerRegion.put("us-east-1", new HashSet<>(Arrays.asList("partition1","partition2")));
         partitionsPerRegion.put("us-west-1", new HashSet<>(Arrays.asList("partition3")));
+
+        
+        regionsWithPartition.put("partition1", new HashSet<>(Arrays.asList("us-east-1")));
+        regionsWithPartition.put("partition2", new HashSet<>(Arrays.asList("us-east-1")));
+        regionsWithPartition.put("partition3", new HashSet<>(Arrays.asList("us-west-1")));
     }
 
     public static boolean isRegion(String region) { 

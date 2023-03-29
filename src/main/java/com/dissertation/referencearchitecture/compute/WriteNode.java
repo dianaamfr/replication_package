@@ -80,7 +80,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     @Override
-    public String write(String key, Integer value, String lastWriteTimestamp) {  
+    public String write(String key, byte[] value, String lastWriteTimestamp) {  
         if(!Config.isKeyInPartition(this.partition, key)) {
             System.err.println(String.format("Error: Key %s not found", key));
             return null;

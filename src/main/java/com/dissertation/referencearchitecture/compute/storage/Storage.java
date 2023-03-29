@@ -14,14 +14,14 @@ public class Storage {
         this.keyVersions = new ConcurrentHashMap<>();
     }
 
-    public void put(String key, String timestamp, int value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, byte[] value) throws KeyNotFoundException {
         if(!this.keyVersions.containsKey(key)){
             this.keyVersions.put(key, new VersionChain());
         }
         this.keyVersions.get(key).put(timestamp, value);
     }
 
-    public Entry<String, Integer> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
+    public Entry<String, byte[]> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
         if(!this.keyVersions.containsKey(key)) {
             throw new KeyNotFoundException();
         }

@@ -32,7 +32,7 @@ public class ClockSyncHandler implements Runnable {
         }
         recentClock = recentClock.split("Clock/")[1];      
 
-        System.out.println("Current clock " + clockValue + ", recv clock " + recentClock);
+        //System.out.println("Current clock " + clockValue + ", recv clock " + recentClock);
         HybridTimestamp recentTimestamp;
         try {
             recentTimestamp = HybridTimestamp.fromString(recentClock);

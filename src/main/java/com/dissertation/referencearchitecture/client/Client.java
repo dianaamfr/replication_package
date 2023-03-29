@@ -5,111 +5,57 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.config.Config;
+import com.dissertation.referencearchitecture.exceptions.InvalidRegionException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
+import com.dissertation.utils.Utils;
 
 public class Client {
-    private final Map<String, WriteRemoteInterface> writeStubs;
+    private Map<String, WriteRemoteInterface> writeStubs;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
-    private final ReadRemoteInterface readStub;
+    private ReadRemoteInterface readStub;
     private String region;
 
-    public Client(Map<String, WriteRemoteInterface> writeStubs, ReadRemoteInterface readStub, String region) {
-        this.writeStubs = writeStubs;
-        this.readStub = readStub;
+    public Client(String region) throws InvalidRegionException, RemoteException, NotBoundException {
+        if(!Config.isRegion(region)) {
+            throw new InvalidRegionException();
+        }
+
         this.region = region;
         this.cache = new HashMap<>();
-        this.lastWriteTimestamp = "0.0";
+        this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
+        initStubs();
     }
 
-    public static void main(String[] args) {
-        if(args.length < 1) {
-            System.err.println("Usage: java Client <region:String>");   
-            return;
-        }
+    public void initStubs() throws RemoteException, NotBoundException {
+        Set<String> partitions = Config.getPartitions(this.region);
+        String readNodeId = String.format("r%s", this.region);
+        Registry registry = LocateRegistry.getRegistry();
+        this.readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
+        this.writeStubs = new HashMap<>();
 
-        String region = args[0];
-        if(!Config.isRegion(region)) {
-            System.err.println("Error: Invalid Region");   
-            return;
+        for(String partition: partitions) {
+            String writeNodeId = String.format("w%s", partition);
+            WriteRemoteInterface writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
+            this.writeStubs.put(partition, writeStub);
         }
+    }
 
+
+    public void requestROT(Set<String> keys) {
         try {
-            
-            Registry registry = LocateRegistry.getRegistry();
-            String readNodeId = String.format("r%s", region);
-            ReadRemoteInterface readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
-
-            Map<String, WriteRemoteInterface> writeStubs = new HashMap<>();
-            Set<String> partitions = Config.getPartitions(region);
-            for(String partition: partitions) {
-                String writeNodeId = String.format("w%s", partition);
-                WriteRemoteInterface writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
-                writeStubs.put(partition, writeStub);
-            }
-
-            Client client = new Client(writeStubs, readStub, region);
-            client.run();
-        } catch (RemoteException | NotBoundException e) {
-            System.err.println("Could not get registry");
-        }
-    }
-
-    public void run() {
-        Scanner scanner = new Scanner(System.in);
-        String input = null;
-        
-        do {   
-            System.out.println("Enter an operation:");
-            System.out.println("\tROT: R <key:String>+");
-            System.out.println("\tWrite: W <key:String> <value:Int>");
-            input = scanner.nextLine();
-            String[] commands = input.split(" ");
-
-            switch(commands[0]) {
-                case "R":
-                    if(commands.length - 1 < 1) {
-                        System.err.println("Error: Unsupported command");
-                    } else {
-                        requestROT(Arrays.copyOfRange(commands, 1, commands.length));
-                    }
-                    break;
-                case "W":
-                    if(commands.length - 1 != 2 || commands.length % 2 == 0) {
-                        System.err.println("Error: Unsupported command");
-                    } else {
-                        requestWrite(Arrays.copyOfRange(commands, 1, commands.length));
-                    }
-                    break;
-                default:
-                    System.err.println("Error: Unsupported command");
-                    break;
-            }
-
-        } while(input != null);
-
-        scanner.close();
-    }
-
-    private void requestROT(String[] commands) {
-        Set<String> keys = new HashSet<String>();
-        try {
-            for(String command: commands) {
-                keys.add(command);
-                if(!Config.isKeyInRegion(this.region, command)) {
+            for(String key: keys) {
+                if(!Config.isKeyInRegion(this.region, key)) {
                     throw new KeyNotFoundException();
                 }
             }
@@ -123,10 +69,8 @@ public class Client {
         }
     }
 
-    private void requestWrite(String[] commands) {
+    public void requestWrite(String key, byte[] value) {
         try {
-            String key = commands[0];
-            Integer value = Integer.parseInt(commands[1]);
             String partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
             String response = writeStub.write(key, value, this.lastWriteTimestamp);
@@ -134,15 +78,16 @@ public class Client {
             if(response != null) {
                 this.lastWriteTimestamp = response;
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-                System.out.println(String.format("Write response: %s = %d at %s ", key, value, this.lastWriteTimestamp));
+                System.out.println(String.format("Write response: %s = %s at %s ", key, Utils.stringFromByteArray(value), this.lastWriteTimestamp));
             } else {
-                System.out.println("Error: Write request failed");
+                System.err.println("Error: Write request failed");
             }
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Key is not available in region %s", this.region));
         } catch (NumberFormatException e) {
             System.err.println("Error: Value must be an Integer");
         } catch (RemoteException e) {
+            e.printStackTrace();
             System.err.println("Error: Could not connect with server");
         }
     }
@@ -157,18 +102,13 @@ public class Client {
         this.cache.keySet().removeAll(toPrune);
     }
 
-    private Map<String, Integer> getReadResponse(Map<String, Integer> response) {
-        Map<String, Integer> values = new HashMap<>();
+    private Map<String, String> getReadResponse(Map<String, byte[]> response) {
+        Map<String, String> values = new HashMap<>();
 
-        for(Entry<String, Integer> entry: response.entrySet()) {
+        for(Entry<String, byte[]> entry: response.entrySet()) {
             Version v = this.cache.getOrDefault(entry.getKey(), null);
-            if(v != null) {
-                values.put(entry.getKey(), v.getValue());
-            } else {
-                values.put(entry.getKey(), entry.getValue());
-            }
+            values.put(entry.getKey(), Utils.stringFromByteArray(v != null ? v.getValue() : entry.getValue()));
         }
-        
         return values;
     }
 }

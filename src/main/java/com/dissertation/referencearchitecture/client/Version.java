@@ -3,9 +3,9 @@ package com.dissertation.referencearchitecture.client;
 public class Version {
     private String key;
     private String timestamp;
-    private Integer value;
+    private byte[] value;
 
-    Version(String key, Integer value, String timestamp) {
+    Version(String key, byte[] value, String timestamp) {
         this.key = key;
         this.value = value;
         this.timestamp = timestamp;
@@ -15,7 +15,7 @@ public class Version {
         return key;
     }
 
-    public Integer getValue() {
+    public byte[] getValue() {
         return this.value;
     }
 

@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
+import com.dissertation.utils.Utils;
 
 public class ReaderStorage extends Storage {
     private ConcurrentMap<String, String> partitionsMaxTimestamp;
@@ -16,18 +17,18 @@ public class ReaderStorage extends Storage {
     public ReaderStorage(String region) {
         super();
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
-        this.stableTime = "0.0";
+        this.stableTime = Utils.MIN_TIMESTAMP;
         this.region = region;
     }
 
     public void init() {
         Set<String> partitions = Config.getPartitions(this.region);
         for(String partition: partitions) {
-            this.partitionsMaxTimestamp.put(partition, "0.0");
+            this.partitionsMaxTimestamp.put(partition, Utils.MIN_TIMESTAMP);
         }
     }
 
-    public void put(String key, String timestamp, int value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, byte[] value) throws KeyNotFoundException {
         super.put(key, timestamp, value);
         String partition = Config.getKeyPartition(this.region, key);
         if(timestamp.compareTo(partitionsMaxTimestamp.get(partition)) > 0) {

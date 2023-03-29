@@ -7,6 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.s3.S3Helper;
+import com.dissertation.utils.Utils;
 
 public class StoragePusher {
     private Storage storage;
@@ -21,8 +22,8 @@ public class StoragePusher {
 
     public boolean push(String timestamp) {
         try {
-            System.out.println(this.storage.getState());
             JSONObject json = toJson(this.storage.getState(), timestamp);
+            //System.out.println(json);
             this.s3Helper.persistClock(timestamp);
             return this.s3Helper.persistLog(this.partition, timestamp, json.toString());
         } catch (Exception e) {
@@ -40,10 +41,10 @@ public class StoragePusher {
             JSONObject versionChainJson = new JSONObject(); // Version chain of the key
             JSONArray versionsJson = new JSONArray(); // Array of versions of a key
             // For each version of the key that belongs to the snapshot defined by clockValue
-            for(Entry<String, Integer> version: versionChain.getValue().getVersionChain(timestamp).entrySet()) {
+            for(Entry<String, byte[]> version: versionChain.getValue().getVersionChain(timestamp).entrySet()) {
                 JSONObject versionJson = new JSONObject();
                 versionJson.put("key", version.getKey());
-                versionJson.put("value", version.getValue());
+                versionJson.put("value", Utils.stringFromByteArray(version.getValue()));
                 versionsJson.put(versionJson);
             }
             versionChainJson.put("key", versionChain.getKey());

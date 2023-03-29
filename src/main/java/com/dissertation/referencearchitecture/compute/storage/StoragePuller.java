@@ -7,6 +7,7 @@ import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
+import com.dissertation.utils.Utils;
 
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
@@ -30,7 +31,7 @@ public class StoragePuller implements Runnable {
                 if(s3Response.getTimestamp() != null && s3Response.getContent() != null) {
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent(), entry.getKey());
-                    System.out.println(this.storage.getState());    
+                    //System.out.println(s3Response.getContent());    
                 }   
             } catch (Exception e) {
                 e.printStackTrace();
@@ -48,7 +49,10 @@ public class StoragePuller implements Runnable {
             JSONArray versionChainArray = versionChainJson.getJSONArray("value");
             for(int j = 0; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
-                this.storage.put(versionChainJson.getString("key"), versionJson.getString("key"), versionJson.getInt("value"));
+                this.storage.put(
+                    versionChainJson.getString("key"), 
+                    versionJson.getString("key"), 
+                    Utils.byteArrayFromString(versionJson.getString("value")));
             }
         }
     }

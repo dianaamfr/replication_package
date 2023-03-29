@@ -4,16 +4,16 @@ import java.io.Serializable;
 import java.util.Map;
 
 public class ROTResponse implements Serializable {
-    private static final long serialVersionUID = 2L;
-    private Map<String, Integer> values;
+    private static final long serialVersionUID = 1L;
+    private Map<String, byte[]> values;
     private String stableTime;
 
-    public ROTResponse(Map<String, Integer> values, String stableTime) {
+    public ROTResponse(Map<String, byte[]> values, String stableTime) {
         this.values = values;
         this.stableTime = stableTime;
     }
 
-    public Map<String, Integer> getValues(){
+    public Map<String, byte[]> getValues(){
         return this.values;
     }
 
