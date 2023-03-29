@@ -11,6 +11,9 @@ public class Utils {
     }
     
     public static String stringFromByteArray(byte[] byteArray) {
+        if(byteArray.length == 0) {
+            return null;
+        }
         return new String(byteArray, StandardCharsets.UTF_8);
     }
 
@@ -19,18 +22,4 @@ public class Utils {
         new Random().nextBytes(b);
         return b;
     }
-/*     public static String stringFromByteBuffer(ByteBuffer buffer) {
-        return stringFromByteArray(buffer.array());
-    }
-
-    public static ByteBuffer byteBufferFromString(String encodedBuffer) {
-        return ByteBuffer.wrap(byteArrayFromString(encodedBuffer));    
-    }
-
-    public static ByteBuffer getRandomByteBuffer(int sizeInBytes) {
-        byte[] b = new byte[sizeInBytes];
-        new Random().nextBytes(b);
-        return ByteBuffer.wrap(b);
-    } */
-
 }

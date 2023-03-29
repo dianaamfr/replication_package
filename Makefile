@@ -24,6 +24,7 @@ emptyBuckets:
 	awslocal s3 rm s3://clock --recursive
 
 clear:
+	make emptyBuckets
 	mvn -q clean
 	
 rmi:
@@ -53,3 +54,6 @@ clientWest:
 
 clientEast:
 	$(run)="$(validationPath).ClientInterface" $(args)="us-east-1" -e
+
+writeGenerator:
+	$(run)="$(validationPath).WriteGenerator" -e

@@ -52,7 +52,9 @@ public class Client {
     }
 
 
-    public void requestROT(Set<String> keys) {
+    public ROTResponse requestROT(Set<String> keys) {
+        ROTResponse result = null;
+
         try {
             for(String key: keys) {
                 if(!Config.isKeyInRegion(this.region, key)) {
@@ -61,24 +63,27 @@ public class Client {
             }
             ROTResponse rotResponse = this.readStub.rot(keys);
             pruneCache(rotResponse.getStableTime());
-            System.out.println(String.format("ROT response: %s at %s", getReadResponse(rotResponse.getValues()).toString(), rotResponse.getStableTime()));
+            result = new ROTResponse(getReadResponse(rotResponse.getValues()), rotResponse.getStableTime());
         } catch (RemoteException e) {
             System.err.println("Error: Could not connect with server");
         } catch (KeyNotFoundException e) {
             System.err.println(String.format("Error: Not all keys are available in region %s", this.region));
         }
+
+        return result;
     }
 
-    public void requestWrite(String key, byte[] value) {
+    public String requestWrite(String key, byte[] value) {
+        String result = null;
+
         try {
             String partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
-            String response = writeStub.write(key, value, this.lastWriteTimestamp);
+            result = writeStub.write(key, value, this.lastWriteTimestamp);
 
-            if(response != null) {
-                this.lastWriteTimestamp = response;
+            if(result != null) {
+                this.lastWriteTimestamp = result;
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-                System.out.println(String.format("Write response: %s = %s at %s ", key, Utils.stringFromByteArray(value), this.lastWriteTimestamp));
             } else {
                 System.err.println("Error: Write request failed");
             }
@@ -90,6 +95,7 @@ public class Client {
             e.printStackTrace();
             System.err.println("Error: Could not connect with server");
         }
+        return result;
     }
 
     private void pruneCache(String stableTime) {
@@ -102,12 +108,12 @@ public class Client {
         this.cache.keySet().removeAll(toPrune);
     }
 
-    private Map<String, String> getReadResponse(Map<String, byte[]> response) {
-        Map<String, String> values = new HashMap<>();
+    private Map<String, byte[]> getReadResponse(Map<String, byte[]> response) {
+        Map<String, byte[]> values = new HashMap<>();
 
         for(Entry<String, byte[]> entry: response.entrySet()) {
             Version v = this.cache.getOrDefault(entry.getKey(), null);
-            values.put(entry.getKey(), Utils.stringFromByteArray(v != null ? v.getValue() : entry.getValue()));
+            values.put(entry.getKey(), v != null ? v.getValue() : entry.getValue());
         }
         return values;
     }

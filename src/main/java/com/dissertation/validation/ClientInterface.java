@@ -3,8 +3,10 @@ package com.dissertation.validation;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
+import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.utils.Utils;
 
 public class ClientInterface {
@@ -70,7 +72,17 @@ public class ClientInterface {
             return;
         } 
         
-        this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
+        ROTResponse result = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
+        if(result != null) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(String.format("ROT at %s:", result.getStableTime()));
+            for(Entry<String, byte[]> entry: result.getValues().entrySet()) {
+                builder.append(String.format("\n\t%s = %s", entry.getKey(), Utils.stringFromByteArray(entry.getValue())));
+            }
+            System.out.println(builder.toString());
+        } else {
+            System.err.println("Error: ROT failed");
+        }
     }
 
     private void sendWriteRequest(String[] commands) {
@@ -79,6 +91,14 @@ public class ClientInterface {
             return;
         }
 
-        this.client.requestWrite(commands[0], Utils.byteArrayFromString(commands[1]));
+        String key = commands[0];
+        byte[] value = Utils.byteArrayFromString(commands[1]);
+        String result = this.client.requestWrite(key, value);
+        
+        if(result != null) {
+            System.out.println(String.format("Write response: %s = %s at %s ", key, commands[1], result));
+        } else {
+            System.err.println("Error: Write failed");
+        }
     }
 }

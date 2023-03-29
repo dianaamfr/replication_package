@@ -23,6 +23,7 @@ import com.dissertation.referencearchitecture.s3.S3Helper;
 
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private ReaderStorage storage; 
+    public static final int PUSH_DELAY = 10000;
     
     public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String region, ReaderStorage storage) throws URISyntaxException {
         super(scheduler, s3Helper, String.format("r%s", region));
@@ -30,7 +31,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), 5000, 5000, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), PUSH_DELAY, PUSH_DELAY, TimeUnit.MILLISECONDS);
     }
     
     public static void main(String[] args) {
