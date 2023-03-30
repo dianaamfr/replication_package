@@ -1,52 +1,92 @@
 package com.dissertation.validation;
 
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.config.Config;
-import com.dissertation.referencearchitecture.exceptions.InvalidRegionException;
 import com.dissertation.utils.Utils;
 
 public class WriteGenerator {
     private ScheduledThreadPoolExecutor scheduler;
-    private static final int MAX_THREADS = 4;
-    private static final int OBJECT_BYTES = 8;
-    private static final int DELAY = 1000;
     private Random random;
     private int numPartitions;
+    private final int delay;
+    private final int bytes;
+    private final int writesPerPartition;
+    private final int clientsPerPartition;
+    private CountDownLatch startSignal;
+    private AtomicIntegerArray counters;
+    private List<String> partitions;
 
-    public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Random random) {
+    private static final int MAX_THREADS = 20;
+    private static final int OBJECT_BYTES = 8;
+    private static final int WRITE_DELAY = 200;
+    private static final int PARTITION_WRITES = 15;
+    private static final int PARTITION_CLIENTS = 1;
+
+    public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Random random, int delay, int bytes, int writesPerPartition, int clientsPerPartition) {
         this.scheduler = scheduler;
         this.random = random;
-        initWriteThreads();
-        getRandomKey("partition1");
+        this.delay = delay;
+        this.bytes = bytes;
+        this.writesPerPartition = writesPerPartition;
+        this.clientsPerPartition = clientsPerPartition;
+        this.partitions = new ArrayList<>(Config.getPartitions());
+        this.numPartitions = partitions.size();
+        this.startSignal = new CountDownLatch(1);
+        this.counters = new AtomicIntegerArray(
+            (new ArrayList<Integer>(Collections.nCopies(this.numPartitions, 0))).stream().mapToInt(i -> i).toArray());
     }
 
     public static void main(String[] args) {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(MAX_THREADS);
-        new WriteGenerator(scheduler, new Random(1));
+
+        try {
+            int delay = args.length > 0 ? Integer.parseInt(args[0]) : WRITE_DELAY;
+            int bytes = args.length > 1 ? Integer.parseInt(args[1]) : OBJECT_BYTES;
+            int writesPerPartition = args.length > 2 ? Integer.parseInt(args[2]) : PARTITION_WRITES;
+            int clientsPerPartition = args.length > 3 ? Integer.parseInt(args[3]) : PARTITION_CLIENTS; 
+            WriteGenerator writeGenerator = new WriteGenerator(scheduler, new Random(1), delay, bytes, writesPerPartition, clientsPerPartition);  
+            writeGenerator.run();
+        } catch(NumberFormatException e) {
+            System.err.println("Usage: WriteGenerator <delay:Int> <bytes:Int>");
+        }
     }
 
-    private void initWriteThreads() {
-        Set<String> partitions = Config.getPartitions();
-        this.numPartitions = partitions.size();
+    private void run() {
+        List<CountDownLatch> countDowns = new ArrayList<>();
 
-        for(String partition: partitions) {
-            Client c;
-            try {
-                c = new Client(getRandomRegion(partition));
-                this.scheduler.scheduleWithFixedDelay(new PartitionWriteGenerator(c, partition), 0, DELAY, TimeUnit.MILLISECONDS);
-            } catch (RemoteException | InvalidRegionException |NotBoundException e) {
-                System.err.println("Error: " + e.toString());
+        for(int i = 0; i < this.numPartitions; i++) {
+            CountDownLatch writeSignal = new CountDownLatch(this.writesPerPartition);
+            countDowns.add(writeSignal);
+            for(int j = 0; j < this.clientsPerPartition; j++) {
+                try {
+                    Client c = new Client(getRandomRegion(this.partitions.get(i)));
+                    this.scheduler.schedule(
+                        new PartitionWriteGenerator(c, this.partitions.get(i), i, writeSignal), 
+                        0, TimeUnit.MILLISECONDS);
+                } catch (Exception e) {
+                    System.err.println("Error: " + e.toString());
+                }
             }
         }
+
+        startSignal.countDown();
+        for(int i=0; i<this.numPartitions; i++) {
+            try {
+                countDowns.get(i).await();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        this.scheduler.shutdown();
     }
 
     private String getRandomRegion(String partition) {
@@ -64,19 +104,35 @@ public class WriteGenerator {
     }
 
     private class PartitionWriteGenerator implements Runnable {
-        Client client;
+        private Client client;
         private String partition;
-
-        public PartitionWriteGenerator(Client client, String partition) {
+        private int index;
+        private CountDownLatch writeSignal;
+        
+        public PartitionWriteGenerator(Client client, String partition, int index, CountDownLatch writeSignal) {
             this.client = client;
             this.partition = partition;
+            this.index = index;
+            this.writeSignal = writeSignal;
         }
 
         @Override
         public void run() {
             String key = getRandomKey(this.partition);
-            byte[] value = Utils.getRandomByteArray(OBJECT_BYTES);
-            this.client.requestWrite(key, value);
+            byte[] value = Utils.getRandomByteArray(bytes);
+            try {
+                startSignal.await();
+                
+                if(counters.getAndIncrement(index) < writesPerPartition) {
+                    this.client.requestWrite(key, value);
+                    scheduler.schedule(
+                        new PartitionWriteGenerator(this.client, this.partition, this.index, this.writeSignal), 
+                        delay, TimeUnit.MILLISECONDS);
+                    this.writeSignal.countDown();
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+            }
         }
     }
 }
