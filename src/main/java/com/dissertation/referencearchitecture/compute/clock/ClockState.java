@@ -8,12 +8,12 @@ public class ClockState {
     private Event originEvent;
     private WriteState writeState;
 
-    enum Event {
+    public enum Event {
         SYNC,
         WRITE
     }
 
-    enum WriteState {
+    public enum WriteState {
         IDLE,
         IN_PROGRESS
     }
@@ -95,4 +95,12 @@ public class ClockState {
         return logicalTime + "." + logicalCount;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if(!(o instanceof ClockState)) {
+            return false;
+        }
+        ClockState timestamp = (ClockState) o;
+        return this.logicalTime == timestamp.getLogicalTime();
+    }
 }

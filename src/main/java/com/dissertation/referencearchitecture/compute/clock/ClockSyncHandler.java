@@ -28,7 +28,8 @@ public class ClockSyncHandler implements Runnable {
         if(recvTimestamp == null) {
             return;
         }
-        recvTimestamp = recvTimestamp.split("Clock/")[1];      
+        recvTimestamp = recvTimestamp.split("Clock/")[1]; 
+        //System.out.println("SYNC: current=" + currentTimestamp + " recv=" + recvTimestamp);     
 
         ClockState recvTime;
         try {

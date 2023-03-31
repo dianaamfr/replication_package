@@ -86,4 +86,5 @@ public class HLC {
     private ClockState setSyncEvent(ClockState prevTime) {
         return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), Event.SYNC);
     }
+
 }
