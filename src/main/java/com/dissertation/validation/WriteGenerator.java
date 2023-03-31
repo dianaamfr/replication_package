@@ -80,7 +80,7 @@ public class WriteGenerator {
         }
     }
 
-    private void run() {
+    public void run() {
         startSignal.countDown();
         for (int i = 0; i < this.partitions.size(); i++) {
             try {

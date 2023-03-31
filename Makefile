@@ -57,3 +57,6 @@ clientEast:
 
 writeGenerator:
 	$(run)="$(validationPath).WriteGenerator" -e
+
+readGenerator:
+	$(run)="$(validationPath).ReadGenerator" -e

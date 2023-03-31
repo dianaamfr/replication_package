@@ -71,6 +71,10 @@ public final class Config {
         return partitionName.equals(partition);
     }
 
+    public static Set<String> getRegions() {
+        return partitionsPerRegion.keySet();
+    }
+
     public static Set<String> getPartitions() {
         return partitions;
     }   
