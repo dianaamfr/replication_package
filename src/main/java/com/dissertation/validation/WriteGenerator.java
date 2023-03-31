@@ -16,14 +16,14 @@ import com.dissertation.utils.Utils;
 public class WriteGenerator {
     private ScheduledThreadPoolExecutor scheduler;
     private Random random;
-    private int numPartitions;
     private final int delay;
     private final int bytes;
     private final int writesPerPartition;
     private final int clientsPerPartition;
+    private List<String> partitions;
     private CountDownLatch startSignal;
     private AtomicIntegerArray counters;
-    private List<String> partitions;
+    private List<CountDownLatch> countDowns;
 
     private static final int MAX_THREADS = 20;
     private static final int OBJECT_BYTES = 8;
@@ -31,7 +31,8 @@ public class WriteGenerator {
     private static final int PARTITION_WRITES = 15;
     private static final int PARTITION_CLIENTS = 1;
 
-    public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Random random, int delay, int bytes, int writesPerPartition, int clientsPerPartition) {
+    public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Random random, int delay, int bytes,
+            int writesPerPartition, int clientsPerPartition) {
         this.scheduler = scheduler;
         this.random = random;
         this.delay = delay;
@@ -39,10 +40,11 @@ public class WriteGenerator {
         this.writesPerPartition = writesPerPartition;
         this.clientsPerPartition = clientsPerPartition;
         this.partitions = new ArrayList<>(Config.getPartitions());
-        this.numPartitions = partitions.size();
         this.startSignal = new CountDownLatch(1);
-        this.counters = new AtomicIntegerArray(
-            (new ArrayList<Integer>(Collections.nCopies(this.numPartitions, 0))).stream().mapToInt(i -> i).toArray());
+        this.counters = new AtomicIntegerArray((new ArrayList<Integer>(Collections.nCopies(this.partitions.size(), 0)))
+                .stream().mapToInt(i -> i).toArray());
+        this.countDowns = new ArrayList<>();
+        this.init();
     }
 
     public static void main(String[] args) {
@@ -52,34 +54,35 @@ public class WriteGenerator {
             int delay = args.length > 0 ? Integer.parseInt(args[0]) : WRITE_DELAY;
             int bytes = args.length > 1 ? Integer.parseInt(args[1]) : OBJECT_BYTES;
             int writesPerPartition = args.length > 2 ? Integer.parseInt(args[2]) : PARTITION_WRITES;
-            int clientsPerPartition = args.length > 3 ? Integer.parseInt(args[3]) : PARTITION_CLIENTS; 
-            WriteGenerator writeGenerator = new WriteGenerator(scheduler, new Random(1), delay, bytes, writesPerPartition, clientsPerPartition);  
+            int clientsPerPartition = args.length > 3 ? Integer.parseInt(args[3]) : PARTITION_CLIENTS;
+            WriteGenerator writeGenerator = new WriteGenerator(scheduler, new Random(1), delay, bytes,
+                    writesPerPartition, clientsPerPartition);
             writeGenerator.run();
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             System.err.println("Usage: WriteGenerator <delay:Int> <bytes:Int>");
         }
     }
 
-    private void run() {
-        List<CountDownLatch> countDowns = new ArrayList<>();
-
-        for(int i = 0; i < this.numPartitions; i++) {
+    private void init() {
+        for (int i = 0; i < this.partitions.size(); i++) {
             CountDownLatch writeSignal = new CountDownLatch(this.writesPerPartition);
             countDowns.add(writeSignal);
-            for(int j = 0; j < this.clientsPerPartition; j++) {
+            for (int j = 0; j < this.clientsPerPartition; j++) {
                 try {
                     Client c = new Client(getRandomRegion(this.partitions.get(i)));
                     this.scheduler.schedule(
-                        new PartitionWriteGenerator(c, this.partitions.get(i), i, writeSignal), 
-                        0, TimeUnit.MILLISECONDS);
+                            new PartitionWriteGenerator(c, this.partitions.get(i), i, writeSignal),
+                            0, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
                     System.err.println("Error: " + e.toString());
                 }
             }
         }
+    }
 
+    private void run() {
         startSignal.countDown();
-        for(int i=0; i<this.numPartitions; i++) {
+        for (int i = 0; i < this.partitions.size(); i++) {
             try {
                 countDowns.get(i).await();
             } catch (Exception e) {
@@ -98,8 +101,8 @@ public class WriteGenerator {
         String result = "";
         int partitionId = Integer.valueOf(partition.split("partition")[1]);
         do {
-            result = String.valueOf((char)(this.random.nextInt(26) + 'a'));
-        } while((Math.floorMod(result.hashCode(), this.numPartitions) + 1) != partitionId);
+            result = String.valueOf((char) (this.random.nextInt(26) + 'a'));
+        } while ((Math.floorMod(result.hashCode(), this.partitions.size()) + 1) != partitionId);
         return result;
     }
 
@@ -108,7 +111,7 @@ public class WriteGenerator {
         private String partition;
         private int index;
         private CountDownLatch writeSignal;
-        
+
         public PartitionWriteGenerator(Client client, String partition, int index, CountDownLatch writeSignal) {
             this.client = client;
             this.partition = partition;
@@ -122,12 +125,11 @@ public class WriteGenerator {
             byte[] value = Utils.getRandomByteArray(bytes);
             try {
                 startSignal.await();
-                
-                if(counters.getAndIncrement(index) < writesPerPartition) {
+                if (counters.getAndIncrement(index) < writesPerPartition) {
                     this.client.requestWrite(key, value);
                     scheduler.schedule(
-                        new PartitionWriteGenerator(this.client, this.partition, this.index, this.writeSignal), 
-                        delay, TimeUnit.MILLISECONDS);
+                            new PartitionWriteGenerator(this.client, this.partition, this.index, this.writeSignal),
+                            delay, TimeUnit.MILLISECONDS);
                     this.writeSignal.countDown();
                 }
             } catch (Exception e) {
