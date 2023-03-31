@@ -19,7 +19,6 @@ For a more detailed description of the reference architecture please refer to [R
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
 
 ### Next steps
-- Generate Read/Write Load (*in progress*)
 - Setup S3 Replication
 - Optimize log persistance and fetching
 - Improve clock synchronization strategy when S3 replication is in place
@@ -39,7 +38,8 @@ For a more detailed description of the reference architecture please refer to [R
 - `utils`: Util functions and variables.
 - `validation`: Comprises different classes that can be used to test the prototype, namely:
     - `ClientInterface`: To test the prototype through a command-line interface.
-    - `WriteGenerator`: To generate write load. 
+    - `WriteGenerator`: To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
+    - `ReadGenerator`: To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized. 
 
 
 ### Dependencies
@@ -48,6 +48,7 @@ For a more detailed description of the reference architecture please refer to [R
 - Maven
 
 ### Execution Instructions
+**User-friendly CLI**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
 3. Create buckets: `make createBuckets`. This command creates buckets in:
@@ -73,6 +74,20 @@ For a more detailed description of the reference architecture please refer to [R
         - ROT example: `R x y` (keys must be available in the region)
         - Write example: `W x 3` (the value must be an integer)
 
+**Load Generators**:
+1. Open a terminal and start LocalStack: `localstack start` 
+2. Open a new terminal in the root folder
+3. Create buckets: `make createBuckets`. This command creates buckets in:
+    - us-east-1:
+        - bucket "partition1": keys "x" and "y"
+        - bucket "partition2": key "z"
+        - bucket "clock", which is used to persist the clock values
+    - use-west-1:
+        - bucket "partition3": key "p"
+4. `make`
+5. Start the Write Generator: `make writeGenerator`
+6. Start the Read Generator: `make readGenerator`
+
 ## Candidate Reference Architecture
 
 ![Candidate Reference Architecture](images/reference-architecture.png)
@@ -89,7 +104,6 @@ Logical clock or Hybrid Logical Clock
 - Clients are sticky to a *Read Compute Node* of their region.
 
 **Overview**:
-
 - The Client Layer forwards writes and ROTs to the Compute Layer through a client library. Writes are forwarded to the *Write Compute Node* of the partition that is responsible for the data item that is written. ROTs are forwarded to the *Read Compute Node* of the nearest region.
 - The client stores his writes in cache until he knows that they are stable. 
 - There is a *Write Compute Node* per partition that orders the writes to that partition, updates the partition’s log and persists it to the ECDS.
