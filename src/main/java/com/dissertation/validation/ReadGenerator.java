@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.config.Config;
@@ -41,11 +42,10 @@ public class ReadGenerator {
         this.keys = keys;
         this.readsPerRegion = readsPerRegion;
         this.clientsPerRegion = clientsPerRegion;
-        this.regions = new ArrayList<>(Config.getRegions());
+        this.regions = Config.getRegions().stream().collect(Collectors.toUnmodifiableList());
         this.numPartitions = Config.getPartitions().size();
         this.startSignal = new CountDownLatch(1);
-        this.counters = new AtomicIntegerArray((new ArrayList<Integer>(Collections.nCopies(this.regions.size(), 0)))
-                .stream().mapToInt(i -> i).toArray());
+        this.counters = new AtomicIntegerArray(Collections.nCopies(this.regions.size(), 0).stream().mapToInt(i -> i).toArray());
         this.countDowns = new ArrayList<>();
         this.init();
     }

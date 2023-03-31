@@ -1,7 +1,7 @@
 package com.dissertation.utils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Utils {
     public final static String MIN_TIMESTAMP = "0.0";
@@ -19,7 +19,7 @@ public class Utils {
 
     public static byte[] getRandomByteArray(int sizeInBytes) {
         byte[] b = new byte[sizeInBytes];
-        new Random().nextBytes(b);
+        ThreadLocalRandom.current().nextBytes(b);
         return b;
     }
 }
