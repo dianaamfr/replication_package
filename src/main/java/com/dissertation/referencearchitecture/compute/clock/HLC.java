@@ -1,64 +1,89 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BinaryOperator;
+import java.util.function.UnaryOperator;
+
+import com.dissertation.referencearchitecture.compute.clock.ClockState.Event;
+import com.dissertation.referencearchitecture.compute.clock.ClockState.WriteState;
 
 public class HLC {
     private TimeProvider timeProvider;
-    private HybridTimestamp currentTime;
-    private AtomicBoolean newUpdate;
+    private AtomicReference<ClockState> currentTime;
+    private BinaryOperator<ClockState> updateClockOperator;
+    private BinaryOperator<ClockState> syncClockOperator;
+    private UnaryOperator<ClockState> originEventOperator;
+    private UnaryOperator<ClockState> writeStateOperator;
 
     public HLC(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
-        this.currentTime = new HybridTimestamp(timeProvider.getTime());
-        this.newUpdate = new AtomicBoolean(false);
+        this.currentTime = new AtomicReference<ClockState>(new ClockState());
+        this.updateClockOperator = this::updateClock;
+        this.syncClockOperator = this::syncClock;
+        this.originEventOperator = this::setSyncEvent;
+        this.writeStateOperator = this::setWriteComplete;
     }
 
-    public void writeEvent(HybridTimestamp recvTime) {
-        newUpdate.set(true);
-        long physicalTime = timeProvider.getTime();
-        HybridTimestamp newTime = new HybridTimestamp(physicalTime);
+    public ClockState getCurrentTimestamp() {
+        return this.currentTime.get();
+    }
+
+   
+    public ClockState writeEvent(ClockState recvEvent) {
+        return this.currentTime.accumulateAndGet(recvEvent, this.updateClockOperator);
+    }
+
+    public ClockState syncEvent(ClockState recvEvent) {
+        return this.currentTime.accumulateAndGet(recvEvent, this.syncClockOperator);
+    }
+
+    public ClockState getLastClockAndSetSyncEvent() {
+        return this.currentTime.getAndUpdate(this.originEventOperator);
+    }
+ 
+    public void writeComplete() {
+        this.currentTime.updateAndGet(this.writeStateOperator);
+    }
+
+    
+    private ClockState updateClock(ClockState prevTime, ClockState recvTime) {
+        ClockState newTime = new ClockState();
+        long inc = recvTime.isWriteEvent() ? 1 : 0;
+
         newTime.setLogicalTime(
-            Math.max(this.currentTime.getLogicalTime(), 
-            Math.max(physicalTime, recvTime.getLogicalTime())));
-        
-        boolean isLocalTimeEqual = newTime.equals(this.currentTime);
+                Math.max(prevTime.getLogicalTime(),
+                        Math.max(timeProvider.getTime(), recvTime.getLogicalTime())));
+
+        boolean isLocalTimeEqual = newTime.equals(prevTime);
         boolean isRecvTimeEqual = newTime.equals(recvTime);
-        if(isLocalTimeEqual && isRecvTimeEqual) {
-            newTime.setLogicalCount(Math.max(
-                this.currentTime.getLogicalCount(), 
-                recvTime.getLogicalCount()) + 1);
-        } else if(isLocalTimeEqual) {
-            newTime.setLogicalCount(this.currentTime.getLogicalCount() + 1);
-        } else if(isRecvTimeEqual) {
-            newTime.setLogicalCount(recvTime.getLogicalCount() + 1);
+
+        if (isLocalTimeEqual && isRecvTimeEqual) {
+            newTime.setLogicalCount(Math.max(prevTime.getLogicalCount(), recvTime.getLogicalCount())
+                    + inc);
+        } else if (isLocalTimeEqual) {
+            newTime.setLogicalCount(prevTime.getLogicalCount() + inc);
+        } else if (isRecvTimeEqual) {
+            newTime.setLogicalCount(recvTime.getLogicalCount() + inc);
         }
 
-        this.currentTime = newTime;
+        newTime.setOriginEvent(recvTime.getOriginEvent());
+        newTime.setWriteState(WriteState.IN_PROGRESS);
+
+        return newTime;
+    };
+
+    private ClockState syncClock(ClockState prevTime, ClockState recvTime) {
+        if (prevTime.isWriteEvent() || prevTime.isWriteInProgress()) {
+            return prevTime;
+        } 
+        return updateClock(prevTime, recvTime);
     }
 
-    public void syncEvent(HybridTimestamp recvTime) {
-        long physicalTime = timeProvider.getTime();
-        HybridTimestamp newTime = new HybridTimestamp(physicalTime);
-        newTime.setLogicalTime(
-            Math.max(this.currentTime.getLogicalTime(), 
-            Math.max(physicalTime, recvTime.getLogicalTime())));
-       
-        boolean isLocalTimeEqual = newTime.equals(this.currentTime);
-        boolean isRecvTimeEqual = newTime.equals(recvTime);
-        if(isLocalTimeEqual && isRecvTimeEqual) {
-            newTime.setLogicalCount(Math.max(
-                this.currentTime.getLogicalCount(), 
-                recvTime.getLogicalCount()));
-        }
-
-        this.currentTime = newTime;
+    private ClockState setWriteComplete(ClockState prevTime) {
+        return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), Event.WRITE, WriteState.IDLE);
     }
 
-    public HybridTimestamp getTimestamp() {
-        return this.currentTime;
-    }
-
-    public boolean hasNewUpdates() {
-        return newUpdate.compareAndSet(true, false);
+    private ClockState setSyncEvent(ClockState prevTime) {
+        return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), Event.SYNC);
     }
 }
