@@ -28,7 +28,6 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private StoragePusher storagePusher;
     private HLC hlc;
     private String partition;
-    public static final int SYNC_DELAY = 10000;
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException {
         super(scheduler, s3Helper, String.format("w%s", partition));
@@ -39,7 +38,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher), SYNC_DELAY, SYNC_DELAY, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher), Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -59,7 +58,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             S3Helper s3Helper = new S3Helper();
             Storage storage = new Storage();
             StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
-            HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_SYNC_DELAY));
+            HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
             WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, storagePusher, hlc);
 
