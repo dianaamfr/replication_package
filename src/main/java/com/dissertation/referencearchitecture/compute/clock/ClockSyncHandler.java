@@ -1,6 +1,6 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
-import com.dissertation.referencearchitecture.compute.clock.ClockState.Event;
+import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
@@ -19,7 +19,8 @@ public class ClockSyncHandler implements Runnable {
     @Override
     public void run() {
         // Cancel sync if new writes have been performed
-        if(this.hlc.getLastClockAndSetSyncEvent().isWriteEvent()) {
+        ClockState currentTime = this.hlc.updateAndGetState();
+        if(!currentTime.isSync()) {
             return;
         }
         
@@ -33,8 +34,7 @@ public class ClockSyncHandler implements Runnable {
 
         ClockState recvTime;
         try {
-            recvTime = ClockState.fromString(recvTimestamp);
-            recvTime.setOriginEvent(Event.SYNC);
+            recvTime = ClockState.fromString(recvTimestamp, State.SYNC);
         } catch (InvalidTimestampException e) {
             System.err.println(String.format("Error: Invalid recent timestamp"));
             return;

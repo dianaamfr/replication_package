@@ -13,6 +13,7 @@ import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
+import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.config.Config;
@@ -87,7 +88,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
         ClockState lastTimestamp;
         try {
-            lastTimestamp = ClockState.fromString(lastWriteTimestamp);
+            lastTimestamp = ClockState.fromString(lastWriteTimestamp, State.WRITE);
         } catch (InvalidTimestampException e) {
             System.err.println(String.format("Error: Invalid lastWriteTimestamp"));
             return null;

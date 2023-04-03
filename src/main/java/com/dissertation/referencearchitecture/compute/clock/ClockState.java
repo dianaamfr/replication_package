@@ -5,42 +5,28 @@ import com.dissertation.referencearchitecture.exceptions.InvalidTimestampExcepti
 public class ClockState {
     private long logicalTime;      
     private long logicalCount;
-    private Event originEvent;
-    private WriteState writeState;
+    private State state;
 
-    public enum Event {
+    public enum State {
+        WRITE,
         SYNC,
-        WRITE
+        INACTIVE,
+        ACTIVE
     }
 
-    public enum WriteState {
-        IDLE,
-        IN_PROGRESS
-    }
-
+    
     public ClockState() {
         this.logicalTime = 0;
         this.logicalCount = 0;
-        this.originEvent = Event.WRITE;
-        this.writeState = WriteState.IDLE;
+        this.state = State.INACTIVE;
     }
 
-    public ClockState(long logicalTime, long logicalCount) {
+    public ClockState(long logicalTime, long logicalCount, State state) {
         this.logicalTime = logicalTime;
         this.logicalCount = logicalCount;
-        this.originEvent = Event.WRITE;
-        this.writeState = WriteState.IDLE;
+        this.state = state;
     }
 
-    public ClockState(long logicalTime, long logicalCount, Event originEvent) {
-        this(logicalTime, logicalCount);
-        this.originEvent = originEvent;
-    }
-
-    public ClockState(long logicalTime, long logicalCount, Event originEvent, WriteState writeState) {
-        this(logicalTime, logicalCount, originEvent);
-        this.writeState = writeState;
-    }
 
     public void setLogicalTime(long logicalTime) {
         this.logicalTime = logicalTime;
@@ -50,13 +36,10 @@ public class ClockState {
         this.logicalCount = logicalCount;
     }
 
-    public void setOriginEvent(Event originEvent) {
-        this.originEvent = originEvent;
+    public void setState(State state) {
+        this.state = state;
     }
 
-    public void setWriteState(WriteState writeState) {
-        this.writeState = writeState;
-    }
 
     public long getLogicalTime() {
         return this.logicalTime;
@@ -66,28 +49,29 @@ public class ClockState {
         return this.logicalCount;
     }
 
-    public Event getOriginEvent() {
-        return this.originEvent;
+    public boolean isActive() {
+        return this.state.equals(State.ACTIVE);
     }
 
-    public boolean isWriteEvent() {
-        return this.originEvent.equals(Event.WRITE);
+    public boolean isSync() {
+        return this.state.equals(State.SYNC);
     }
 
-    public WriteState getWriteState() {
-        return this.writeState;
+    public State getState() {
+        return this.state;
     }
 
-    public boolean isWriteInProgress() {
-        return this.writeState.equals(WriteState.IN_PROGRESS);
+    public boolean isWrite() {
+        return this.state.equals(State.WRITE);
     }
 
-    public static ClockState fromString(String timestamp) throws InvalidTimestampException {
+
+    public static ClockState fromString(String timestamp, State state) throws InvalidTimestampException {
         String[] parts = timestamp.split("\\.");  
         if(parts.length != 2) {
             throw new InvalidTimestampException();
         }
-        return new ClockState(Long.valueOf(parts[0]), Long.valueOf(parts[1]));
+        return new ClockState(Long.valueOf(parts[0]), Long.valueOf(parts[1]), state);
     }
 
     @Override
