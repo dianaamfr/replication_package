@@ -15,6 +15,6 @@ public abstract class Response implements Serializable {
     }
 
     public boolean isError() {
-        return true;
+        return false;
     }
 }
