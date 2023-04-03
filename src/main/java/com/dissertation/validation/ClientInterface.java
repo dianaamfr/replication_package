@@ -97,7 +97,7 @@ public class ClientInterface {
         WriteResponse result = this.client.requestWrite(key, value);
         
         if(!result.isError()) {
-            System.out.println(String.format("Write response: %s = %s at %s ", key, commands[1], result));
+            System.out.println(String.format("Write response: %s = %s at %s ", key, commands[1], result.getTimestamp()));
         } else {
             System.err.println(result.getStatus());
         }

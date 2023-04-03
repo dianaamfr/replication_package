@@ -77,14 +77,16 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
         Map<String, byte[]> values = new HashMap<>(readSet.size());
         String stableTime = this.storage.getStableTime();
 
-        try {
-            for (String key: readSet) {
+        for (String key: readSet) {
+            try {
                 byte[] value = this.storage.get(key, stableTime).getValue();
                 values.put(key, value);
-            }
-        } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
-            return new ROTError(e.toString());
-        }    
+            } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
+                values.put(key, new byte[0]);
+            } catch (Exception e) {
+                return new ROTError(e.toString());
+            }    
+        }
         return new ROTResponse(values, stableTime);
     }
 }
