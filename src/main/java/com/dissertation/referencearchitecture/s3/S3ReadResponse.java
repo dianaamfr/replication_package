@@ -1,22 +1,34 @@
 package com.dissertation.referencearchitecture.s3;
 
-public class S3ReadResponse {
+import com.dissertation.utils.Response;
+
+public class S3ReadResponse extends Response {
     private String timestamp;
     private String content;
 
-    public S3ReadResponse(String key) {
-        this.timestamp = key.split("Logs/")[1];
+    public S3ReadResponse() {
+        super();
+        this.timestamp = "";
+        this.content = "";
     }
 
-    public S3ReadResponse() {}
+    public S3ReadResponse(String timestamp) {
+        this();
+        this.timestamp = timestamp;
+        this.content = "";
+    }
 
-    public S3ReadResponse(String key, String content) {
-        this.timestamp = key.split("Logs/")[1];
+    public S3ReadResponse(String timestamp, String content) {
+        this(timestamp);
         this.content = content;
     }
 
     public boolean hasContent() {
-        return this.content != null;
+        return !this.content.isBlank();
+    }
+
+    public boolean hasTimestamp() {
+        return !this.timestamp.isBlank();
     }
 
     public String getContent() {

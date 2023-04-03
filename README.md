@@ -16,13 +16,12 @@ For a more detailed description of the reference architecture please refer to [R
 - **Client Layer**: Connects with the Compute Layer via RMI.
 - **Clock**: Hybrid Logical Clock.
 - **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
-- **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
+- **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than its own, it advances its clock.
 
 ### Next steps
 - Setup S3 Replication
 - Optimize log persistance and fetching
 - Improve clock synchronization strategy when S3 replication is in place
-- Avoid locks if possible
 - Garbage Collection
 
 ## Getting Started
@@ -33,14 +32,13 @@ For a more detailed description of the reference architecture please refer to [R
     - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
     - `config`: Temporarily stores a predefined configuration of the data store (regions and partitions) and provides helper functions to consult that configuration. 
     - `exceptions`: Custom exceptions used throughout the source code.
-    - `remoteInterface`: Interfaces that define the methods used for the RMI ROT and write requests.
+    - `remoteInterface`: Interfaces that define the methods used for the RMI ROT and write requests and response classes.
     - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
-- `utils`: Util functions and variables.
+- `utils`: Util functions, constants and classes.
 - `validation`: Comprises different classes that can be used to test the prototype, namely:
     - `ClientInterface`: To test the prototype through a command-line interface.
     - `WriteGenerator`: To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
     - `ReadGenerator`: To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized. 
-
 
 ### Dependencies
 - [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/)
@@ -113,3 +111,6 @@ Logical clock or Hybrid Logical Clock
 - Given that there are multiple writers, clocks must be synchronized to ensure writes become visible.
 - When a *Read Compute Node* receives a ROT request, it reads from the *stableTime* and sends back the *stableTime* together with the requested values so that the client may prune his cache and determine which values to return. After pruning the cache, if the client has a version in his cache of one of the requested items, he must return the value in his cache to ensure read-your-writes.
 
+**Clock Synchronization**
+
+![Clock Synchronization](images/clock-sync.png)

@@ -28,11 +28,13 @@ public class StoragePuller implements Runnable {
         for(Entry<String, String> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(entry.getKey(), String.valueOf(entry.getValue()));
-                if(s3Response.getTimestamp() != null && s3Response.getContent() != null) {
+                if(s3Response.hasContent() && s3Response.hasTimestamp()) {
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent(), entry.getKey());
                     //System.out.println(s3Response.getContent());    
-                }   
+                } else if(s3Response.isError()) {
+                    System.err.println(s3Response.getStatus());
+                }
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println(String.format("Error: Error when pulling from partition %s", entry.getKey()));

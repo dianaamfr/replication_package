@@ -1,9 +1,9 @@
 package com.dissertation.referencearchitecture.remoteInterface.response;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.dissertation.utils.Response;
 import com.dissertation.utils.Utils;
 
 public class ROTResponse extends Response {

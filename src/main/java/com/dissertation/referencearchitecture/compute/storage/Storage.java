@@ -28,6 +28,12 @@ public class Storage {
         return this.keyVersions.get(key).get(maxTimestamp);
     }
 
+    public void delete(String key, String timestamp) throws KeyNotFoundException {
+        if(this.keyVersions.containsKey(key)){
+            this.keyVersions.get(key).delete(timestamp);
+        }
+    }
+
     public ConcurrentMap<String,VersionChain> getState() {
         return this.keyVersions;
     }

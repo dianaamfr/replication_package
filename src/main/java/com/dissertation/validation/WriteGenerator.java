@@ -3,9 +3,9 @@ package com.dissertation.validation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
@@ -15,7 +15,6 @@ import com.dissertation.utils.Utils;
 
 public class WriteGenerator {
     private ScheduledThreadPoolExecutor scheduler;
-    private Random random;
     private final int delay;
     private final int bytes;
     private final int writesPerPartition;
@@ -31,10 +30,9 @@ public class WriteGenerator {
     private static final int PARTITION_WRITES = 15;
     private static final int PARTITION_CLIENTS = 1;
 
-    public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Random random, int delay, int bytes,
+    public WriteGenerator(ScheduledThreadPoolExecutor scheduler, int delay, int bytes,
             int writesPerPartition, int clientsPerPartition) {
         this.scheduler = scheduler;
-        this.random = random;
         this.delay = delay;
         this.bytes = bytes;
         this.writesPerPartition = writesPerPartition;
@@ -55,7 +53,7 @@ public class WriteGenerator {
             int bytes = args.length > 1 ? Integer.parseInt(args[1]) : OBJECT_BYTES;
             int writesPerPartition = args.length > 2 ? Integer.parseInt(args[2]) : PARTITION_WRITES;
             int clientsPerPartition = args.length > 3 ? Integer.parseInt(args[3]) : PARTITION_CLIENTS;
-            WriteGenerator writeGenerator = new WriteGenerator(scheduler, new Random(1), delay, bytes,
+            WriteGenerator writeGenerator = new WriteGenerator(scheduler, delay, bytes,
                     writesPerPartition, clientsPerPartition);
             writeGenerator.run();
         } catch (NumberFormatException e) {
@@ -94,14 +92,14 @@ public class WriteGenerator {
 
     private String getRandomRegion(String partition) {
         List<String> regions = new ArrayList<>(Config.getPartitionRegions(partition));
-        return regions.get(this.random.nextInt(regions.size()));
+        return regions.get(ThreadLocalRandom.current().nextInt(regions.size()));
     }
 
     private String getRandomKey(String partition) {
         String result = "";
         int partitionId = Integer.valueOf(partition.split("partition")[1]);
         do {
-            result = String.valueOf((char) (this.random.nextInt(26) + 'a'));
+            result = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
         } while ((Math.floorMod(result.hashCode(), this.partitions.size()) + 1) != partitionId);
         return result;
     }

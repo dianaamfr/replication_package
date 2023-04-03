@@ -4,19 +4,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.config.Config;
 
 public class ReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
-    private Random random;
     private final int delay;
     private final int keys;
     private final int readsPerRegion;
@@ -33,19 +33,17 @@ public class ReadGenerator {
     private static final int REGION_READS = 15;
     private static final int REGION_CLIENTS = 3;
 
-    public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Random random, int delay, int keys,
+    public ReadGenerator(ScheduledThreadPoolExecutor scheduler, int delay, int keys,
     int readsPerRegion, int clientsPerRegion) {
         this.scheduler = scheduler;
-        this.random = random;
         this.delay = delay;
         this.keys = keys;
         this.readsPerRegion = readsPerRegion;
         this.clientsPerRegion = clientsPerRegion;
-        this.regions = new ArrayList<>(Config.getRegions());
+        this.regions = Config.getRegions().stream().collect(Collectors.toUnmodifiableList());
         this.numPartitions = Config.getPartitions().size();
         this.startSignal = new CountDownLatch(1);
-        this.counters = new AtomicIntegerArray((new ArrayList<Integer>(Collections.nCopies(this.regions.size(), 0)))
-                .stream().mapToInt(i -> i).toArray());
+        this.counters = new AtomicIntegerArray(Collections.nCopies(this.regions.size(), 0).stream().mapToInt(i -> i).toArray());
         this.countDowns = new ArrayList<>();
         this.init();
     }
@@ -57,7 +55,7 @@ public class ReadGenerator {
             int bytes = args.length > 1 ? Integer.parseInt(args[1]) : READ_KEYS;
             int readsPerRegion = args.length > 2 ? Integer.parseInt(args[2]) : REGION_READS;
             int clientsPerRegion = args.length > 3 ? Integer.parseInt(args[3]) : REGION_CLIENTS;
-            ReadGenerator readGenerator = new ReadGenerator(scheduler, new Random(1), delay, bytes,
+            ReadGenerator readGenerator = new ReadGenerator(scheduler, delay, bytes,
                     readsPerRegion, clientsPerRegion);
             readGenerator.run();
         } catch (NumberFormatException e) {
@@ -101,7 +99,7 @@ public class ReadGenerator {
             int partitionId = Integer.valueOf(partition.split("partition")[1]);
             String aux = "";
             do {
-                aux = String.valueOf((char) (this.random.nextInt(26) + 'a'));
+                aux = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
             } while ((Math.floorMod(aux.hashCode(), this.numPartitions) + 1) != partitionId);
             result.add(aux);
         }
@@ -110,7 +108,7 @@ public class ReadGenerator {
 
     private String getRandomPartition(String region) {
         List<String> partitions = new ArrayList<>(Config.getPartitions(region));
-        return partitions.get(this.random.nextInt(partitions.size()));
+        return partitions.get(ThreadLocalRandom.current().nextInt(partitions.size()));
     }
 
 

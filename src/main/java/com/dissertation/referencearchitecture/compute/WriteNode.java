@@ -8,12 +8,12 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
-import com.dissertation.referencearchitecture.compute.clock.HybridTimestamp;
-import com.dissertation.referencearchitecture.compute.clock.SystemTimeProvider;
+import com.dissertation.referencearchitecture.compute.clock.ClockState;
+import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
+import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.config.Config;
@@ -30,20 +30,17 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private StoragePusher storagePusher;
     private HLC hlc;
     private String partition;
-    private ReentrantLock mutex;
-    public static final int SYNC_DELAY = 10000;
 
-    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc, ReentrantLock mutex) throws URISyntaxException {
+    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException {
         super(scheduler, s3Helper, String.format("w%s", partition));
         this.partition = partition;
         this.storage = storage;        
         this.storagePusher = storagePusher;
         this.hlc = hlc;
-        this.mutex = mutex;
     }
 
     public void init() {
-        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher, this.mutex), SYNC_DELAY, SYNC_DELAY, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher), Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
     }
 
     public static void main(String[] args) {
@@ -59,14 +56,13 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         try {
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
             S3Helper s3Helper = new S3Helper();
             Storage storage = new Storage();
             StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
-            HLC hlc = new HLC(new SystemTimeProvider(scheduler, 10000));
-            ReentrantLock mutex = new ReentrantLock();
-        
-            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, storagePusher, hlc, mutex);
+            HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
+
+            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, storagePusher, hlc);
 
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
@@ -89,30 +85,33 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             return new WriteError(String.format("Key %s not found", key));
         }
 
-        HybridTimestamp lastTimestamp;
+        ClockState lastTimestamp;
         try {
-            lastTimestamp = HybridTimestamp.fromString(lastWriteTimestamp);
+            lastTimestamp = ClockState.fromString(lastWriteTimestamp, State.WRITE);
         } catch (InvalidTimestampException e) {
             return new WriteError(e.toString());
         }
 
         String writeTimestamp = Utils.MIN_TIMESTAMP;
-        mutex.lock();
-         try {
-            this.hlc.writeEvent(lastTimestamp);
-            writeTimestamp = this.hlc.getTimestamp().toString();
+        WriteResponse writeResponse;
+        try {
+            writeTimestamp = this.hlc.writeEvent(lastTimestamp).toString();
             this.storage.put(key, writeTimestamp, value);
-            boolean result = this.storagePusher.push(writeTimestamp);
-            if(result == false) {
-                // TODO: reset timestamp and storage (?)
-                return new WriteError("Write to data store failed");
+            if(this.storagePusher.push(writeTimestamp)) {
+                writeResponse = new WriteResponse(writeTimestamp);
+            } else {
+                // TODO: Should the timestamp be reset?
+                this.storage.delete(key, writeTimestamp);
+                writeResponse = new WriteError("Write to data store failed");
             }
         } catch (KeyNotFoundException e) {
-            // TODO: reset timestamp (?)
-            return new WriteError(String.format("Key %s not found", key));
-        } finally {
-            this.mutex.unlock();
+            // TODO: Should the timestamp be reset?
+            writeResponse = new WriteError(String.format("Key %s not found", key));
+        } catch(Exception e) {
+            writeResponse = new WriteError(e.toString());
         }
-        return new WriteResponse(writeTimestamp);
+
+        this.hlc.writeComplete();
+        return writeResponse;
     }
 }

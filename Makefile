@@ -60,3 +60,6 @@ writeGenerator:
 
 readGenerator:
 	$(run)="$(validationPath).ReadGenerator" -e
+
+clock:
+	$(run)="$(classPath).TestClock" -e

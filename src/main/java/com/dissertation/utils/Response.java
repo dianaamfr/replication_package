@@ -1,4 +1,4 @@
-package com.dissertation.referencearchitecture.remoteInterface.response;
+package com.dissertation.utils;
 
 import java.io.Serializable;
 
