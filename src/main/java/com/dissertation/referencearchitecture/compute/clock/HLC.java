@@ -31,8 +31,8 @@ public class HLC {
         return this.currentTime.accumulateAndGet(recvEvent, this.updateClockOperator);
     }
 
-    public void writeComplete() {
-        this.currentTime.updateAndGet(this.writeStateOperator);
+    public ClockState writeComplete() {
+        return this.currentTime.updateAndGet(this.writeStateOperator);
     }
 
     public ClockState updateAndGetState() {
@@ -91,7 +91,7 @@ public class HLC {
         if(prevTime.isActive()) {
             return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
         }
-        
+
         return updateClock(prevTime, recvTime);
     }
 
