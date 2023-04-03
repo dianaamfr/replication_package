@@ -20,7 +20,10 @@ import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteError;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.referencearchitecture.s3.S3Helper;
+import com.dissertation.utils.Utils;
 
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private Storage storage;  
@@ -81,21 +84,19 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     @Override
-    public String write(String key, byte[] value, String lastWriteTimestamp) {  
+    public WriteResponse write(String key, byte[] value, String lastWriteTimestamp) {  
         if(!Config.isKeyInPartition(this.partition, key)) {
-            System.err.println(String.format("Error: Key %s not found", key));
-            return null;
+            return new WriteError(String.format("Key %s not found", key));
         }
 
         HybridTimestamp lastTimestamp;
         try {
             lastTimestamp = HybridTimestamp.fromString(lastWriteTimestamp);
         } catch (InvalidTimestampException e) {
-            System.err.println(String.format("Error: Invalid lastWriteTimestamp"));
-            return null;
+            return new WriteError(e.toString());
         }
 
-        String writeTimestamp = null;
+        String writeTimestamp = Utils.MIN_TIMESTAMP;
         mutex.lock();
          try {
             this.hlc.writeEvent(lastTimestamp);
@@ -104,13 +105,14 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             boolean result = this.storagePusher.push(writeTimestamp);
             if(result == false) {
                 // TODO: reset timestamp and storage (?)
+                return new WriteError("Write to data store failed");
             }
         } catch (KeyNotFoundException e) {
             // TODO: reset timestamp (?)
-            System.err.println(String.format("Error: Key %s not found", key));
+            return new WriteError(String.format("Key %s not found", key));
         } finally {
             this.mutex.unlock();
         }
-        return writeTimestamp;
+        return new WriteResponse(writeTimestamp);
     }
 }

@@ -14,9 +14,12 @@ import java.util.Map.Entry;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.InvalidRegionException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
+import com.dissertation.referencearchitecture.remoteInterface.response.ROTError;
+import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteError;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.utils.Utils;
 
 public class Client {
@@ -53,8 +56,6 @@ public class Client {
 
 
     public ROTResponse requestROT(Set<String> keys) {
-        ROTResponse result = null;
-
         try {
             for(String key: keys) {
                 if(!Config.isKeyInRegion(this.region, key)) {
@@ -62,40 +63,30 @@ public class Client {
                 }
             }
             ROTResponse rotResponse = this.readStub.rot(keys);
-            pruneCache(rotResponse.getStableTime());
-            result = new ROTResponse(getReadResponse(rotResponse.getValues()), rotResponse.getStableTime());
-        } catch (RemoteException e) {
-            System.err.println("Error: Could not connect with server");
-        } catch (KeyNotFoundException e) {
-            System.err.println(String.format("Error: Not all keys are available in region %s", this.region));
+            if(!rotResponse.isError()) {
+                pruneCache(rotResponse.getStableTime());
+                return new ROTResponse(getReadResponse(rotResponse.getValues()), rotResponse.getStableTime());
+            }
+            return rotResponse;
+        } catch (RemoteException | KeyNotFoundException e) {
+            return new ROTError(e.toString());
         }
-
-        return result;
     }
 
-    public String requestWrite(String key, byte[] value) {
-        String result = null;
-
+    public WriteResponse requestWrite(String key, byte[] value) {
         try {
             String partition = Config.getKeyPartition(this.region, key);
             WriteRemoteInterface writeStub = this.writeStubs.get(partition);
-            result = writeStub.write(key, value, this.lastWriteTimestamp);
+            WriteResponse writeResponse = writeStub.write(key, value, this.lastWriteTimestamp);
 
-            if(result != null) {
-                this.lastWriteTimestamp = result;
+            if(!writeResponse.isError()) {
+                this.lastWriteTimestamp = writeResponse.getTimestamp();
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-            } else {
-                System.err.println("Error: Write request failed");
             }
-        } catch (KeyNotFoundException e) {
-            System.err.println(String.format("Error: Key is not available in region %s", this.region));
-        } catch (NumberFormatException e) {
-            System.err.println("Error: Value must be an Integer");
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            System.err.println("Error: Could not connect with server");
+            return writeResponse;
+        } catch (KeyNotFoundException | RemoteException e) {
+            return new WriteError(e.toString());
         }
-        return result;
     }
 
     private void pruneCache(String stableTime) {

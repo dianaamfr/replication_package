@@ -6,7 +6,7 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
+import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
 import com.dissertation.utils.Utils;
 
 public class ClientInterface {
