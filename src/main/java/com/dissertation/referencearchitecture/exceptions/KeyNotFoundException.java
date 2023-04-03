@@ -8,4 +8,9 @@ public class KeyNotFoundException extends Exception {
     public KeyNotFoundException(String message, Throwable error) {
         super(message, error);
     }
+
+    @Override
+    public String toString() {
+        return "Key not found.";
+    }
 }
