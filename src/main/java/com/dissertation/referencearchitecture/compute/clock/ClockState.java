@@ -57,10 +57,6 @@ public class ClockState {
         return this.state.equals(State.SYNC);
     }
 
-    public State getState() {
-        return this.state;
-    }
-
     public boolean isWrite() {
         return this.state.equals(State.WRITE);
     }

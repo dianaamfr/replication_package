@@ -39,10 +39,9 @@ public class ClockSyncHandler implements Runnable {
             System.err.println(String.format("Error: Invalid recent timestamp"));
             return;
         }
-
         // Try to sync clock with received clock
         ClockState newTime = this.hlc.syncEvent(recvTime);
-        if(newTime.toString().compareTo(recvTime.toString()) < 0) {
+        if(!newTime.isSync()) {
             return;
         } 
 
@@ -52,6 +51,7 @@ public class ClockSyncHandler implements Runnable {
         if(result == false) {
             // TODO: reset timestamp (?)
         }
+        this.hlc.syncComplete();
     }
 
 }
