@@ -75,33 +75,32 @@ public class S3Helper {
                 return getObject(bucketName, last.key());
             }
 
-            return new S3ReadResponse(last.key());
-        } catch (Exception e) {
-            e.printStackTrace();
             return new S3ReadResponse();
+        } catch (Exception e) {
+            return new S3Error(e.toString());
         }
 
     }
 
-    public String getClocksAfter(String timestamp) {
+    public S3ReadResponse getClocksAfter(String timestamp) {
         List<S3Object> objects = new ArrayList<>();
 
         try {
             objects = getObjectsAfter(clockBucket, clockPrefix, timestamp);
 
             if (objects.isEmpty()) {
-                return null;
+                return new S3ReadResponse();
             }
 
             S3Object last = objects.get(objects.size() - 1);
             if (last.key().compareTo(timestamp) > 0) {
-                return last.key();
+                String recvTimestamp = last.key().split("Clock/")[1];
+                return new S3ReadResponse(recvTimestamp);
             }
+            return new S3ReadResponse();
         } catch (Exception e) {
-            e.printStackTrace();
+            return new S3Error(e.toString());
         }
-        
-        return null;
     }
 
     private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key) {
@@ -134,6 +133,7 @@ public class S3Helper {
                 .build();
 
         ResponseBytes<GetObjectResponse> objectBytes = this.s3Client.getObjectAsBytes(getObject);
-        return new S3ReadResponse(key, objectBytes.asUtf8String());
+        String recvTimestamp = key.split("Logs/")[1];
+        return new S3ReadResponse(recvTimestamp, objectBytes.asUtf8String());
     }
 }

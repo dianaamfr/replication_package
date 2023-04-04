@@ -32,9 +32,9 @@ For a more detailed description of the reference architecture please refer to [R
     - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
     - `config`: Temporarily stores a predefined configuration of the data store (regions and partitions) and provides helper functions to consult that configuration. 
     - `exceptions`: Custom exceptions used throughout the source code.
-    - `remoteInterface`: Interfaces that define the methods used for the RMI ROT and write requests.
+    - `remoteInterface`: Interfaces that define the methods used for the RMI ROT and write requests and response classes.
     - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
-- `utils`: Util functions and variables.
+- `utils`: Util functions, constants and classes.
 - `validation`: Comprises different classes that can be used to test the prototype, namely:
     - `ClientInterface`: To test the prototype through a command-line interface.
     - `WriteGenerator`: To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 

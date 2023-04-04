@@ -20,6 +20,8 @@ import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteError;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 
@@ -77,36 +79,37 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
     }
 
-    // TODO: don't return null, use design pattern null object
     @Override
-    public String write(String key, byte[] value, String lastWriteTimestamp) {  
+    public WriteResponse write(String key, byte[] value, String lastWriteTimestamp) {  
         if(!Config.isKeyInPartition(this.partition, key)) {
-            System.err.println(String.format("Error: Key %s not found", key));
-            return null;
+            return new WriteError(String.format("Key %s not found", key));
         }
 
         ClockState lastTimestamp;
         try {
             lastTimestamp = ClockState.fromString(lastWriteTimestamp, State.WRITE);
         } catch (InvalidTimestampException e) {
-            System.err.println(String.format("Error: Invalid lastWriteTimestamp"));
-            return null;
+            return new WriteError(e.toString());
         }
 
-        String writeTimestamp = null;
-         try {
+        String writeTimestamp = Utils.MIN_TIMESTAMP;
+        WriteResponse writeResponse;
+        try {
             writeTimestamp = this.hlc.writeEvent(lastTimestamp).toString();
             this.storage.put(key, writeTimestamp, value);
-            boolean result = this.storagePusher.push(writeTimestamp);
-            if(result == false) {
-                // TODO: Should the timestamp be reset?
+            if(this.storagePusher.push(writeTimestamp)) {
+                writeResponse = new WriteResponse(writeTimestamp);
+            } else {
                 this.storage.delete(key, writeTimestamp);
+                writeResponse = new WriteError("Write to data store failed");
             }
         } catch (KeyNotFoundException e) {
-            // TODO: Should the timestamp be reset?
-            System.err.println(String.format("Error: Key %s not found", key));
+            writeResponse = new WriteError(String.format("Key %s not found", key));
+        } catch(Exception e) {
+            writeResponse = new WriteError(e.toString());
         }
+
         this.hlc.writeComplete();
-        return writeTimestamp;
+        return writeResponse;
     }
 }

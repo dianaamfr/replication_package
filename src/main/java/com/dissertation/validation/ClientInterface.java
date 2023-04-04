@@ -6,7 +6,8 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
+import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
+import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.utils.Utils;
 
 public class ClientInterface {
@@ -73,7 +74,7 @@ public class ClientInterface {
         } 
         
         ROTResponse result = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
-        if(result != null) {
+        if(!result.isError()) {
             StringBuilder builder = new StringBuilder();
             builder.append(String.format("ROT at %s:", result.getStableTime()));
             for(Entry<String, byte[]> entry: result.getValues().entrySet()) {
@@ -81,7 +82,7 @@ public class ClientInterface {
             }
             System.out.println(builder.toString());
         } else {
-            System.err.println("Error: ROT failed");
+            System.err.println(result.getStatus());
         }
     }
 
@@ -93,12 +94,12 @@ public class ClientInterface {
 
         String key = commands[0];
         byte[] value = Utils.byteArrayFromString(commands[1]);
-        String result = this.client.requestWrite(key, value);
+        WriteResponse result = this.client.requestWrite(key, value);
         
-        if(result != null) {
-            System.out.println(String.format("Write response: %s = %s at %s ", key, commands[1], result));
+        if(!result.isError()) {
+            System.out.println(String.format("Write response: %s = %s at %s ", key, commands[1], result.getTimestamp()));
         } else {
-            System.err.println("Error: Write failed");
+            System.err.println(result.getStatus());
         }
     }
 }

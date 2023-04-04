@@ -17,8 +17,9 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
-import com.dissertation.referencearchitecture.remoteInterface.ROTResponse;
 import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
+import com.dissertation.referencearchitecture.remoteInterface.response.ROTError;
+import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 
@@ -80,10 +81,10 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             try {
                 byte[] value = this.storage.get(key, stableTime).getValue();
                 values.put(key, value);
-            } catch (KeyNotFoundException e) {
+            } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
                 values.put(key, new byte[0]);
-            } catch (KeyVersionNotFoundException e) {
-                values.put(key, new byte[0]);
+            } catch (Exception e) {
+                return new ROTError(e.toString());
             }    
         }
         return new ROTResponse(values, stableTime);

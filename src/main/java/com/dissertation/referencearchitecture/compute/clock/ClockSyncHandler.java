@@ -4,6 +4,7 @@ import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
+import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 
 public class ClockSyncHandler implements Runnable {
     private HLC hlc;
@@ -25,16 +26,15 @@ public class ClockSyncHandler implements Runnable {
         }
         
         ClockState currentTimestamp = this.hlc.getCurrentTimestamp();
-        String recvTimestamp = this.s3Helper.getClocksAfter(currentTimestamp.toString());
-        if(recvTimestamp == null) {
+        S3ReadResponse response = this.s3Helper.getClocksAfter(currentTimestamp.toString());
+        if(!response.hasTimestamp()) {
             return;
         }
-        recvTimestamp = recvTimestamp.split("Clock/")[1]; 
         //System.out.println("SYNC: current=" + currentTimestamp + " recv=" + recvTimestamp);     
 
         ClockState recvTime;
         try {
-            recvTime = ClockState.fromString(recvTimestamp, State.SYNC);
+            recvTime = ClockState.fromString(response.getTimestamp(), State.SYNC);
         } catch (InvalidTimestampException e) {
             System.err.println(String.format("Error: Invalid recent timestamp"));
             return;
@@ -47,10 +47,7 @@ public class ClockSyncHandler implements Runnable {
 
         String newTimestamp = newTime.toString();
         this.s3Helper.persistClock(newTimestamp);
-        boolean result = this.storagePusher.push(newTimestamp);
-        if(result == false) {
-            // TODO: reset timestamp (?)
-        }
+        this.storagePusher.push(newTimestamp);
         this.hlc.syncComplete();
     }
 
