@@ -1,14 +1,9 @@
 .ONESHELL: # Applies to every targets in the file!
 
-args = -Dexec.args
-classPath = com.dissertation.referencearchitecture
-validationPath = com.dissertation.validation
-run = mvn -q exec:java -Dexec.mainClass
-
 # Setup
 all:
 	make emptyBuckets
-	mvn clean install
+	mvn package
 	make rmi
 
 createBuckets:
@@ -34,32 +29,29 @@ rmi:
 
 # Compute Nodes
 readNodeWest:
-	$(run)="$(classPath).compute.ReadNode"  $(args)="us-west-1" -e
+	java -jar target/readNode-jar-with-dependencies.jar us-west-1
 
 readNodeEast:
-	$(run)="$(classPath).compute.ReadNode"  $(args)="us-east-1" -e
+	java -jar target/readNode-jar-with-dependencies.jar us-east-1
 
 writeNode1:
-	$(run)="$(classPath).compute.WriteNode" $(args)="partition1" -e
+	java -jar target/writeNode-jar-with-dependencies.jar partition1
 
 writeNode2:
-	$(run)="$(classPath).compute.WriteNode" $(args)="partition2" -e
+	java -jar target/writeNode-jar-with-dependencies.jar partition2
 
 writeNode3:
-	$(run)="$(classPath).compute.WriteNode" $(args)="partition3" -e
+	java -jar target/writeNode-jar-with-dependencies.jar partition3
 
 # Validation
 clientWest:
-	$(run)="$(validationPath).ClientInterface" $(args)="us-west-1" -e
+	java -jar target/clientInterface-jar-with-dependencies.jar us-west-1
 
 clientEast:
-	$(run)="$(validationPath).ClientInterface" $(args)="us-east-1" -e
+	java -jar target/clientInterface-jar-with-dependencies.jar us-east-1
 
 writeGenerator:
-	$(run)="$(validationPath).WriteGenerator" -e
+	java -jar target/writeGenerator-jar-with-dependencies.jar
 
 readGenerator:
-	$(run)="$(validationPath).ReadGenerator" -e
-
-clock:
-	$(run)="$(classPath).TestClock" -e
+	java -jar target/readGenerator-jar-with-dependencies.jar

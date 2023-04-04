@@ -10,8 +10,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <maven.shade.plugin.version>3.2.1</maven.shade.plugin.version>
         <maven.compiler.plugin.version>3.6.1</maven.compiler.plugin.version>
+        <maven.assembly.plugin.version>3.5.0</maven.assembly.plugin.version>
+        <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <aws.java.sdk.version>2.20.27</aws.java.sdk.version>
         <aws.lambda.java.version>1.2.0</aws.lambda.java.version>
@@ -77,6 +78,7 @@
             <artifactId>json</artifactId>
             <version>${json.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -87,27 +89,137 @@
                 <version>${maven.compiler.plugin.version}</version>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>${maven.shade.plugin.version}</version>
-                <configuration>
-                    <createDependencyReducedPom>false</createDependencyReducedPom>
-                    <finalName>referencearchitecture</finalName>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <!-- Suppress module-info.class warning-->
-                                <exclude>module-info.class</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                </configuration>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
                 <executions>
                     <execution>
+                        <id>default-jar</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven.assembly.plugin.version}</version>
+                <executions>
+                    <!-- CLIENT -->
+                    <execution>
+                        <id>client</id>
+                        <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.dissertation.referencearchitecture.client.Client</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>client</finalName>
+                        </configuration>
                         <phase>package</phase>
                         <goals>
-                            <goal>shade</goal>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- READ NODE -->                    
+                    <execution>
+                        <id>read-node</id>
+                        <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.dissertation.referencearchitecture.compute.ReadNode</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>readNode</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- WRITE NODE -->                           
+                    <execution>
+                        <id>write-node</id>
+                        <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.dissertation.referencearchitecture.compute.WriteNode</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>writeNode</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                    
+                    <!-- READ GENERATOR -->       
+                    <execution>
+                        <id>read-generator</id>
+                        <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.dissertation.validation.ReadGenerator</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>readGenerator</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- WRITE GENERATOR -->                     
+                    <execution>
+                        <id>write-generator</id>
+                        <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.dissertation.validation.WriteGenerator</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>writeGenerator</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- CLIENT INTERFACE -->                     
+                    <execution>
+                        <id>client-interface</id>
+                        <configuration>
+                        <archive>
+                            <manifest>
+                                <mainClass>com.dissertation.validation.ClientInterface</mainClass>
+                            </manifest>
+                        </archive>
+                        <descriptorRefs>
+                            <descriptorRef>jar-with-dependencies</descriptorRef>
+                        </descriptorRefs>
+                        <finalName>clientInterface</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
