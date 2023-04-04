@@ -16,13 +16,12 @@ For a more detailed description of the reference architecture please refer to [R
 - **Client Layer**: Connects with the Compute Layer via RMI.
 - **Clock**: Hybrid Logical Clock.
 - **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
-- **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than it own, it advances its clock.
+- **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than its own, it advances its clock.
 
 ### Next steps
 - Setup S3 Replication
 - Optimize log persistance and fetching
 - Improve clock synchronization strategy when S3 replication is in place
-- Avoid locks if possible
 - Garbage Collection
 
 ## Getting Started
@@ -40,7 +39,6 @@ For a more detailed description of the reference architecture please refer to [R
     - `ClientInterface`: To test the prototype through a command-line interface.
     - `WriteGenerator`: To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
     - `ReadGenerator`: To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized. 
-
 
 ### Dependencies
 - [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/)
@@ -113,3 +111,6 @@ Logical clock or Hybrid Logical Clock
 - Given that there are multiple writers, clocks must be synchronized to ensure writes become visible.
 - When a *Read Compute Node* receives a ROT request, it reads from the *stableTime* and sends back the *stableTime* together with the requested values so that the client may prune his cache and determine which values to return. After pruning the cache, if the client has a version in his cache of one of the requested items, he must return the value in his cache to ensure read-your-writes.
 
+**Clock Synchronization**
+
+![Clock Synchronization](images/clock-sync.png)

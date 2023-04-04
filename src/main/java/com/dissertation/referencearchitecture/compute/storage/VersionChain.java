@@ -15,12 +15,18 @@ public class VersionChain {
     }
 
     public void put(String timestamp, byte[] value) {
-        versions.put(timestamp, value);
+        this.versions.put(timestamp, value);
+    }
+
+    public void delete(String timestamp) {
+        if(this.versions.containsKey(timestamp)) {
+            this.versions.remove(timestamp);
+        }
     }
 
     public Entry<String, byte[]> get(String maxTimestamp) throws KeyVersionNotFoundException {
         try {
-            Entry<String, byte[]> entry = versions.floorEntry(maxTimestamp);
+            Entry<String, byte[]> entry = this.versions.floorEntry(maxTimestamp);
             if(entry == null) {
                 throw new KeyVersionNotFoundException();
             }
@@ -32,7 +38,7 @@ public class VersionChain {
 
     @Override
     public String toString() {
-        return versions.toString();
+        return this.versions.toString();
     }
 
     public SortedMap<String, byte[]> getVersionChain(String maxKey) {

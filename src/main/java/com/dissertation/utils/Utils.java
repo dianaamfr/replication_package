@@ -5,6 +5,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class Utils {
     public final static String MIN_TIMESTAMP = "0.0";
+    public final static int SYNC_DELAY = 10000;
+    public final  static int PULL_DELAY = 10000;
+    public final  static int CLOCK_DELAY = 10000;
 
     public static byte[] byteArrayFromString(String encodedBuffer) {
         return encodedBuffer.getBytes(StandardCharsets.UTF_8);    
