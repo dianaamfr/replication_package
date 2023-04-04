@@ -11,7 +11,8 @@ public class HLC {
     private final BinaryOperator<ClockState> updateClockOperator;
     private final BinaryOperator<ClockState> syncClockOperator;
     private final UnaryOperator<ClockState> requestSyncOperator;
-    private final UnaryOperator<ClockState> writeStateOperator;
+    private final UnaryOperator<ClockState> writeCompleteOperator;
+    private final UnaryOperator<ClockState> syncCompleteOperator;
     private AtomicReference<ClockState> currentTime;
 
     public HLC(TimeProvider timeProvider) {
@@ -19,7 +20,8 @@ public class HLC {
         this.updateClockOperator = this::updateClock;
         this.syncClockOperator = this::syncClock;
         this.requestSyncOperator = this::setSyncEvent;
-        this.writeStateOperator = this::setWriteComplete;
+        this.writeCompleteOperator = this::setWriteComplete;
+        this.syncCompleteOperator = this::setSyncComplete;
         this.currentTime = new AtomicReference<ClockState>(new ClockState());
     }
 
@@ -32,7 +34,7 @@ public class HLC {
     }
 
     public ClockState writeComplete() {
-        return this.currentTime.updateAndGet(this.writeStateOperator);
+        return this.currentTime.updateAndGet(this.writeCompleteOperator);
     }
 
     public ClockState updateAndGetState() {
@@ -41,6 +43,10 @@ public class HLC {
 
     public ClockState syncEvent(ClockState recvEvent) {
         return this.currentTime.accumulateAndGet(recvEvent, this.syncClockOperator);
+    }
+
+    public ClockState syncComplete() {
+        return this.currentTime.updateAndGet(this.syncCompleteOperator);
     }
 
    
@@ -64,7 +70,7 @@ public class HLC {
             newTime.setLogicalCount(recvTime.getLogicalCount() + inc);
         }
 
-        newTime.setState(recvTime.isWrite() ? State.WRITE : State.INACTIVE);
+        newTime.setState(recvTime.isWrite() ? State.WRITE : State.SYNC);
 
         return newTime;
     };
@@ -95,4 +101,10 @@ public class HLC {
         return updateClock(prevTime, recvTime);
     }
 
+    private ClockState setSyncComplete(ClockState prevTime) {
+        if(prevTime.isWrite()) {
+            return prevTime;
+        }
+        return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
+    }
 }
