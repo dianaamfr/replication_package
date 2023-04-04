@@ -100,12 +100,10 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             if(this.storagePusher.push(writeTimestamp)) {
                 writeResponse = new WriteResponse(writeTimestamp);
             } else {
-                // TODO: Should the timestamp be reset?
                 this.storage.delete(key, writeTimestamp);
                 writeResponse = new WriteError("Write to data store failed");
             }
         } catch (KeyNotFoundException e) {
-            // TODO: Should the timestamp be reset?
             writeResponse = new WriteError(String.format("Key %s not found", key));
         } catch(Exception e) {
             writeResponse = new WriteError(e.toString());

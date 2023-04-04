@@ -47,10 +47,7 @@ public class ClockSyncHandler implements Runnable {
 
         String newTimestamp = newTime.toString();
         this.s3Helper.persistClock(newTimestamp);
-        boolean result = this.storagePusher.push(newTimestamp);
-        if(result == false) {
-            // TODO: reset timestamp (?)
-        }
+        this.storagePusher.push(newTimestamp);
         this.hlc.syncComplete();
     }
 
