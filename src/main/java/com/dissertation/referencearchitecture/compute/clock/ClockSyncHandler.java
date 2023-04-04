@@ -30,7 +30,7 @@ public class ClockSyncHandler implements Runnable {
         if(!response.hasTimestamp()) {
             return;
         }
-        //System.out.println("SYNC: current=" + currentTimestamp + " recv=" + recvTimestamp);     
+        //System.out.println("SYNC: current=" + currentTimestamp + " recv=" + response.getTimestamp());     
 
         ClockState recvTime;
         try {
@@ -46,7 +46,6 @@ public class ClockSyncHandler implements Runnable {
         } 
 
         String newTimestamp = newTime.toString();
-        this.s3Helper.persistClock(newTimestamp);
         this.storagePusher.push(newTimestamp);
         this.hlc.syncComplete();
     }
