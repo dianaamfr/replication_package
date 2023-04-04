@@ -1,5 +1,6 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.SortedMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 
@@ -23,7 +24,7 @@ public class StoragePusher {
     public boolean push(String timestamp) {
         try {
             JSONObject json = toJson(this.storage.getState(), timestamp);
-            //System.out.println(json);
+            // System.out.println(json);
             this.s3Helper.persistClock(timestamp);
             return this.s3Helper.persistLog(this.partition, timestamp, json.toString());
         } catch (Exception e) {
@@ -36,23 +37,29 @@ public class StoragePusher {
         JSONObject stateJson = new JSONObject();
         JSONArray versionChainsJson = new JSONArray();
 
-        // For each key
-        for(Entry<String, VersionChain> versionChain: state.entrySet()) {
-            JSONObject versionChainJson = new JSONObject(); // Version chain of the key
-            JSONArray versionsJson = new JSONArray(); // Array of versions of a key
-            // For each version of the key that belongs to the snapshot defined by clockValue
-            for(Entry<String, byte[]> version: versionChain.getValue().getVersionChain(timestamp).entrySet()) {
-                JSONObject versionJson = new JSONObject();
-                versionJson.put("key", version.getKey());
-                versionJson.put("value", Utils.stringFromByteArray(version.getValue()));
-                versionsJson.put(versionJson);
+        for (Entry<String, VersionChain> versionChain : state.entrySet()) {
+            JSONArray versionsJson = new JSONArray();
+            SortedMap<String, byte[]> keySnapshotVersions = versionChain.getValue().getVersionChain(timestamp);
+            for (Entry<String, byte[]> version : keySnapshotVersions.entrySet()) {
+                versionsJson.put(getVersionJson(version.getKey(), version.getValue()));
             }
-            versionChainJson.put("key", versionChain.getKey());
-            versionChainJson.put("value", versionsJson);
-            versionChainsJson.put(versionChainJson);
+            versionChainsJson.put(getVersionChainJson(versionChain.getKey(), versionsJson));
         }
-
-        stateJson.put("state", versionChainsJson);
+        stateJson.put(Utils.LOG_STATE, versionChainsJson);
         return stateJson;
+    }
+
+    private JSONObject getVersionChainJson(String key, JSONArray versions) {
+        JSONObject keyVersionChainJson = new JSONObject();
+        keyVersionChainJson.put(Utils.LOG_KEY, key);
+        keyVersionChainJson.put(Utils.LOG_VERSIONS, versions);
+        return keyVersionChainJson;
+    }
+
+    private JSONObject getVersionJson(String timestamp, byte[] value) {
+        JSONObject keyVersion = new JSONObject();
+        keyVersion.put(Utils.LOG_TIMESTAMP, timestamp);
+        keyVersion.put(Utils.LOG_VALUE, Utils.stringFromByteArray(value));
+        return keyVersion;
     }
 }
