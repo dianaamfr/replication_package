@@ -15,13 +15,15 @@ import java.util.stream.Collectors;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.config.Config;
 
+import software.amazon.awssdk.regions.Region;
+
 public class ReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
     private final int delay;
     private final int keys;
     private final int readsPerRegion;
     private final int clientsPerRegion;
-    private final List<String> regions;
+    private final List<Region> regions;
     private final int numPartitions;
     private CountDownLatch startSignal;
     private AtomicIntegerArray counters;
@@ -92,7 +94,7 @@ public class ReadGenerator {
         this.scheduler.shutdown();
     }
 
-    private Set<String> getRandomKeys(String region) {
+    private Set<String> getRandomKeys(Region region) {
         Set<String> result = new HashSet<>();
         for(int i = 0; i < this.keys; i++) {
             String partition = getRandomPartition(region);
@@ -106,7 +108,7 @@ public class ReadGenerator {
         return result;
     }
 
-    private String getRandomPartition(String region) {
+    private String getRandomPartition(Region region) {
         List<String> partitions = new ArrayList<>(Config.getPartitions(region));
         return partitions.get(ThreadLocalRandom.current().nextInt(partitions.size()));
     }
@@ -114,11 +116,11 @@ public class ReadGenerator {
 
     private class RegionReadGenerator implements Runnable {
         private Client client;
-        private String region;
+        private Region region;
         private int index;
         private CountDownLatch readSignal;
 
-        public RegionReadGenerator(Client client, String region, int index, CountDownLatch readSignal) {
+        public RegionReadGenerator(Client client, Region region, int index, CountDownLatch readSignal) {
             this.client = client;
             this.region = region;
             this.index = index;

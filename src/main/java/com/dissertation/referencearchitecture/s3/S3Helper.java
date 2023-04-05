@@ -6,6 +6,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.dissertation.utils.Utils;
+
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -24,16 +26,16 @@ public class S3Helper {
     private final static Integer maxKeys = 5;
     private final static String logPrefix = "Logs/";
     private final static String clockPrefix = "Clock/";
-    private final static String clockBucket = "clock";
+    private final static String clockBucket = "reference-architecture-clock";
 
-    public S3Helper() throws URISyntaxException {
-        this.s3Client = s3Client();
+    public S3Helper(Region region) throws URISyntaxException {
+        this.s3Client = s3Client(region);
     }
 
-    private static S3Client s3Client() throws URISyntaxException {
+    private static S3Client s3Client(Region region) throws URISyntaxException {
         ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
         return S3Client.builder()
-                .region(Region.US_WEST_2)
+                .region(region != null ? region : Utils.DEFAULT_REGION)
                 .credentialsProvider(credentialsProvider)
                 .endpointOverride(URI.create(s3Uri))
                 .forcePathStyle(true)

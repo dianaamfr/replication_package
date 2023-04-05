@@ -8,10 +8,13 @@ import java.util.Set;
 
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 
+import software.amazon.awssdk.regions.Region;
+
 public final class Config {
     private static Set<String> partitions;
-    private static Map<String, Set<String>> partitionsPerRegion;
-    private static Map<String, Set<String>> regionsWithPartition;
+    private static Map<Region, Set<String>> partitionsPerRegion;
+    private static Map<String, Set<Region>> regionsWithPartition;
+    public static final String PARTITION_FORMAT = "reference-architecture-partition%d";
 
     static {
         partitions = new HashSet<>();
@@ -21,20 +24,18 @@ public final class Config {
     }
 
     private static void init() {
-        partitions.add("partition1");
-        partitions.add("partition2");
-        partitions.add("partition3");
+        String partition1 = String.format(PARTITION_FORMAT, 1);
+        String partition2 = String.format(PARTITION_FORMAT, 2);
+        partitions.add(partition1);
+        partitions.add(partition2);
 
-        partitionsPerRegion.put("us-east-1", new HashSet<>(Arrays.asList("partition1","partition2")));
-        partitionsPerRegion.put("us-west-1", new HashSet<>(Arrays.asList("partition3")));
-
-        
-        regionsWithPartition.put("partition1", new HashSet<>(Arrays.asList("us-east-1")));
-        regionsWithPartition.put("partition2", new HashSet<>(Arrays.asList("us-east-1")));
-        regionsWithPartition.put("partition3", new HashSet<>(Arrays.asList("us-west-1")));
+        partitionsPerRegion.put(Region.EU_NORTH_1, new HashSet<>(Arrays.asList(partition1, partition2)));
+  
+        regionsWithPartition.put(partition1, new HashSet<>(Arrays.asList(Region.EU_NORTH_1)));
+        regionsWithPartition.put(partition2, new HashSet<>(Arrays.asList(Region.EU_NORTH_1)));
     }
 
-    public static boolean isRegion(String region) { 
+    public static boolean isRegion(Region region) { 
         return partitionsPerRegion.containsKey(region);
     }
 
@@ -42,9 +43,9 @@ public final class Config {
         return partitions.contains(partition);
     }
 
-    public static String getKeyPartition(String region, String key) throws KeyNotFoundException {
+    public static String getKeyPartition(Region region, String key) throws KeyNotFoundException {
         int partitionId = Math.floorMod(key.hashCode(), partitions.size()) + 1;
-        String partitionName = String.format("partition%d", partitionId);
+        String partitionName = String.format(PARTITION_FORMAT, partitionId);
 
         if(!isRegion(region) || !partitionsPerRegion.get(region).contains(partitionName)) {
             throw new KeyNotFoundException();
@@ -53,9 +54,9 @@ public final class Config {
         return partitionName;
     }
 
-    public static boolean isKeyInRegion(String region, String key) {
+    public static boolean isKeyInRegion(Region region, String key) {
         int partitionId = Math.floorMod(key.hashCode(), partitions.size()) + 1;
-        String partitionName = String.format("partition%d", partitionId);
+        String partitionName = String.format(PARTITION_FORMAT, partitionId);
 
         if(!isRegion(region) || !partitionsPerRegion.get(region).contains(partitionName)) {
             return false;
@@ -66,12 +67,12 @@ public final class Config {
 
     public static boolean isKeyInPartition(String partition, String key) {
         int partitionId = Math.floorMod(key.hashCode(), partitions.size()) + 1;
-        String partitionName = String.format("partition%d", partitionId);
+        String partitionName = String.format(PARTITION_FORMAT, partitionId);
 
         return partitionName.equals(partition);
     }
 
-    public static Set<String> getRegions() {
+    public static Set<Region> getRegions() {
         return partitionsPerRegion.keySet();
     }
 
@@ -79,11 +80,11 @@ public final class Config {
         return partitions;
     }   
     
-    public static Set<String> getPartitions(String region) {
+    public static Set<String> getPartitions(Region region) {
         return partitionsPerRegion.get(region);
     }   
 
-    public static Set<String> getPartitionRegions(String partition) {
+    public static Set<Region> getPartitionRegions(String partition) {
         return regionsWithPartition.get(partition);
     }   
 }

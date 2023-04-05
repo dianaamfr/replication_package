@@ -23,11 +23,13 @@ import com.dissertation.referencearchitecture.remoteInterface.response.ROTRespon
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 
+import software.amazon.awssdk.regions.Region;
+
 public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     private ReaderStorage storage; 
  
-    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String region, ReaderStorage storage) throws URISyntaxException {
-        super(scheduler, s3Helper, String.format("r%s", region));
+    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, Region region, ReaderStorage storage) throws URISyntaxException {
+        super(scheduler, s3Helper, String.format("r%s", region.toString()));
         this.storage = storage;
     }
 
@@ -36,20 +38,23 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     }
     
     public static void main(String[] args) {
+        Region region;
         if(args.length < 1) {
-            System.err.println("Usage: java ReadNode <region:String>");   
-            return;
-        }
-
-        String region = args[0];
-        if(!Config.isRegion(region)) {
-            System.err.println("Error: Invalid Region");   
-            return;
+            System.out.println("HERE");
+            region = Utils.getCurrentRegion();
+            System.out.println(region);
+        } else {
+            region = Region.of(args[0]);
         }
         
+        if(!Config.isRegion(region)) {
+            System.err.println("Error: Invalid region");   
+            return;
+        }
+  
         try {
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-            S3Helper s3Helper = new S3Helper();
+            S3Helper s3Helper = new S3Helper(region);
             ReaderStorage storage = new ReaderStorage(region);
             storage.init();
 

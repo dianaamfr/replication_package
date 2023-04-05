@@ -10,6 +10,8 @@ import com.dissertation.referencearchitecture.remoteInterface.response.ROTRespon
 import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.utils.Utils;
 
+import software.amazon.awssdk.regions.Region;
+
 public class ClientInterface {
     private final Client client;
 
@@ -18,12 +20,13 @@ public class ClientInterface {
     }
 
     public static void main(String[] args) {
+        Region region;
         if(args.length < 1) {
-            System.err.println("Usage: java Client <region:String>");   
-            return;
+            region = Utils.getCurrentRegion();
+        } else {
+            region = Region.of(args[0]);
         }
 
-        String region = args[0];
         try {
             Client client = new Client(region);
             (new ClientInterface(client)).run();

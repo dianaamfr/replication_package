@@ -22,14 +22,16 @@ import com.dissertation.referencearchitecture.remoteInterface.response.WriteErro
 import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.utils.Utils;
 
+import software.amazon.awssdk.regions.Region;
+
 public class Client {
     private Map<String, WriteRemoteInterface> writeStubs;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
     private ReadRemoteInterface readStub;
-    private String region;
+    private Region region;
 
-    public Client(String region) throws InvalidRegionException, RemoteException, NotBoundException {
+    public Client(Region region) throws InvalidRegionException, RemoteException, NotBoundException {
         if(!Config.isRegion(region)) {
             throw new InvalidRegionException();
         }
@@ -42,7 +44,7 @@ public class Client {
 
     public void initStubs() throws RemoteException, NotBoundException {
         Set<String> partitions = Config.getPartitions(this.region);
-        String readNodeId = String.format("r%s", this.region);
+        String readNodeId = String.format("r%s", this.region.toString());
         Registry registry = LocateRegistry.getRegistry();
         this.readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
         this.writeStubs = new HashMap<>();

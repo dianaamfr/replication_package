@@ -1,4 +1,8 @@
 .ONESHELL: # Applies to every targets in the file!
+region = eu-north-1
+partition1Bucket = reference-architecture-partition1
+partition2Bucket = reference-architecture-partition2
+clockBucket = reference-architecture-clock
 
 # Setup
 all:
@@ -7,16 +11,14 @@ all:
 	make rmi
 
 createBuckets:
-	awslocal s3api create-bucket --bucket partition1 --region us-east-1
-	awslocal s3api create-bucket --bucket partition2 --region us-east-1
-	awslocal s3api create-bucket --bucket partition3 --region us-west-1 --create-bucket-configuration LocationConstraint=us-west-1
-	awslocal s3api create-bucket --bucket clock --region us-east-1
+	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
+	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
+	awslocal s3api create-bucket --bucket $(clockBucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
 
 emptyBuckets:
-	awslocal s3 rm s3://partition1 --recursive
-	awslocal s3 rm s3://partition2 --recursive
-	awslocal s3 rm s3://partition3 --recursive
-	awslocal s3 rm s3://clock --recursive
+	awslocal s3 rm s3://$(partition1Bucket) --recursive
+	awslocal s3 rm s3://$(partition2Bucket) --recursive
+	awslocal s3 rm s3://$(clockBucket) --recursive
 
 clear:
 	make emptyBuckets
@@ -28,27 +30,24 @@ rmi:
 	sleep 0.5
 
 # Compute Nodes
-readNodeWest:
-	java -jar target/readNode-jar-with-dependencies.jar us-west-1
+readNode:
+	java -jar target/readNode-jar-with-dependencies.jar
 
-readNodeEast:
-	java -jar target/readNode-jar-with-dependencies.jar us-east-1
+readNodeNorth:
+	java -jar target/readNode-jar-with-dependencies.jar $(region)
 
 writeNode1:
-	java -jar target/writeNode-jar-with-dependencies.jar partition1
+	java -jar target/writeNode-jar-with-dependencies.jar $(partition1Bucket)
 
 writeNode2:
-	java -jar target/writeNode-jar-with-dependencies.jar partition2
-
-writeNode3:
-	java -jar target/writeNode-jar-with-dependencies.jar partition3
+	java -jar target/writeNode-jar-with-dependencies.jar $(partition2Bucket)
 
 # Validation
-clientWest:
-	java -jar target/clientInterface-jar-with-dependencies.jar us-west-1
+client:
+	java -jar target/clientInterface-jar-with-dependencies.jar
 
-clientEast:
-	java -jar target/clientInterface-jar-with-dependencies.jar us-east-1
+clientNorth:
+	java -jar target/clientInterface-jar-with-dependencies.jar $(region)
 
 writeGenerator:
 	java -jar target/writeGenerator-jar-with-dependencies.jar

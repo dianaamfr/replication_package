@@ -13,6 +13,8 @@ import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.utils.Utils;
 
+import software.amazon.awssdk.regions.Region;
+
 public class WriteGenerator {
     private ScheduledThreadPoolExecutor scheduler;
     private final int delay;
@@ -90,8 +92,8 @@ public class WriteGenerator {
         this.scheduler.shutdown();
     }
 
-    private String getRandomRegion(String partition) {
-        List<String> regions = new ArrayList<>(Config.getPartitionRegions(partition));
+    private Region getRandomRegion(String partition) {
+        List<Region> regions = new ArrayList<>(Config.getPartitionRegions(partition));
         return regions.get(ThreadLocalRandom.current().nextInt(regions.size()));
     }
 

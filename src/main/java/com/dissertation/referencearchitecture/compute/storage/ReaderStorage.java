@@ -9,12 +9,14 @@ import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Utils;
 
+import software.amazon.awssdk.regions.Region;
+
 public class ReaderStorage extends Storage {
     private ConcurrentMap<String, String> partitionsMaxTimestamp;
     private String stableTime;
-    private String region;
+    private Region region;
     
-    public ReaderStorage(String region) {
+    public ReaderStorage(Region region) {
         super();
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
         this.stableTime = Utils.MIN_TIMESTAMP;

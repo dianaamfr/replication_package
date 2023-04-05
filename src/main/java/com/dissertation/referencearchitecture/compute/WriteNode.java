@@ -57,7 +57,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
         try {
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
-            S3Helper s3Helper = new S3Helper();
+            S3Helper s3Helper = new S3Helper(Utils.getCurrentRegion());
             Storage storage = new Storage();
             StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
