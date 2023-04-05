@@ -40,9 +40,7 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     public static void main(String[] args) {
         Region region;
         if(args.length < 1) {
-            System.out.println("HERE");
             region = Utils.getCurrentRegion();
-            System.out.println(region);
         } else {
             region = Region.of(args[0]);
         }
