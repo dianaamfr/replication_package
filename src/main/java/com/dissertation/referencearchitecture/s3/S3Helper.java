@@ -8,8 +8,11 @@ import java.util.List;
 
 import com.dissertation.utils.Utils;
 
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -22,7 +25,6 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class S3Helper {
     private final S3Client s3Client;
-    private final static String s3Uri = "http://localhost:4566";
     private final static Integer maxKeys = 5;
     private final static String logPrefix = "Logs/";
     private final static String clockPrefix = "Clock/";
@@ -33,13 +35,12 @@ public class S3Helper {
     }
 
     private static S3Client s3Client(Region region) throws URISyntaxException {
-        ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
         return S3Client.builder()
-                .region(region != null ? region : Utils.DEFAULT_REGION)
-                .credentialsProvider(credentialsProvider)
-                .endpointOverride(URI.create(s3Uri))
-                .forcePathStyle(true)
-                .build();
+            .region(region)
+            //.credentialsProvider(ProfileCredentialsProvider.create())
+            .credentialsProvider(InstanceProfileCredentialsProvider.create())
+            //.endpointOverride(URI.create(System.getenv("S3_ENDPOINT")))
+            .forcePathStyle(true).build();
     }
 
     public boolean persistLog(String bucketName, String timestamp, String logJson) {
