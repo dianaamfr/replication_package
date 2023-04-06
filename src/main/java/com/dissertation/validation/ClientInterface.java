@@ -1,13 +1,16 @@
 package com.dissertation.validation;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
-import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
+import com.dissertation.ROTResponse;
+import com.dissertation.WriteResponse;
+import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 
 import software.amazon.awssdk.regions.Region;
@@ -20,40 +23,47 @@ public class ClientInterface {
     }
 
     public static void main(String[] args) {
-        Region region;
-        if(args.length < 1) {
-            region = Utils.getCurrentRegion();
-        } else {
-            region = Region.of(args[0]);
+        Address readAddress;
+        List<Address> writeAddresses = new ArrayList<>();
+
+        if(args.length % 2 == 0 || args.length < 5) {
+            System.err.println("Usage: ClientInterface <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+");
+            return;
         }
 
         try {
-            Client client = new Client(region);
+            readAddress = new Address(Integer.parseInt(args[0]), args[1]);
+            for(int i=2; i < args.length; i+=3) {
+                writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i+1], Integer.parseInt(args[i+2])));
+            }
+
+            Client client = new Client(readAddress, writeAddresses);
             (new ClientInterface(client)).run();
+        } catch(NumberFormatException e) {
+            System.err.println("Invalid port number");
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println("Error: " + e.getMessage());
+            System.err.println(e.getMessage());
         }
     }
 
     public void run() {
         Scanner scanner = new Scanner(System.in);
         String input = null;
-        
-        do {   
+
+        do {
             System.out.println("Enter an operation:");
             System.out.println("\tROT: R <key:String>+");
             System.out.println("\tWrite: W <key:String> <value:Int>");
             input = scanner.nextLine();
             String[] commands = input.split(" ");
 
-            if(commands.length == 0) {
-                System.err.println("Error: Unsupported command");
+            if (commands.length == 0) {
+                System.err.println("Unsupported command");
                 continue;
             }
 
             String[] params = Arrays.copyOfRange(commands, 1, commands.length);
-            switch(commands[0]) {
+            switch (commands[0]) {
                 case "R":
                     this.sendROTRequest(params);
                     break;
@@ -61,48 +71,50 @@ public class ClientInterface {
                     this.sendWriteRequest(params);
                     break;
                 default:
-                    System.err.println("Error: Unsupported command");
+                    System.err.println("Unsupported command");
                     break;
             }
 
-        } while(input != null);
+        } while (input != null);
 
         scanner.close();
     }
 
     private void sendROTRequest(String[] commands) {
-        if(commands.length < 1) {
-            System.err.println("Error: Unsupported command");
+        if (commands.length < 1) {
+            System.err.println("Unsupported command");
             return;
-        } 
-        
-        ROTResponse result = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
-        if(!result.isError()) {
-            StringBuilder builder = new StringBuilder();
-            builder.append(String.format("ROT at %s:", result.getStableTime()));
-            for(Entry<String, byte[]> entry: result.getValues().entrySet()) {
-                builder.append(String.format("\n\t%s = %s", entry.getKey(), Utils.stringFromByteArray(entry.getValue())));
-            }
-            System.out.println(builder.toString());
-        } else {
-            System.err.println(result.getStatus());
         }
+
+        ROTResponse result = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
+        // if (!result.isError()) {
+        //     StringBuilder builder = new StringBuilder();
+        //     builder.append(String.format("ROT at %s:", result.getStableTime()));
+        //     for (Entry<String, byte[]> entry : result.getValues().entrySet()) {
+        //         builder.append(
+        //                 String.format("\n\t%s = %s", entry.getKey(), Utils.stringFromByteArray(entry.getValue())));
+        //     }
+        //     System.out.println(builder.toString());
+        // } else {
+        //     System.err.println(result.getStatus());
+        // }
     }
 
     private void sendWriteRequest(String[] commands) {
-        if(commands.length != 2) {
-            System.err.println("Error: Unsupported command");
+        if (commands.length != 2) {
+            System.err.println("Unsupported command");
             return;
         }
 
         String key = commands[0];
         byte[] value = Utils.byteArrayFromString(commands[1]);
         WriteResponse result = this.client.requestWrite(key, value);
-        
-        if(!result.isError()) {
-            System.out.println(String.format("Write response: %s = %s at %s ", key, commands[1], result.getTimestamp()));
-        } else {
-            System.err.println(result.getStatus());
-        }
+
+        // if (!result.isError()) {
+        //     System.out
+        //             .println(String.format("Write response: %s = %s at %s ", key, commands[1], result.getTimestamp()));
+        // } else {
+        //     System.err.println(result.getStatus());
+        // }
     }
 }

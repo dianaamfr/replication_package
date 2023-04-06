@@ -48,6 +48,7 @@ public class WriteGenerator {
     }
 
     public static void main(String[] args) {
+        /*
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(MAX_THREADS);
 
         try {
@@ -60,10 +61,11 @@ public class WriteGenerator {
             writeGenerator.run();
         } catch (NumberFormatException e) {
             System.err.println("Usage: WriteGenerator <delay:Int> <bytes:Int>");
-        }
+        } */
     }
 
     private void init() {
+        /*
         for (int i = 0; i < this.partitions.size(); i++) {
             CountDownLatch writeSignal = new CountDownLatch(this.writesPerPartition);
             countDowns.add(writeSignal);
@@ -74,10 +76,11 @@ public class WriteGenerator {
                             new PartitionWriteGenerator(c, this.partitions.get(i), i, writeSignal),
                             0, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
-                    System.err.println("Error: " + e.toString());
+                    System.err.println(e.toString());
                 }
             }
         }
+        */
     }
 
     public void run() {

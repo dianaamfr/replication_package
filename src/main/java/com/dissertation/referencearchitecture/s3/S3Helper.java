@@ -30,14 +30,13 @@ public class S3Helper {
     }
 
     private static S3Client s3Client(Region region) throws URISyntaxException {
-        String s3Endpoint = System.getProperty(Utils.LOCALSTACK_ENDPOINT_PROPERTY);
         S3ClientBuilder s3ClientBuilder = S3Client.builder()
             .region(region)
             .forcePathStyle(true);
 
-        if(s3Endpoint != null) {
+        if(Utils.S3_ENDPOINT != null) {
             return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
-                .endpointOverride(URI.create(s3Endpoint)).build();
+                .endpointOverride(URI.create(Utils.S3_ENDPOINT)).build();
         }
 
         return s3ClientBuilder.credentialsProvider(InstanceProfileCredentialsProvider.create())

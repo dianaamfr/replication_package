@@ -51,6 +51,7 @@ public class ReadGenerator {
     }
 
     public static void main(String[] args) {
+        /*
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(MAX_THREADS);
         try {
             int delay = args.length > 0 ? Integer.parseInt(args[0]) : READ_DELAY;
@@ -62,10 +63,11 @@ public class ReadGenerator {
             readGenerator.run();
         } catch (NumberFormatException e) {
             System.err.println("Usage: WriteGenerator <delay:Int> <bytes:Int>");
-        }
+        }*/
     }
 
     private void init() {
+        /*
         for (int i = 0; i < this.regions.size(); i++) {
             CountDownLatch readSignal = new CountDownLatch(this.readsPerRegion);
             countDowns.add(readSignal);
@@ -76,10 +78,10 @@ public class ReadGenerator {
                             new RegionReadGenerator(c, this.regions.get(i), i, readSignal),
                             0, TimeUnit.MILLISECONDS);
                 } catch (Exception e) {
-                    System.err.println("Error: " + e.toString());
+                    System.err.println(e.toString());
                 }
             }
-        }
+        }*/
     }
 
     public void run() {

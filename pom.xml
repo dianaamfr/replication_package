@@ -211,7 +211,7 @@
                     </execution>
 
                     <!-- READ GENERATOR -->
-                    <execution>
+                    <!-- <execution>
                         <id>read-generator</id>
                         <configuration>
                             <finalName>readGenerator</finalName>
@@ -228,10 +228,10 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                    </execution>
+                    </execution> -->
 
                     <!-- WRITE GENERATOR -->
-                    <execution>
+                    <!-- <execution>
                         <id>write-generator</id>
                         <configuration>
                             <finalName>writeGenerator</finalName>
@@ -248,7 +248,7 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                    </execution>
+                    </execution> -->
 
                     <!-- CLIENT INTERFACE -->
                     <execution>

@@ -18,6 +18,7 @@ message ROTRequest {
 
 message ROTResponse {
     map<string, bytes> values = 1;
+    string stableTime = 2;
 }
 
 service WriteService {

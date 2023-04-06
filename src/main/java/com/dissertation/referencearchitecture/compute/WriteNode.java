@@ -2,11 +2,6 @@ package com.dissertation.referencearchitecture.compute;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.rmi.AlreadyBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -21,7 +16,6 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
 import com.dissertation.referencearchitecture.remoteInterface.response.WriteError;
 import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
 import com.dissertation.referencearchitecture.s3.S3Helper;
@@ -30,13 +24,13 @@ import com.dissertation.utils.Utils;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 
-public class WriteNode extends ComputeNode implements WriteRemoteInterface {
+public class WriteNode extends ComputeNode {
     private Storage storage;  
     private StoragePusher storagePusher;
     private HLC hlc;
     private String partition;
 
-    public WriteNode(Server server, ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException {
+    public WriteNode(Server server, ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException, IOException, InterruptedException {
         super(server, scheduler, s3Helper, String.format("w%s", partition));
         this.partition = partition;
         this.storage = storage;        
@@ -58,7 +52,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
 
         String partition = args[0];
         if(!Config.isPartition(partition)) {    
-            System.err.println(String.format("Error: Partition %p does not exist", partition));   
+            System.err.println(String.format("Partition %p does not exist", partition));   
             return;
         }
 
@@ -73,22 +67,10 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
             WriteNode writeNode = new WriteNode(server, scheduler, s3Helper, partition, storage, storagePusher, hlc);
-
-            // Bind the remote object's stub in the registry
-            WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
-            Registry registry = LocateRegistry.getRegistry();
-            registry.bind(writeNode.id, stub);
-            
             writeNode.init();
         } catch (URISyntaxException e) {
             System.err.println("Could not connect with AWS S3");
-        } catch (RemoteException e) {
-            System.err.println("Could not get registry");
-        } catch (AlreadyBoundException e) {
-            System.err.println("Could not bind to registry");
         } catch (IOException e) {
-            System.err.println("Could not start server");
-        } catch (InterruptedException e) {
             System.err.println("Could not start server");
         } catch (NumberFormatException e) {
             System.err.println("Invalid port number");
@@ -97,7 +79,6 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
     }
 
-    @Override
     public WriteResponse write(String key, byte[] value, String lastWriteTimestamp) {  
         if(!Config.isKeyInPartition(this.partition, key)) {
             return new WriteError(String.format("Key %s not found", key));

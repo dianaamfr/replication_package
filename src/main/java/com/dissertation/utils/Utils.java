@@ -26,7 +26,8 @@ public class Utils {
     public static final String LOG_VALUE = "value";
     public static final String LOG_TIMESTAMP = "timestamp";
 
-    public static final String LOCALSTACK_ENDPOINT_PROPERTY="s3Endpoint";
+    public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
+    public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
 
     public static byte[] byteArrayFromString(String encodedBuffer) {
         return encodedBuffer.getBytes(StandardCharsets.UTF_8);    
@@ -55,5 +56,14 @@ public class Utils {
             System.err.println("Warning: Failed to get default region. Using default."); 
         }
         return region;
+    }
+
+    public static int getKeyPartitionId(String key) {
+        int partitionId = Math.floorMod(key.hashCode(), NUM_PARTITIONS) + 1;
+        return partitionId;
+    }
+
+    public static String getPartitionBucket(int partitionId) {
+        return String.format(Utils.S3_PARTITION_FORMAT, partitionId);
     }
 }

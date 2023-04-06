@@ -2,11 +2,6 @@ package com.dissertation.referencearchitecture.compute;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.rmi.AlreadyBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -16,10 +11,8 @@ import java.util.concurrent.TimeUnit;
 import com.dissertation.referencearchitecture.compute.service.ROTServiceImpl;
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
-import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
-import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
 import com.dissertation.referencearchitecture.remoteInterface.response.ROTError;
 import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
 import com.dissertation.referencearchitecture.s3.S3Helper;
@@ -29,7 +22,7 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import software.amazon.awssdk.regions.Region;
 
-public class ReadNode extends ComputeNode implements ReadRemoteInterface {
+public class ReadNode extends ComputeNode {
     private ReaderStorage storage; 
  
     public ReadNode(Server server, ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, Region region, ReaderStorage storage) throws URISyntaxException {
@@ -46,14 +39,14 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     public static void main(String[] args) {
         if(args.length < 1) {
             System.err.println("Usage: ReadNode <port:Int>");
+            return;
         } 
 
         Region region = Utils.getCurrentRegion();
-        // TODO: consider removing this
-        if(!Config.isRegion(region)) {
-            System.err.println("Error: Invalid region");   
-            return;
-        }
+        // if(!Config.isRegion(region)) {
+        //     System.err.println("Invalid region");   
+        //     return;
+        // }
   
         try {
             int port = Integer.valueOf(args[0]);
@@ -65,22 +58,10 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             storage.init();
 
             ReadNode readNode = new ReadNode(server, scheduler, s3Helper, region, storage);
-            
-            // Bind the remote object's stub in the registry
-            ReadRemoteInterface stub = (ReadRemoteInterface) UnicastRemoteObject.exportObject(readNode, 0);
-            Registry registry = LocateRegistry.getRegistry();
-            registry.bind(readNode.id, stub);
-
             readNode.init();
         } catch (URISyntaxException e) {
             System.err.println("Could not connect with AWS S3");
-        } catch (RemoteException e) {
-            System.err.println("Could not get registry");
-        } catch (AlreadyBoundException e) {
-            System.err.println("Could not bind to registry");
         } catch (IOException e) {
-            System.err.println("Could not start server");
-        } catch (InterruptedException e) {
             System.err.println("Could not start server");
         } catch (NumberFormatException e) {
             System.err.println("Invalid port number");
@@ -89,7 +70,6 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
         }
     }
 
-    @Override
     public ROTResponse rot(Set<String> readSet) {
         Map<String, byte[]> values = new HashMap<>(readSet.size());
         String stableTime = this.storage.getStableTime();
