@@ -72,11 +72,11 @@ This repository holds a Maven project. The project's source code, stored under `
 2. Open a new terminal in the root folder
 3. Create buckets: `make createBuckets`. This command creates buckets in:
     - us-east-1:
-        - bucket "partition1": keys "x" and "y"
-        - bucket "partition2": key "z"
+        - bucket "partition1"
+        - bucket "partition2"
         - bucket "clock", which is used to persist the clock values
     - use-west-1:
-        - bucket "partition3": key "p"
+        - bucket "partition3"
 4. `make`
 5. Start the Write Generator: `make writeGenerator`
 6. Start the Read Generator: `make readGenerator`
