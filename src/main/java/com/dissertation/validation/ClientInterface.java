@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.ROTResponse;
-import com.dissertation.WriteResponse;
+import com.dissertation.referencearchitecture.ROTResponse;
+import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;

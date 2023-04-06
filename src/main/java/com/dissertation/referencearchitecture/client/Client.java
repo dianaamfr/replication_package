@@ -7,12 +7,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import com.dissertation.ROTRequest;
-import com.dissertation.ROTResponse;
-import com.dissertation.ROTServiceGrpc;
-import com.dissertation.WriteRequest;
-import com.dissertation.WriteResponse;
-import com.dissertation.WriteServiceGrpc;
+import com.dissertation.referencearchitecture.ROTRequest;
+import com.dissertation.referencearchitecture.ROTResponse;
+import com.dissertation.referencearchitecture.ROTServiceGrpc;
+import com.dissertation.referencearchitecture.WriteRequest;
+import com.dissertation.referencearchitecture.WriteResponse;
+import com.dissertation.referencearchitecture.WriteServiceGrpc;
+import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
@@ -42,39 +43,42 @@ public class Client {
     }
 
     public ROTResponse requestROT(Set<String> keys) {
-        // TODO: check if keys are available in region
-        ROTRequest rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
-        ROTResponse rotResponse = this.readStub.rot(rotRequest);
-        // TODO: prune cache
-        // consult cache and return response with correct values
-        return rotResponse;
-        // try {
-        // for(String key: keys) {
-        // if(!Config.isKeyInRegion(this.region, key)) {
-        // throw new KeyNotFoundException();
-        // }
-        // }
-        // ROTResponse rotResponse = this.readStub.rot(
-        // ROTRequest.newBuilder().addAllKeys(keys).build();
-        // );
+        Builder builder = ROTResponse.newBuilder();
+        ROTRequest rotRequest;
+        ROTResponse rotResponse;
+        
+        try {
+            for(String key: keys) {
+                if(!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+                    throw new KeyNotFoundException();
+                }
+            }
 
-        // // if(!rotResponse.isError()) {
-        // // pruneCache(rotResponse.getStableTime());
-        // // return new ROTResponse(getReadResponse(rotResponse.getValues()),
-        // rotResponse.getStableTime());
-        // // }
-        // return rotResponse;
-        // } catch (KeyNotFoundException e) {
-        // return new ROTError(e.toString());
-        // }
+            rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
+            rotResponse = this.readStub.rot(rotRequest);
+
+            if(!rotResponse.getError()) {
+                pruneCache(rotResponse.getStableTime());
+                builder
+                    .putAllValues(getReadResponse(rotResponse.getValuesMap()))
+                    .setStableTime(rotResponse.getStableTime());
+                return builder.build();
+            }
+            return rotResponse;
+        } catch (KeyNotFoundException e) {
+            return builder
+                .setStatus(e.toString())
+                .setError(true).build();
+        }
     }
 
     public WriteResponse requestWrite(String key, ByteString value) {
-        //try {
+        try {
             int partitionId = Utils.getKeyPartitionId(key);
-            // if(!this.writeStubs.containsKey(partitionId)) {
-            //     // TODO: return error response
-            // }
+            if(!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+                throw new KeyNotFoundException();
+            }
+
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
             WriteRequest writeRequest = WriteRequest.newBuilder()
                 .setKey(key)
@@ -83,18 +87,17 @@ public class Client {
                 .build();
 
             WriteResponse writeResponse = writeStub.write(writeRequest);
-            System.out.println(writeResponse.getWriteTimestamp());
-            this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-            this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-
-            // if (!writeResponse.isError()) {
-            //     this.lastWriteTimestamp = writeResponse.getTimestamp();
-            //     this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
-            // }
+            if(!writeResponse.getError()) {
+                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+                this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
+            }
             return writeResponse;
-        // } catch (KeyNotFoundException) {
-        //     return new WriteError(e.toString());
-        // }
+        } catch (KeyNotFoundException e) {
+            return WriteResponse.newBuilder()
+                .setStatus(e.toString())
+                .setError(true)
+                .build();
+        }
     }
 
     private void pruneCache(String stableTime) {

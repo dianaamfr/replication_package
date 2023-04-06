@@ -1,6 +1,6 @@
 syntax="proto3";
 option java_multiple_files = true;
-package com.dissertation;
+package com.dissertation.referencearchitecture;
 
 message WriteRequest {
     string key = 1;

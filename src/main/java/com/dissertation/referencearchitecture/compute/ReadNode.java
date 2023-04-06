@@ -7,10 +7,10 @@ import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.dissertation.ROTRequest;
-import com.dissertation.ROTResponse;
-import com.dissertation.ROTResponse.Builder;
-import com.dissertation.ROTServiceGrpc.ROTServiceImplBase;
+import com.dissertation.referencearchitecture.ROTRequest;
+import com.dissertation.referencearchitecture.ROTResponse;
+import com.dissertation.referencearchitecture.ROTResponse.Builder;
+import com.dissertation.referencearchitecture.ROTServiceGrpc.ROTServiceImplBase;
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;

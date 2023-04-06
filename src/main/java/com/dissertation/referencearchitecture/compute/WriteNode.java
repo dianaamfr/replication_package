@@ -7,10 +7,10 @@ import java.util.concurrent.TimeUnit;
 
 import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
-import com.dissertation.WriteRequest;
-import com.dissertation.WriteResponse;
-import com.dissertation.WriteResponse.Builder;
-import com.dissertation.WriteServiceGrpc.WriteServiceImplBase;
+import com.dissertation.referencearchitecture.WriteRequest;
+import com.dissertation.referencearchitecture.WriteResponse;
+import com.dissertation.referencearchitecture.WriteResponse.Builder;
+import com.dissertation.referencearchitecture.WriteServiceGrpc.WriteServiceImplBase;
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
 import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
