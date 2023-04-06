@@ -38,7 +38,6 @@ public class S3Helper {
             return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
                 .endpointOverride(URI.create(Utils.S3_ENDPOINT)).build();
         }
-
         return s3ClientBuilder.credentialsProvider(InstanceProfileCredentialsProvider.create())
             .build();
     }

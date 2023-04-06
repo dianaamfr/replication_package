@@ -32,7 +32,7 @@ public class WriteNode extends ComputeNode {
     private int partition;
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException, IOException, InterruptedException {
-        super(scheduler, s3Helper, String.format("w%s", partition));
+        super(scheduler, s3Helper);
         this.partition = partition;
         this.storage = storage;        
         this.storagePusher = storagePusher;
@@ -41,8 +41,8 @@ public class WriteNode extends ComputeNode {
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        super.init(server);
         this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher), Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
+        super.init(server);
     }
 
     public static void main(String[] args) {

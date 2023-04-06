@@ -11,13 +11,11 @@ import io.grpc.Server;
 public abstract class ComputeNode {
     protected Server server;
     protected S3Helper s3Helper;
-    protected final String id;
     protected ScheduledThreadPoolExecutor scheduler;
     
-    public ComputeNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String id) throws URISyntaxException {
+    public ComputeNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper) throws URISyntaxException {
         this.scheduler = scheduler;
         this.s3Helper = s3Helper;
-        this.id = id;
     }
 
     public void init(Server server) throws IOException, InterruptedException {

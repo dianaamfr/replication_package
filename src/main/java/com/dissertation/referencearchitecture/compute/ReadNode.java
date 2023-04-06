@@ -27,15 +27,15 @@ import software.amazon.awssdk.regions.Region;
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage; 
  
-    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, Region region, ReaderStorage storage) throws URISyntaxException {
-        super(scheduler, s3Helper, String.format("r%s", region.toString()));
+    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage) throws URISyntaxException {
+        super(scheduler, s3Helper);
         this.storage = storage;
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        super.init(server);
         this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), Utils.PULL_DELAY, Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
+        super.init(server);
     }
     
     public static void main(String[] args) {
@@ -53,7 +53,7 @@ public class ReadNode extends ComputeNode {
             ReaderStorage storage = new ReaderStorage(region);
             storage.init();
 
-            ReadNode readNode = new ReadNode(scheduler, s3Helper, region, storage);
+            ReadNode readNode = new ReadNode(scheduler, s3Helper, storage);
             ROTServiceImpl readService = readNode.new ROTServiceImpl();
             Server server = ServerBuilder.forPort(port).addService(readService).build();
             readNode.init(server);

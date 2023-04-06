@@ -39,7 +39,7 @@ clear:
 	
 # Compute Nodes
 readNode:
-	java -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort)
 
 writeNode1:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/writeNode.jar $(partitionId1) $(writePort1)
