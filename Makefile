@@ -4,6 +4,7 @@ partition1Bucket = reference-architecture-partition1
 partition2Bucket = reference-architecture-partition2
 clockBucket = reference-architecture-clock
 s3Endpoint = http://localhost:4566
+serverPort = 8080
 
 # Setup
 all:
@@ -35,13 +36,13 @@ readNode:
 	java -jar target/readNode.jar
 
 readNodeNorth:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/readNode.jar $(region)
+	java -Ds3Endpoint=$(s3Endpoint) -DserverPort=$(serverPort) -jar target/readNode.jar $(region)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partition1Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -DserverPort=$(serverPort) -jar target/writeNode.jar $(partition1Bucket)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partition2Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -DserverPort=$(serverPort) -jar target/writeNode.jar $(partition2Bucket)
 
 # Validation
 client:

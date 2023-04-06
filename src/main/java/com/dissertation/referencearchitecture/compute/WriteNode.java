@@ -1,5 +1,6 @@
 package com.dissertation.referencearchitecture.compute;
 
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.rmi.AlreadyBoundException;
 import java.rmi.RemoteException;
@@ -14,6 +15,7 @@ import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
 import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
+import com.dissertation.referencearchitecture.compute.service.WriteServiceImpl;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.config.Config;
@@ -25,21 +27,26 @@ import com.dissertation.referencearchitecture.remoteInterface.response.WriteResp
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 
+import io.grpc.Server;
+import io.grpc.ServerBuilder;
+
 public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     private Storage storage;  
     private StoragePusher storagePusher;
     private HLC hlc;
     private String partition;
 
-    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException {
-        super(scheduler, s3Helper, String.format("w%s", partition));
+    public WriteNode(Server server, ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException {
+        super(server, scheduler, s3Helper, String.format("w%s", partition));
         this.partition = partition;
         this.storage = storage;        
         this.storagePusher = storagePusher;
         this.hlc = hlc;
     }
 
-    public void init() {
+    @Override
+    public void init() throws IOException, InterruptedException {
+        super.init();
         this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher), Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
     }
 
@@ -56,13 +63,16 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         try {
+            int port = Integer.valueOf(System.getProperty("serverPort"));
+            Server server = ServerBuilder.forPort(port).addService(new WriteServiceImpl()).build();
+
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
             S3Helper s3Helper = new S3Helper(Utils.getCurrentRegion());
             Storage storage = new Storage();
             StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
-            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, storagePusher, hlc);
+            WriteNode writeNode = new WriteNode(server, scheduler, s3Helper, partition, storage, storagePusher, hlc);
 
             // Bind the remote object's stub in the registry
             WriteRemoteInterface stub = (WriteRemoteInterface) UnicastRemoteObject.exportObject(writeNode, 0);
@@ -76,6 +86,8 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
+        } catch (IOException|InterruptedException e) {
+            System.err.println(e.toString());
         }
     }
 
