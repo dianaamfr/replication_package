@@ -22,7 +22,7 @@ For a more detailed description of the reference architecture please refer to [R
 
 ### Structure 
 This repository holds a Maven project with the following structure:
-- `src/main/java` comprised the application sources, namely:
+- `src/main/java` comprises the project's source code and follows the structure below:
     - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
         - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and his last write timestamp.
         - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
