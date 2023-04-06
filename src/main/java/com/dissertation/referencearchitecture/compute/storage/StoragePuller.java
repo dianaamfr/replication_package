@@ -44,18 +44,21 @@ public class StoragePuller implements Runnable {
 
     private void parseJson(String json, String partition) throws Exception {
         JSONObject response = new JSONObject(json);
-        JSONArray versionChainsJson = response.getJSONArray("state");
+        JSONArray versionChainsJson = response.getJSONArray(Utils.LOG_STATE);
 
         for(int i = 0; i < versionChainsJson.length(); i++) {
             JSONObject versionChainJson = versionChainsJson.getJSONObject(i);
-            JSONArray versionChainArray = versionChainJson.getJSONArray("value");
-            for(int j = 0; j < versionChainArray.length(); j++) {
+            JSONArray versionChainArray = versionChainJson.getJSONArray(Utils.LOG_VERSIONS);
+            String key = versionChainJson.getString(Utils.LOG_KEY);
+            int lastIdx = this.storage.getLastParsedIndex(key);
+            for(int j = lastIdx; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
                 this.storage.put(
-                    versionChainJson.getString("key"), 
-                    versionJson.getString("key"), 
-                    Utils.byteArrayFromString(versionJson.getString("value")));
+                    key, 
+                    versionJson.getString(Utils.LOG_TIMESTAMP), 
+                    Utils.byteArrayFromString(versionJson.getString(Utils.LOG_VALUE)));
             }
+            this.storage.setLastParsedIndex(key, versionChainArray.length());
         }
     }
     

@@ -13,12 +13,14 @@ import software.amazon.awssdk.regions.Region;
 
 public class ReaderStorage extends Storage {
     private ConcurrentMap<String, String> partitionsMaxTimestamp;
+    private ConcurrentMap<String, Integer> keyLastParsedIndex;
     private String stableTime;
     private Region region;
     
     public ReaderStorage(Region region) {
         super();
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
+        this.keyLastParsedIndex = new ConcurrentHashMap<>();
         this.stableTime = Utils.MIN_TIMESTAMP;
         this.region = region;
     }
@@ -64,4 +66,11 @@ public class ReaderStorage extends Storage {
         }
     }
 
+    public void setLastParsedIndex(String key, Integer index) {
+        this.keyLastParsedIndex.put(key, index);
+    }
+
+    public Integer getLastParsedIndex(String key) {
+        return this.keyLastParsedIndex.getOrDefault(key, 0);
+    }
 }

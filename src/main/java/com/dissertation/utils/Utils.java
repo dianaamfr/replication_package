@@ -15,6 +15,12 @@ public class Utils {
 
     public static final Region DEFAULT_REGION = Region.EU_NORTH_1;
 
+    public static final String LOG_STATE = "state";
+    public static final String LOG_VERSIONS = "versions";
+    public static final String LOG_KEY = "key";
+    public static final String LOG_VALUE = "value";
+    public static final String LOG_TIMESTAMP = "timestamp";
+
     public static byte[] byteArrayFromString(String encodedBuffer) {
         return encodedBuffer.getBytes(StandardCharsets.UTF_8);    
     }
