@@ -6,16 +6,13 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.dissertation.utils.Utils;
-
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -25,22 +22,28 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class S3Helper {
     private final S3Client s3Client;
-    private final static Integer maxKeys = 5;
-    private final static String logPrefix = "Logs/";
-    private final static String clockPrefix = "Clock/";
-    private final static String clockBucket = "reference-architecture-clock";
+    private static final Integer maxKeys = 5;
+    private static final String logPrefix = "Logs/";
+    private static final String clockPrefix = "Clock/";
+    private static final String clockBucket = "reference-architecture-clock";
 
     public S3Helper(Region region) throws URISyntaxException {
         this.s3Client = s3Client(region);
     }
 
     private static S3Client s3Client(Region region) throws URISyntaxException {
-        return S3Client.builder()
+        String s3Endpoint = System.getProperty("s3Endpoint");
+        S3ClientBuilder s3ClientBuilder = S3Client.builder()
             .region(region)
-            //.credentialsProvider(ProfileCredentialsProvider.create())
-            .credentialsProvider(InstanceProfileCredentialsProvider.create())
-            //.endpointOverride(URI.create(System.getenv("S3_ENDPOINT")))
-            .forcePathStyle(true).build();
+            .forcePathStyle(true);
+
+        if(s3Endpoint != null) {
+            return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
+                .endpointOverride(URI.create(s3Endpoint)).build();
+        }
+
+        return s3ClientBuilder.credentialsProvider(InstanceProfileCredentialsProvider.create())
+            .build();
     }
 
     public boolean persistLog(String bucketName, String timestamp, String logJson) {

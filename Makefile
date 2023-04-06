@@ -3,6 +3,7 @@ region = eu-north-1
 partition1Bucket = reference-architecture-partition1
 partition2Bucket = reference-architecture-partition2
 clockBucket = reference-architecture-clock
+s3Endpoint = http://localhost:4566
 
 # Setup
 all:
@@ -34,13 +35,13 @@ readNode:
 	java -jar target/readNode-jar-with-dependencies.jar
 
 readNodeNorth:
-	java -jar target/readNode-jar-with-dependencies.jar $(region)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/readNode-jar-with-dependencies.jar $(region)
 
 writeNode1:
-	java -jar target/writeNode-jar-with-dependencies.jar $(partition1Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode-jar-with-dependencies.jar $(partition1Bucket)
 
 writeNode2:
-	java -jar target/writeNode-jar-with-dependencies.jar $(partition2Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode-jar-with-dependencies.jar $(partition2Bucket)
 
 # Validation
 client:
