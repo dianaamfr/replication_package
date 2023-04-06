@@ -12,76 +12,62 @@ For a more detailed description of the reference architecture please refer to [R
 ## Prototype Features
 ### Current Features
 - **ECDS**: LocalStack is being used to emulate AWS S3 (without any replication configuration).
-- **Compute Layer**: Provides ROTs and Writes to the Client via RMI and uses AWS S3 for persistance.
-- **Client Layer**: Connects with the Compute Layer via RMI.
+- **Compute Layer**: Provides ROTs and Writes to the Client through gRPC and uses AWS S3 for persistance.
+- **Client Layer**: Connects with the Compute Layer through gRPC.
 - **Clock**: Hybrid Logical Clock.
 - **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than its own, it advances its clock.
 
-### Next steps
-- Setup S3 Replication
-- Optimize log persistance and fetching
-- Improve clock synchronization strategy when S3 replication is in place
-- Garbage Collection
-
 ## Getting Started
 
 ### Structure 
-- `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
-    - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through RMI. It keeps a "cache" with its unstable writes and his last write timestamp.
-    - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
-    - `config`: Temporarily stores a predefined configuration of the data store (regions and partitions) and provides helper functions to consult that configuration. 
-    - `exceptions`: Custom exceptions used throughout the source code.
-    - `remoteInterface`: Interfaces that define the methods used for the RMI ROT and write requests and response classes.
-    - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
-- `utils`: Util functions, constants and classes.
-- `validation`: Comprises different classes that can be used to test the prototype, namely:
-    - `ClientInterface`: To test the prototype through a command-line interface.
-    - `WriteGenerator`: To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
-    - `ReadGenerator`: To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized. 
+This repository holds a Maven project with the following structure:
+- `src/main/java` comprised the application sources, namely:
+    - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
+        - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and his last write timestamp.
+        - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
+        - `exceptions`: Custom exceptions used throughout the source code.
+        - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
+    - `utils`: Util functions, constants and classes.
+    - `validation`: Comprises classes that can be used to test the prototype, namely:
+        - `ClientInterface`: To test the prototype through a command-line interface.
+        - `WriteGenerator`: *(To be refactored)* To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
+        - `ReadGenerator`: *(To be refactored)* To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized.
+    - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
 
 ### Dependencies
-- [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/)
 - OpenJDK
 - Maven
+- [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/) can be used to test the project locally.
 
 ### Execution Instructions
 **User-friendly CLI**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
-3. Create buckets: `make createBuckets`. This command creates buckets in:
-    - us-east-1:
-        - bucket "partition1": keys "x" and "y"
-        - bucket "partition2": key "z"
-        - bucket "clock", which is used to persist the clock values
-    - use-west-1:
-        - bucket "partition3": key "p"
+3. Create buckets: `make createBuckets`. This command creates the following buckets:
+    - bucket `reference-architecture-partition1`;
+    - bucket `reference-architecture-partition2`;
+    - bucket `reference-architecture-clock`, which is used to persist the clock values.
 4. `make`
-5. Start the Read Compute Nodes, one on each terminal:
-    - `make readNodeWest`
-    - `make readNodeEast`
+5. Start a Read Compute Node:
+    - `make readNode`
 6. Start the Write Compute Nodes, one on each terminal:
     - `make writeNode1` (partition1)
     - `make writeNode2` (partition2)
-    - `make writeNode3` (partition3)
 7. To test using the command-line interface:
-    1. Start the desired number of Clients with the following commands:
-        - `make clientWest` to access buckets in "us-west-1"
-        - `make clientEast` to access buckets in "us-east-1"
+    1. Start the desired number of Clients with the following command:
+        - `make client`
     2. Issue the desired ROT and write requests:
-        - ROT example: `R x y` (keys must be available in the region)
-        - Write example: `W x 3` (the value must be an integer)
+        - ROT example: `R x y`
+        - Write example: `W x 3`
 
 **Load Generators**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
-3. Create buckets: `make createBuckets`. This command creates buckets in:
-    - us-east-1:
-        - bucket "partition1": keys "x" and "y"
-        - bucket "partition2": key "z"
-        - bucket "clock", which is used to persist the clock values
-    - use-west-1:
-        - bucket "partition3": key "p"
+3. Create buckets: `make createBuckets`. This command creates the following buckets:
+    - bucket `reference-architecture-partition1`;
+    - bucket `reference-architecture-partition2`;
+    - bucket `reference-architecture-clock`, which is used to persist the clock values.
 4. `make`
 5. Start the Write Generator: `make writeGenerator`
 6. Start the Read Generator: `make readGenerator`
