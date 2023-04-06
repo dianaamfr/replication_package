@@ -18,15 +18,10 @@ For a more detailed description of the reference architecture please refer to [R
 - **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
 - **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than its own, it advances its clock.
 
-### Next steps
-- Setup S3 Replication
-- Optimize log persistance and fetching
-- Improve clock synchronization strategy when S3 replication is in place
-- Garbage Collection
-
 ## Getting Started
 
-### Structure 
+### Structure
+This repository holds a Maven project. The project's source code, stored under `src/main/java`, is structured as follows:
 - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
     - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through RMI. It keeps a "cache" with its unstable writes and his last write timestamp.
     - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
@@ -51,11 +46,11 @@ For a more detailed description of the reference architecture please refer to [R
 2. Open a new terminal in the root folder
 3. Create buckets: `make createBuckets`. This command creates buckets in:
     - us-east-1:
-        - bucket "partition1": keys "x" and "y"
-        - bucket "partition2": key "z"
+        - bucket "partition1"
+        - bucket "partition2"
         - bucket "clock", which is used to persist the clock values
     - use-west-1:
-        - bucket "partition3": key "p"
+        - bucket "partition3"
 4. `make`
 5. Start the Read Compute Nodes, one on each terminal:
     - `make readNodeWest`
@@ -69,8 +64,8 @@ For a more detailed description of the reference architecture please refer to [R
         - `make clientWest` to access buckets in "us-west-1"
         - `make clientEast` to access buckets in "us-east-1"
     2. Issue the desired ROT and write requests:
-        - ROT example: `R x y` (keys must be available in the region)
-        - Write example: `W x 3` (the value must be an integer)
+        - ROT example: `R x y`
+        - Write example: `W x 3`
 
 **Load Generators**:
 1. Open a terminal and start LocalStack: `localstack start` 
