@@ -15,7 +15,6 @@ public abstract class ComputeNode {
     protected ScheduledThreadPoolExecutor scheduler;
     
     public ComputeNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String id) throws URISyntaxException {
-        
         this.scheduler = scheduler;
         this.s3Helper = s3Helper;
         this.id = id;

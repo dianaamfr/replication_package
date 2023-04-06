@@ -9,13 +9,13 @@ import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.WriteRequest;
 import com.dissertation.WriteResponse;
+import com.dissertation.WriteResponse.Builder;
 import com.dissertation.WriteServiceGrpc.WriteServiceImplBase;
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
 import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
-import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
@@ -78,48 +78,50 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
-            System.out.println(request.getKey());
-            System.out.println(request.getValue());
-            System.out.println(request.getLastWriteTimestamp());
+            ClockState lastTimestamp = new ClockState();
+            String writeTimestamp = Utils.MIN_TIMESTAMP;
+            Builder responseBuilder = WriteResponse.newBuilder().setError(false);
+            
+            if(Utils.getKeyPartitionId(request.getKey()) != partition) {
+                responseBuilder
+                    .setStatus(String.format("Key %s not found", request.getKey()))
+                    .setError(true);
+            } else {
+                try {
+                    lastTimestamp = ClockState.fromString(request.getLastWriteTimestamp(), State.WRITE);
+                } catch (InvalidTimestampException e) {
+                    responseBuilder
+                        .setStatus(e.toString())
+                        .setError(true);
+                }
+            }
+            
+            if(!responseBuilder.getError()) {
+                try {
+                    writeTimestamp = hlc.writeEvent(lastTimestamp).toString();
+                    storage.put(request.getKey(), writeTimestamp, request.getValue());
+                    if(storagePusher.push(writeTimestamp)) {
+                        responseBuilder.setWriteTimestamp(writeTimestamp);
+                    } else {
+                        storage.delete(request.getKey(), writeTimestamp);
+                        responseBuilder
+                            .setStatus("Write to data store failed")
+                            .setError(true);
+                    }
+                } catch (KeyNotFoundException e) {
+                    responseBuilder
+                        .setStatus(String.format("Key %s not found", request.getKey()))
+                        .setError(true);
+                } catch(Exception e) {
+                    responseBuilder
+                        .setStatus(e.toString())
+                        .setError(true);
+                }
+                hlc.writeComplete();
+            }
 
-            WriteResponse response = WriteResponse.newBuilder().build();
-           
-            responseObserver.onNext(response);
+            responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
     }
-    
-
-    // public WriteResponse write(String key, byte[] value, String lastWriteTimestamp) {  
-    //     if(Utils.getKeyPartitionId(key) != this.partition) {
-    //         return new WriteError(String.format("Key %s not found", key));
-    //     }
-
-    //     ClockState lastTimestamp;
-    //     try {
-    //         lastTimestamp = ClockState.fromString(lastWriteTimestamp, State.WRITE);
-    //     } catch (InvalidTimestampException e) {
-    //         return new WriteError(e.toString());
-    //     }
-
-    //     String writeTimestamp = Utils.MIN_TIMESTAMP;
-    //     WriteResponse writeResponse;
-    //     try {
-    //         writeTimestamp = this.hlc.writeEvent(lastTimestamp).toString();
-    //         this.storage.put(key, writeTimestamp, value);
-    //         if(this.storagePusher.push(writeTimestamp)) {
-    //             writeResponse = new WriteResponse(writeTimestamp);
-    //         } else {
-    //             this.storage.delete(key, writeTimestamp);
-    //             writeResponse = new WriteError("Write to data store failed");
-    //         }
-    //     } catch (KeyNotFoundException e) {
-    //         writeResponse = new WriteError(String.format("Key %s not found", key));
-    //     } catch(Exception e) {
-    //         writeResponse = new WriteError(e.toString());
-    //     }
-
-    //     this.hlc.writeComplete();
-    //     return writeResponse;
-    // }
 }
