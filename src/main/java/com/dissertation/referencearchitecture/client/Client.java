@@ -69,7 +69,7 @@ public class Client {
         // }
     }
 
-    public WriteResponse requestWrite(String key, byte[] value) {
+    public WriteResponse requestWrite(String key, ByteString value) {
         //try {
             int partitionId = Utils.getKeyPartitionId(key);
             // if(!this.writeStubs.containsKey(partitionId)) {
@@ -78,7 +78,7 @@ public class Client {
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
             WriteRequest writeRequest = WriteRequest.newBuilder()
                 .setKey(key)
-                .setValue(ByteString.copyFrom(value))
+                .setValue(value)
                 .setLastWriteTimestamp(this.lastWriteTimestamp)
                 .build();
 
@@ -107,10 +107,10 @@ public class Client {
         this.cache.keySet().removeAll(toPrune);
     }
 
-    private Map<String, byte[]> getReadResponse(Map<String, byte[]> response) {
-        Map<String, byte[]> values = new HashMap<>();
+    private Map<String, ByteString> getReadResponse(Map<String, ByteString> response) {
+        Map<String, ByteString> values = new HashMap<>();
 
-        for (Entry<String, byte[]> entry : response.entrySet()) {
+        for (Entry<String, ByteString> entry : response.entrySet()) {
             Version v = this.cache.getOrDefault(entry.getKey(), null);
             values.put(entry.getKey(), v != null ? v.getValue() : entry.getValue());
         }

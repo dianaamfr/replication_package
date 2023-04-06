@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.dissertation.ROTRequest;
 import com.dissertation.ROTResponse;
+import com.dissertation.ROTResponse.Builder;
 import com.dissertation.ROTServiceGrpc.ROTServiceImplBase;
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
@@ -17,6 +17,7 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -44,11 +45,7 @@ public class ReadNode extends ComputeNode {
         } 
 
         Region region = Utils.getCurrentRegion();
-        // if(!Config.isRegion(region)) {
-        //     System.err.println("Invalid region");   
-        //     return;
-        // }
-  
+
         try {
             int port = Integer.valueOf(args[0]);
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
@@ -74,27 +71,35 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
-            System.out.println(request.getKeysList());
-            ROTResponse response = ROTResponse.newBuilder().build();
-            responseObserver.onNext(response);
+            boolean error = false;
+            String stableTime = storage.getStableTime();
+            Builder responseBuilder = ROTResponse.newBuilder();
+            Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
+    
+            for (String key: request.getKeysList()) {
+                try {
+                    ByteString value = storage.get(key, stableTime).getValue();
+                    values.put(key, value);
+                } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
+                    values.put(key, ByteString.EMPTY);
+                } catch (Exception e) {
+                    error = true;
+                    responseBuilder.setStatus(e.toString());
+                }    
+            }
+
+            if(error) {
+                responseBuilder.setError(true);
+            } else {
+                responseBuilder
+                    .setError(false)
+                    .setStableTime(stableTime)
+                    .putAllValues(values);
+
+            }
+
+            responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
     }   
-
-/*     public ROTResponse rot(Set<String> readSet) {
-        Map<String, byte[]> values = new HashMap<>(readSet.size());
-        String stableTime = this.storage.getStableTime();
-
-        for (String key: readSet) {
-            try {
-                byte[] value = this.storage.get(key, stableTime).getValue();
-                values.put(key, value);
-            } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
-                values.put(key, new byte[0]);
-            } catch (Exception e) {
-                return new ROTError(e.toString());
-            }    
-        }
-        return new ROTResponse(values, stableTime);
-    } */
 }

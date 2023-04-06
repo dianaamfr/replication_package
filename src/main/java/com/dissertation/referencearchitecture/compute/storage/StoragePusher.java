@@ -9,6 +9,7 @@ import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 public class StoragePusher {
     private Storage storage;
@@ -39,8 +40,8 @@ public class StoragePusher {
 
         for (Entry<String, VersionChain> versionChain : state.entrySet()) {
             JSONArray versionsJson = new JSONArray();
-            SortedMap<String, byte[]> keySnapshotVersions = versionChain.getValue().getVersionChain(timestamp);
-            for (Entry<String, byte[]> version : keySnapshotVersions.entrySet()) {
+            SortedMap<String, ByteString> keySnapshotVersions = versionChain.getValue().getVersionChain(timestamp);
+            for (Entry<String, ByteString> version : keySnapshotVersions.entrySet()) {
                 versionsJson.put(getVersionJson(version.getKey(), version.getValue()));
             }
             versionChainsJson.put(getVersionChainJson(versionChain.getKey(), versionsJson));
@@ -56,10 +57,10 @@ public class StoragePusher {
         return keyVersionChainJson;
     }
 
-    private JSONObject getVersionJson(String timestamp, byte[] value) {
+    private JSONObject getVersionJson(String timestamp, ByteString value) {
         JSONObject keyVersion = new JSONObject();
         keyVersion.put(Utils.LOG_TIMESTAMP, timestamp);
-        keyVersion.put(Utils.LOG_VALUE, Utils.stringFromByteArray(value));
+        keyVersion.put(Utils.LOG_VALUE, Utils.stringFromByteString(value));
         return keyVersion;
     }
 }

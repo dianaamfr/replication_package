@@ -56,7 +56,7 @@ public class StoragePuller implements Runnable {
                 this.storage.put(
                     key, 
                     versionJson.getString(Utils.LOG_TIMESTAMP), 
-                    Utils.byteArrayFromString(versionJson.getString(Utils.LOG_VALUE)));
+                    Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
             }
             this.storage.setLastParsedIndex(key, versionChainArray.length());
         }

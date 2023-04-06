@@ -3,6 +3,8 @@ package com.dissertation.utils;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ThreadLocalRandom;
 
+import com.google.protobuf.ByteString;
+
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
@@ -29,21 +31,21 @@ public class Utils {
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
 
-    public static byte[] byteArrayFromString(String encodedBuffer) {
-        return encodedBuffer.getBytes(StandardCharsets.ISO_8859_1);    
+    public static ByteString byteStringFromString(String encodedBuffer) {
+        return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.ISO_8859_1));    
     }
     
-    public static String stringFromByteArray(byte[] byteArray) {
-        if(byteArray.length == 0) {
+    public static String stringFromByteString(ByteString byteString) {
+        if(byteString.isEmpty()) {
             return null;
         }
-        return new String(byteArray, StandardCharsets.ISO_8859_1);
+        return byteString.toString(StandardCharsets.ISO_8859_1);
     }
 
-    public static byte[] getRandomByteArray(int sizeInBytes) {
+    public static ByteString getRandomByteString(int sizeInBytes) {
         byte[] b = new byte[sizeInBytes];
         ThreadLocalRandom.current().nextBytes(b);
-        return b;
+        return ByteString.copyFrom(b);
     }
 
     public static Region getCurrentRegion() {

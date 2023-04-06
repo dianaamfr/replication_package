@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 import software.amazon.awssdk.regions.Region;
 
@@ -125,7 +126,7 @@ public class WriteGenerator {
         @Override
         public void run() {
             String key = getRandomKey(this.partition);
-            byte[] value = Utils.getRandomByteArray(bytes);
+            ByteString value = Utils.getRandomByteString(bytes);
             try {
                 startSignal.await();
                 if (counters.getAndIncrement(index) < writesPerPartition) {

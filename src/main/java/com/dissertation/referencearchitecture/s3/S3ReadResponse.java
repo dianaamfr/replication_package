@@ -1,7 +1,5 @@
 package com.dissertation.referencearchitecture.s3;
 
-import com.dissertation.utils.Response;
-
 public class S3ReadResponse extends Response {
     private String timestamp;
     private String content;

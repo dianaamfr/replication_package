@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
+import com.google.protobuf.ByteString;
 
 public class Storage {
     protected ConcurrentMap<String, VersionChain> keyVersions;
@@ -14,14 +15,14 @@ public class Storage {
         this.keyVersions = new ConcurrentHashMap<>();
     }
 
-    public void put(String key, String timestamp, byte[] value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, ByteString value) throws KeyNotFoundException {
         if(!this.keyVersions.containsKey(key)){
             this.keyVersions.put(key, new VersionChain());
         }
         this.keyVersions.get(key).put(timestamp, value);
     }
 
-    public Entry<String, byte[]> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
+    public Entry<String, ByteString> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
         if(!this.keyVersions.containsKey(key)) {
             throw new KeyNotFoundException();
         }

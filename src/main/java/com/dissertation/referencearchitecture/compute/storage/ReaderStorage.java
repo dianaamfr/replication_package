@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.dissertation.referencearchitecture.config.Config;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 import software.amazon.awssdk.regions.Region;
 
@@ -32,7 +33,7 @@ public class ReaderStorage extends Storage {
         }
     }
 
-    public void put(String key, String timestamp, byte[] value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, ByteString value) throws KeyNotFoundException {
         super.put(key, timestamp, value);
         String partition = Config.getKeyPartition(this.region, key);
         if(timestamp.compareTo(partitionsMaxTimestamp.get(partition)) > 0) {

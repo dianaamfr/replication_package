@@ -11,6 +11,7 @@ import com.dissertation.ROTResponse;
 import com.dissertation.WriteResponse;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 public class ClientInterface {
     private final Client client;
@@ -104,9 +105,9 @@ public class ClientInterface {
         }
 
         String key = commands[0];
-        byte[] value = Utils.byteArrayFromString(commands[1]);
+        ByteString value = Utils.byteStringFromString(commands[1]);
         System.out.println(value);
-        System.out.println(Utils.stringFromByteArray(value));
+        System.out.println(Utils.stringFromByteString(value));
         WriteResponse result = this.client.requestWrite(key, value);
 
         // if (!result.isError()) {
