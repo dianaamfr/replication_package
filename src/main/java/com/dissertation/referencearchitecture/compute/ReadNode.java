@@ -44,20 +44,19 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
     }
     
     public static void main(String[] args) {
-        Region region;
         if(args.length < 1) {
-            region = Utils.getCurrentRegion();
-        } else {
-            region = Region.of(args[0]);
-        }
-        
+            System.err.println("Usage: ReadNode <port:Int>");
+        } 
+
+        Region region = Utils.getCurrentRegion();
+        // TODO: consider removing this
         if(!Config.isRegion(region)) {
             System.err.println("Error: Invalid region");   
             return;
         }
   
         try {
-            int port = Integer.valueOf(System.getProperty("serverPort"));
+            int port = Integer.valueOf(args[0]);
             Server server = ServerBuilder.forPort(port).addService(new ROTServiceImpl()).build();
 
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
@@ -79,8 +78,14 @@ public class ReadNode extends ComputeNode implements ReadRemoteInterface {
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
+        } catch (IOException e) {
+            System.err.println("Could not start server");
+        } catch (InterruptedException e) {
+            System.err.println("Could not start server");
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid port number");
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println(e.toString());
         }
     }
 

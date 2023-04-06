@@ -1,10 +1,14 @@
 .ONESHELL: # Applies to every targets in the file!
-region = eu-north-1
 partition1Bucket = reference-architecture-partition1
 partition2Bucket = reference-architecture-partition2
 clockBucket = reference-architecture-clock
 s3Endpoint = http://localhost:4566
-serverPort = 8080
+readPort = 8080
+readIp = 0.0.0.0
+writePort1 = 8081
+writeIp1 = 0.0.0.0
+writePort2 = 8082
+writeIp2 = 0.0.0.0
 
 # Setup
 all:
@@ -33,23 +37,17 @@ rmi:
 
 # Compute Nodes
 readNode:
-	java -jar target/readNode.jar
-
-readNodeNorth:
-	java -Ds3Endpoint=$(s3Endpoint) -DserverPort=$(serverPort) -jar target/readNode.jar $(region)
+	java  -jar target/readNode.jar $(readPort)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -DserverPort=$(serverPort) -jar target/writeNode.jar $(partition1Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partition1Bucket) $(writePort1)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -DserverPort=$(serverPort) -jar target/writeNode.jar $(partition2Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partition2Bucket) $(writePort2)
 
 # Validation
 client:
-	java -jar target/clientInterface.jar
-
-clientNorth:
-	java -jar target/clientInterface.jar $(region)
+	java -jar target/clientInterface.jar $(readPort) $(readIp) $(writePort1) $(writeIp1) $(writePort2) $(writeIp2)
 
 writeGenerator:
 	java -jar target/writeGenerator.jar

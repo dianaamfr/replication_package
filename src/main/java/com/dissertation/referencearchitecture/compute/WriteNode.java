@@ -51,8 +51,8 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
     }
 
     public static void main(String[] args) {
-        if(args.length < 1) {
-            System.err.println("Usage: java WriteNode <partition:String>");   
+        if(args.length < 2) {
+            System.err.println("Usage: java WriteNode <partition:String> <port:Int>");   
             return;
         }
 
@@ -63,7 +63,7 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
         }
 
         try {
-            int port = Integer.valueOf(System.getProperty("serverPort"));
+            int port = Integer.valueOf(args[1]);
             Server server = ServerBuilder.forPort(port).addService(new WriteServiceImpl()).build();
 
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
@@ -86,7 +86,13 @@ public class WriteNode extends ComputeNode implements WriteRemoteInterface {
             System.err.println("Could not get registry");
         } catch (AlreadyBoundException e) {
             System.err.println("Could not bind to registry");
-        } catch (IOException|InterruptedException e) {
+        } catch (IOException e) {
+            System.err.println("Could not start server");
+        } catch (InterruptedException e) {
+            System.err.println("Could not start server");
+        } catch (NumberFormatException e) {
+            System.err.println("Invalid port number");
+        } catch (Exception e) {
             System.err.println(e.toString());
         }
     }
