@@ -5,15 +5,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
-import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.ROTResponse;
 import com.dissertation.WriteResponse;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
-
-import software.amazon.awssdk.regions.Region;
 
 public class ClientInterface {
     private final Client client;
@@ -26,7 +23,7 @@ public class ClientInterface {
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
 
-        if(args.length % 2 == 0 || args.length < 5) {
+        if(args.length < 5 || (args.length - 2) % 3 != 0) {
             System.err.println("Usage: ClientInterface <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+");
             return;
         }
@@ -108,6 +105,8 @@ public class ClientInterface {
 
         String key = commands[0];
         byte[] value = Utils.byteArrayFromString(commands[1]);
+        System.out.println(value);
+        System.out.println(Utils.stringFromByteArray(value));
         WriteResponse result = this.client.requestWrite(key, value);
 
         // if (!result.isError()) {

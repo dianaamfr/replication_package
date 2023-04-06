@@ -13,9 +13,9 @@ import com.dissertation.utils.Utils;
 public class StoragePusher {
     private Storage storage;
     private S3Helper s3Helper;
-    private String partition;
+    private int partition;
 
-    public StoragePusher(Storage storage, S3Helper s3Helper, String partition) {
+    public StoragePusher(Storage storage, S3Helper s3Helper, int partition) {
         this.storage = storage;
         this.partition = partition;
         this.s3Helper = s3Helper;
@@ -26,7 +26,7 @@ public class StoragePusher {
             JSONObject json = toJson(this.storage.getState(), timestamp);
             // System.out.println(json);
             this.s3Helper.persistClock(timestamp);
-            return this.s3Helper.persistLog(this.partition, timestamp, json.toString());
+            return this.s3Helper.persistLog(Utils.getPartitionBucket(partition), timestamp, json.toString());
         } catch (Exception e) {
             e.printStackTrace();
             return false;

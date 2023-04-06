@@ -30,14 +30,14 @@ public class Utils {
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
 
     public static byte[] byteArrayFromString(String encodedBuffer) {
-        return encodedBuffer.getBytes(StandardCharsets.UTF_8);    
+        return encodedBuffer.getBytes(StandardCharsets.ISO_8859_1);    
     }
     
     public static String stringFromByteArray(byte[] byteArray) {
         if(byteArray.length == 0) {
             return null;
         }
-        return new String(byteArray, StandardCharsets.UTF_8);
+        return new String(byteArray, StandardCharsets.ISO_8859_1);
     }
 
     public static byte[] getRandomByteArray(int sizeInBytes) {
@@ -53,7 +53,7 @@ public class Utils {
         try {
             region = regionLookup.getRegion();
         } catch (SdkClientException e) {
-            System.err.println("Warning: Failed to get default region. Using default."); 
+            System.err.println("Warning: Failed to get region. Using default."); 
         }
         return region;
     }

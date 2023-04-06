@@ -22,7 +22,6 @@ partitionId2 = 2
 all:
 	make emptyBuckets
 	mvn package
-	make rmi
 
 createBuckets:
 	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
@@ -38,24 +37,19 @@ clear:
 	make emptyBuckets
 	mvn -q clean
 	
-rmi:
-	cd target/classes
-	rmiregistry
-	sleep 0.5
-
 # Compute Nodes
 readNode:
-	java -jar target/readNode.jar $(readPort)
+	java -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partitionId1) $(writePort1)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/writeNode.jar $(partitionId1) $(writePort1)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partitionId2) $(writePort2)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/writeNode.jar $(partitionId2) $(writePort2)
 
 # Validation
 client:
-	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readPort) $(readIp) $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(writeId) $(partitionId2)
+	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readPort) $(readIp) $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
 
 writeGenerator:
 	java -jar target/writeGenerator.jar

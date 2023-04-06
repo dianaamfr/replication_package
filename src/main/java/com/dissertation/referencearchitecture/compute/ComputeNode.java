@@ -14,14 +14,16 @@ public abstract class ComputeNode {
     protected final String id;
     protected ScheduledThreadPoolExecutor scheduler;
     
-    public ComputeNode(Server server, ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String id) throws URISyntaxException {
-        this.server = server;
+    public ComputeNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String id) throws URISyntaxException {
+        
         this.scheduler = scheduler;
         this.s3Helper = s3Helper;
         this.id = id;
     }
 
-    public void init() throws IOException, InterruptedException {
+    public void init(Server server) throws IOException, InterruptedException {
+        this.server = server;
+        
         System.out.println("Starting server...");
         this.server.start();
         System.out.println(String.format("Server started at port %d!", this.server.getPort()));

@@ -13,7 +13,6 @@ import com.dissertation.ROTServiceGrpc;
 import com.dissertation.WriteRequest;
 import com.dissertation.WriteResponse;
 import com.dissertation.WriteServiceGrpc;
-import com.dissertation.referencearchitecture.exceptions.InvalidRegionException;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;

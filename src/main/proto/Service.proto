@@ -10,6 +10,8 @@ message WriteRequest {
 
 message WriteResponse {
     string writeTimestamp = 1;
+    bool error = 2;
+    string status = 3;
 }
 
 message ROTRequest {
@@ -19,6 +21,8 @@ message ROTRequest {
 message ROTResponse {
     map<string, bytes> values = 1;
     string stableTime = 2;
+    bool error = 3;
+    string status = 4;
 }
 
 service WriteService {
