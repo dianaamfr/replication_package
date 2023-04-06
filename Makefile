@@ -32,26 +32,26 @@ rmi:
 
 # Compute Nodes
 readNode:
-	java -jar target/readNode-jar-with-dependencies.jar
+	java -jar target/readNode.jar
 
 readNodeNorth:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/readNode-jar-with-dependencies.jar $(region)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/readNode.jar $(region)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode-jar-with-dependencies.jar $(partition1Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partition1Bucket)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode-jar-with-dependencies.jar $(partition2Bucket)
+	java -Ds3Endpoint=$(s3Endpoint) -jar target/writeNode.jar $(partition2Bucket)
 
 # Validation
 client:
-	java -jar target/clientInterface-jar-with-dependencies.jar
+	java -jar target/clientInterface.jar
 
 clientNorth:
-	java -jar target/clientInterface-jar-with-dependencies.jar $(region)
+	java -jar target/clientInterface.jar $(region)
 
 writeGenerator:
-	java -jar target/writeGenerator-jar-with-dependencies.jar
+	java -jar target/writeGenerator.jar
 
 readGenerator:
-	java -jar target/readGenerator-jar-with-dependencies.jar
+	java -jar target/readGenerator.jar
