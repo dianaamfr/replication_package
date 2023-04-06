@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -84,18 +85,18 @@ public class ClientInterface {
             return;
         }
 
-        ROTResponse result = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
-        // if (!result.isError()) {
-        //     StringBuilder builder = new StringBuilder();
-        //     builder.append(String.format("ROT at %s:", result.getStableTime()));
-        //     for (Entry<String, byte[]> entry : result.getValues().entrySet()) {
-        //         builder.append(
-        //                 String.format("\n\t%s = %s", entry.getKey(), Utils.stringFromByteArray(entry.getValue())));
-        //     }
-        //     System.out.println(builder.toString());
-        // } else {
-        //     System.err.println(result.getStatus());
-        // }
+        ROTResponse rotResponse = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
+        if (!rotResponse.getError()) {
+            StringBuilder builder = new StringBuilder();
+            builder.append(String.format("ROT at %s:", rotResponse.getStableTime()));
+            for (Entry<String, ByteString> entry : rotResponse.getValuesMap().entrySet()) {
+                builder.append(
+                        String.format("\n\t%s = %s", entry.getKey(), Utils.stringFromByteString(entry.getValue())));
+            }
+            System.out.println(builder.toString());
+        } else {
+            System.err.println(rotResponse.getStatus());
+        }
     }
 
     private void sendWriteRequest(String[] commands) {
@@ -106,15 +107,14 @@ public class ClientInterface {
 
         String key = commands[0];
         ByteString value = Utils.byteStringFromString(commands[1]);
-        System.out.println(value);
-        System.out.println(Utils.stringFromByteString(value));
-        WriteResponse result = this.client.requestWrite(key, value);
+        WriteResponse writeResponse = this.client.requestWrite(key, value);
 
-        // if (!result.isError()) {
-        //     System.out
-        //             .println(String.format("Write response: %s = %s at %s ", key, commands[1], result.getTimestamp()));
-        // } else {
-        //     System.err.println(result.getStatus());
-        // }
+        if (!writeResponse.getError()) {
+            System.out.println(String.format(
+                    "Write response: %s = %s at %s ", 
+                    key, commands[1], writeResponse.getWriteTimestamp()));
+        } else {
+            System.err.println(writeResponse.getStatus());
+        }
     }
 }
