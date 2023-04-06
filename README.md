@@ -33,7 +33,7 @@ This repository holds a Maven project with the following structure:
         - `ClientInterface`: To test the prototype through a command-line interface.
         - `WriteGenerator`: *(To be refactored)* To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
         - `ReadGenerator`: *(To be refactored)* To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized.
-    - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
+- `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
 
 ### Dependencies
 - OpenJDK
