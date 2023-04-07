@@ -6,6 +6,7 @@ clockBucket = reference-architecture-clock
 s3Endpoint = http://localhost:4566
 
 partitions = 2
+regionPartitions = 2
 
 readPort = 8080
 readIp = 0.0.0.0
@@ -17,6 +18,8 @@ partitionId1 = 1
 writePort2 = 8082
 writeIp2 = 0.0.0.0
 partitionId2 = 2
+
+addresses = $(readPort) $(readIp) $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
 
 # Setup
 all:
@@ -49,10 +52,10 @@ writeNode2:
 
 # Validation
 client:
-	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readPort) $(readIp) $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
+	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(regionPartitions) $(addresses)
 
 writeGenerator:
-	java -jar target/writeGenerator.jar
+	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar $(addresses)
 
 readGenerator:
-	java -jar target/readGenerator.jar
+	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(addresses)

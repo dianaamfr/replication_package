@@ -61,8 +61,7 @@ public class Utils {
     }
 
     public static int getKeyPartitionId(String key) {
-        int partitionId = Math.floorMod(key.hashCode(), NUM_PARTITIONS) + 1;
-        return partitionId;
+        return Math.floorMod(key.hashCode(), NUM_PARTITIONS) + 1;
     }
 
     public static String getPartitionBucket(int partitionId) {
