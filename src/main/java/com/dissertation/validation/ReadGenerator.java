@@ -21,11 +21,8 @@ import com.dissertation.utils.Utils;
 public class ReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
 
-    private final Address readAddress;
-    private final List<Address> writeAddresses;
-
-    private final int delay;
     private final int regionPartitions;
+    private final int delay;
     private final int readsPerPartition;
     private final int clients;
     private CountDownLatch startSignal;
@@ -38,14 +35,11 @@ public class ReadGenerator {
     private static final int READS_PER_PARTITION = 15;
     private static final int MAX_KEYS_PER_READ = 2;
     private static final int CLIENTS = 3;
-    private static final String USAGE = "Usage: ClientInterface <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <partitionsPerRead:Int> <readsPerPartition:Int> <clients:Int>";
+    private static final String USAGE = "Usage: ClientInterface <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <readsPerPartition:Int> <clients:Int>";
 
     public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
             int regionPartitions, int delay, int readsPerPartition, int clients) {
         this.scheduler = scheduler;
-
-        this.readAddress = readAddress;
-        this.writeAddresses = writeAddresses;
 
         this.regionPartitions = regionPartitions;
         this.delay = delay;
@@ -57,7 +51,7 @@ public class ReadGenerator {
                 Collections.nCopies(this.regionPartitions, 0).stream().mapToInt(i -> i).toArray());
         this.partitionCounterPos = new ConcurrentHashMap<>();
         this.countDowns = new ConcurrentHashMap<>();
-        this.init();
+        this.init(readAddress, writeAddresses);
     }
 
     public static void main(String[] args) {
@@ -91,18 +85,18 @@ public class ReadGenerator {
         }
     }
 
-    private void init() {
+    private void init(Address readAddress, List<Address> writeAddresses) {
         // Init countdowns to wait until all partitions handle the same number of reads
         for (int i = 0; i < regionPartitions; i++) {
             CountDownLatch readSignal = new CountDownLatch(this.readsPerPartition);
             this.countDowns.put(i, readSignal);
-            this.partitionCounterPos.put(this.writeAddresses.get(i).getPartitionId(), i);
+            this.partitionCounterPos.put(writeAddresses.get(i).getPartitionId(), i);
         }
 
         // Init clients
         for (int j = 0; j < this.clients; j++) {
             try {
-                Client c = new Client(this.readAddress, this.writeAddresses);
+                Client c = new Client(readAddress, writeAddresses);
                 this.scheduler.schedule(
                         new RegionReadGenerator(c),
                         0, TimeUnit.MILLISECONDS);
