@@ -15,7 +15,7 @@ public class Storage {
         this.keyVersions = new ConcurrentHashMap<>();
     }
 
-    public void put(String key, String timestamp, ByteString value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, ByteString value) {
         if(!this.keyVersions.containsKey(key)){
             this.keyVersions.put(key, new VersionChain());
         }
@@ -29,7 +29,7 @@ public class Storage {
         return this.keyVersions.get(key).get(maxTimestamp);
     }
 
-    public void delete(String key, String timestamp) throws KeyNotFoundException {
+    public void delete(String key, String timestamp) {
         if(this.keyVersions.containsKey(key)){
             this.keyVersions.get(key).delete(timestamp);
         }
