@@ -19,7 +19,8 @@ writePort2 = 8082
 writeIp2 = 0.0.0.0
 partitionId2 = 2
 
-addresses = $(readPort) $(readIp) $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
+readAddress = $(readPort) $(readIp)
+writeAddresses = $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
 
 # Setup
 all:
@@ -42,7 +43,7 @@ clear:
 	
 # Compute Nodes
 readNode:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort) $(partitionId1) $(partitionId2)
 
 writeNode1:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/writeNode.jar $(partitionId1) $(writePort1)
@@ -52,10 +53,10 @@ writeNode2:
 
 # Validation
 client:
-	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(regionPartitions) $(addresses)
+	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
 
 writeGenerator:
-	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar $(addresses)
+	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar
 
 readGenerator:
-	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(addresses)
+	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses)
