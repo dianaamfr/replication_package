@@ -36,9 +36,7 @@ public class Client {
         this.writeStubs = new HashMap<>();
 
         for (Address address : writeAddresses) {
-            WriteServiceGrpc.WriteServiceBlockingStub writeStub = WriteServiceGrpc
-                    .newBlockingStub(address.getChannel());
-            this.writeStubs.put(address.getPartitionId(), writeStub);
+            this.writeStubs.put(address.getPartitionId(), WriteServiceGrpc.newBlockingStub(address.getChannel()));
         }
     }
 
