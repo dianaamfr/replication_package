@@ -57,7 +57,7 @@ client:
 	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
 
 writeGenerator:
-	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar  $(regionPartitions) $(writeAddresses)
+	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses)
 
 readGenerator:
 	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses)
