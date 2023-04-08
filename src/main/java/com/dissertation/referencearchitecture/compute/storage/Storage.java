@@ -15,11 +15,17 @@ public class Storage {
         this.keyVersions = new ConcurrentHashMap<>();
     }
 
-    public void put(String key, String timestamp, ByteString value) throws KeyNotFoundException {
+    public void put(String key, String timestamp, ByteString value) {
         if(!this.keyVersions.containsKey(key)){
             this.keyVersions.put(key, new VersionChain());
         }
         this.keyVersions.get(key).put(timestamp, value);
+    }
+
+    public void delete(String key, String timestamp) {
+        if(this.keyVersions.containsKey(key)){
+            this.keyVersions.get(key).delete(timestamp);
+        }
     }
 
     public Entry<String, ByteString> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
@@ -27,12 +33,6 @@ public class Storage {
             throw new KeyNotFoundException();
         }
         return this.keyVersions.get(key).get(maxTimestamp);
-    }
-
-    public void delete(String key, String timestamp) throws KeyNotFoundException {
-        if(this.keyVersions.containsKey(key)){
-            this.keyVersions.get(key).delete(timestamp);
-        }
     }
 
     public ConcurrentMap<String,VersionChain> getState() {

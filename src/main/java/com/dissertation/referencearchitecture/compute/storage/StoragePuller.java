@@ -25,12 +25,13 @@ public class StoragePuller implements Runnable {
     }
 
     private void pull() {
-        for(Entry<String, String> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
+        for(Entry<Integer, String> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
-                S3ReadResponse s3Response = this.s3Helper.getLogAfter(entry.getKey(), String.valueOf(entry.getValue()));
+                String partitionBucket = Utils.getPartitionBucket(entry.getKey());
+                S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket, String.valueOf(entry.getValue()));
                 if(s3Response.hasContent() && s3Response.hasTimestamp()) {
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
-                    parseJson(s3Response.getContent(), entry.getKey());
+                    parseJson(s3Response.getContent());
                     //System.out.println(s3Response.getContent());    
                 } else if(s3Response.isError()) {
                     System.err.println(s3Response.getStatus());
@@ -42,7 +43,7 @@ public class StoragePuller implements Runnable {
         }
     }
 
-    private void parseJson(String json, String partition) throws Exception {
+    private void parseJson(String json) {
         JSONObject response = new JSONObject(json);
         JSONArray versionChainsJson = response.getJSONArray(Utils.LOG_STATE);
 

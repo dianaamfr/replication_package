@@ -17,7 +17,6 @@ import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
-import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 
@@ -108,10 +107,6 @@ public class WriteNode extends ComputeNode {
                             .setStatus("Write to data store failed")
                             .setError(true);
                     }
-                } catch (KeyNotFoundException e) {
-                    responseBuilder
-                        .setStatus(String.format("Key %s not found", request.getKey()))
-                        .setError(true);
                 } catch(Exception e) {
                     responseBuilder
                         .setStatus(e.toString())
