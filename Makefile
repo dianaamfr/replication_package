@@ -6,6 +6,7 @@ clockBucket = reference-architecture-clock
 s3Endpoint = http://localhost:4566
 
 partitions = 2
+regionPartitions = 2
 
 readPort = 8080
 readIp = 0.0.0.0
@@ -17,6 +18,9 @@ partitionId1 = 1
 writePort2 = 8082
 writeIp2 = 0.0.0.0
 partitionId2 = 2
+
+readAddress = $(readPort) $(readIp)
+writeAddresses = $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
 
 # Setup
 all:
@@ -39,7 +43,7 @@ clear:
 	
 # Compute Nodes
 readNode:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/readNode.jar $(readPort) $(partitionId1) $(partitionId2)
 
 writeNode1:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -jar target/writeNode.jar $(partitionId1) $(writePort1)
@@ -49,10 +53,10 @@ writeNode2:
 
 # Validation
 client:
-	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readPort) $(readIp) $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
+	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
 
-writeGenerator:
-	java -jar target/writeGenerator.jar
+# writeGenerator:
+# 	java -jar target/writeGenerator.jar
 
-readGenerator:
-	java -jar target/readGenerator.jar
+# readGenerator:
+# 	java -jar target/readGenerator.jar
