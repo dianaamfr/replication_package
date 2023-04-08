@@ -24,7 +24,6 @@ import com.google.protobuf.ByteString;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
-import software.amazon.awssdk.regions.Region;
 
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
@@ -42,12 +41,10 @@ public class ReadNode extends ComputeNode {
     }
     
     public static void main(String[] args) {
-        if(args.length < 3) {
+        if(args.length < 2) {
             System.err.println(USAGE);
             return;
         } 
-
-        Region region = Utils.getCurrentRegion();
 
         try {
             Set<Integer> partitionIds = new HashSet<>();
@@ -55,9 +52,8 @@ public class ReadNode extends ComputeNode {
             for(int i = 1; i < args.length; i++) {
                 partitionIds.add(Integer.valueOf(args[i]));
             }
-
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-            S3Helper s3Helper = new S3Helper(region);
+            S3Helper s3Helper = new S3Helper(Utils.getCurrentRegion());
             ReaderStorage storage = new ReaderStorage();
             storage.init(partitionIds);
 

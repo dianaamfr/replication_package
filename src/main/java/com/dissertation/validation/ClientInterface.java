@@ -16,7 +16,7 @@ import com.google.protobuf.ByteString;
 
 public class ClientInterface {
     private final Client client;
-
+    private static final String USAGE = "Usage: ClientInterface <readPort> <readAddress> (<writePort:Int> <writeIp:String>)+";
     private ClientInterface(Client client) {
         this.client = client;
     }
@@ -26,7 +26,7 @@ public class ClientInterface {
         List<Address> writeAddresses = new ArrayList<>();
 
         if(args.length < 5 || (args.length - 2) % 3 != 0) {
-            System.err.println("Usage: ClientInterface <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+");
+            System.err.println(USAGE);
             return;
         }
 
@@ -39,7 +39,7 @@ public class ClientInterface {
             Client client = new Client(readAddress, writeAddresses);
             (new ClientInterface(client)).run();
         } catch(NumberFormatException e) {
-            System.err.println("Invalid port number");
+            System.err.println(USAGE);
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }

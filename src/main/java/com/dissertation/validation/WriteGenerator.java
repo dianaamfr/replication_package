@@ -19,7 +19,6 @@ import com.google.protobuf.ByteString;
 import software.amazon.awssdk.regions.Region;
 
 public class WriteGenerator {
-
     private ScheduledThreadPoolExecutor scheduler;
     private final int regionPartitions;
     private final int delay;
