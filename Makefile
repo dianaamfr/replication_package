@@ -7,6 +7,7 @@ s3Endpoint = http://localhost:4566
 
 partitions = 2
 regionPartitions = 2
+region = eu-north-1
 
 readPort = 8080
 readIp = 0.0.0.0
