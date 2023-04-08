@@ -1,5 +1,5 @@
 package com.dissertation.validation;
-
+/*
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.referencearchitecture.config.Config;
 
 import software.amazon.awssdk.regions.Region;
+*/
 
 public class ReadGenerator {
     /*
