@@ -7,12 +7,10 @@ public class Address {
     private int port;
     private String ip;
     private int partitionId;
-    private ManagedChannel channel;
 
     public Address(int port, String ip) {
         this.port = port;
         this.ip = ip;
-        this.initChannel();
     }
 
     public Address(int port, String ip, int partitionId) {
@@ -33,13 +31,10 @@ public class Address {
     }
 
     public ManagedChannel getChannel() {
-        return this.channel;
+        return ManagedChannelBuilder
+        .forAddress(this.ip, this.port)
+        .usePlaintext()
+        .build();
     }
 
-    public void initChannel() {
-        this.channel = ManagedChannelBuilder
-          .forAddress(this.ip, this.port)
-          .usePlaintext()
-          .build();
-    }
 }
