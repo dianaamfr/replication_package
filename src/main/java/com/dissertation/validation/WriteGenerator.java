@@ -17,6 +17,7 @@ import com.google.protobuf.ByteString;
 import software.amazon.awssdk.regions.Region;
 
 public class WriteGenerator {
+    /*
     private ScheduledThreadPoolExecutor scheduler;
     private final int delay;
     private final int bytes;
@@ -49,7 +50,6 @@ public class WriteGenerator {
     }
 
     public static void main(String[] args) {
-        /*
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(MAX_THREADS);
 
         try {
@@ -62,11 +62,10 @@ public class WriteGenerator {
             writeGenerator.run();
         } catch (NumberFormatException e) {
             System.err.println("Usage: WriteGenerator <delay:Int> <bytes:Int>");
-        } */
+        }
     }
 
     private void init() {
-        /*
         for (int i = 0; i < this.partitions.size(); i++) {
             CountDownLatch writeSignal = new CountDownLatch(this.writesPerPartition);
             countDowns.add(writeSignal);
@@ -81,7 +80,6 @@ public class WriteGenerator {
                 }
             }
         }
-        */
     }
 
     public void run() {
@@ -140,5 +138,5 @@ public class WriteGenerator {
                 System.err.println(e.getMessage());
             }
         }
-    }
+    } */
 }
