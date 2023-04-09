@@ -81,7 +81,6 @@ public class WriteNode extends ComputeNode {
             ClockState lastTimestamp = new ClockState();
             String writeTimestamp = Utils.MIN_TIMESTAMP;
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
-            System.out.println(responseBuilder.getError());
             
             if(Utils.getKeyPartitionId(request.getKey()) != partition) {
                 responseBuilder
