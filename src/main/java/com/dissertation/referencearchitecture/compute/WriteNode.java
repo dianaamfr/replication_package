@@ -29,6 +29,7 @@ public class WriteNode extends ComputeNode {
     private StoragePusher storagePusher;
     private HLC hlc;
     private int partition;
+    private static final String USAGE = "Usage: WriteNode <partition> <port>";
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper);
@@ -46,7 +47,7 @@ public class WriteNode extends ComputeNode {
 
     public static void main(String[] args) {
         if(args.length < 2) {
-            System.err.println("Usage: java WriteNode <partitionId:Int> <port:Int>");   
+            System.err.println(USAGE);   
             return;
         }
 
@@ -68,7 +69,7 @@ public class WriteNode extends ComputeNode {
         } catch (IOException e) {
             System.err.println("Could not start server");
         } catch (NumberFormatException e) {
-            System.err.println("Invalid port number");
+            System.err.println(USAGE);
         } catch (Exception e) {
             System.err.println(e.toString());
         }
@@ -80,6 +81,7 @@ public class WriteNode extends ComputeNode {
             ClockState lastTimestamp = new ClockState();
             String writeTimestamp = Utils.MIN_TIMESTAMP;
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
+            System.out.println(responseBuilder.getError());
             
             if(Utils.getKeyPartitionId(request.getKey()) != partition) {
                 responseBuilder
