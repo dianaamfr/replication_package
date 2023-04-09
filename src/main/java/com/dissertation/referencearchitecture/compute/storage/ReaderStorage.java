@@ -27,10 +27,7 @@ public class ReaderStorage extends Storage {
 
     public void put(String key, String timestamp, ByteString value) {
         super.put(key, timestamp, value);
-        int partition = Utils.getKeyPartitionId(key);
-        if(timestamp.compareTo(partitionsMaxTimestamp.get(partition)) > 0) {
-            this.partitionsMaxTimestamp.put(partition, timestamp);
-        }
+        this.setPartitionMaxTimestamp(Utils.getKeyPartitionId(key), timestamp);
     }
 
     public void setStableTime() {
@@ -54,9 +51,12 @@ public class ReaderStorage extends Storage {
     }
 
     public void setPartitionMaxTimestamp(Integer partition, String timestamp) {
-        if(timestamp.compareTo(this.partitionsMaxTimestamp.get(partition)) > 0) {
-            this.partitionsMaxTimestamp.put(partition, timestamp);
-        }
+        this.partitionsMaxTimestamp.compute(partition, (k,v) -> {
+            if(timestamp.compareTo(v) > 0) {
+                return timestamp;
+            }
+            return v;
+        });
     }
 
     public void setLastParsedIndex(String key, Integer index) {
