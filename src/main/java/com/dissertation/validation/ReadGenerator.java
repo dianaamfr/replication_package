@@ -1,148 +1,122 @@
 package com.dissertation.validation;
-/*
+
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicIntegerArray;
-import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
+import com.dissertation.utils.Address;
 
-import software.amazon.awssdk.regions.Region;
-*/
+public class ReadGenerator extends LoadGenerator {
+    private final int readsPerPartition;
+   
+    private static final int READS_PER_PARTITION = 15;
+    private static final int MAX_KEYS_PER_READ = 2;
 
-public class ReadGenerator {
-    /*
-    private ScheduledThreadPoolExecutor scheduler;
-    private final int delay;
-    private final int keys;
-    private final int readsPerRegion;
-    private final int clientsPerRegion;
-    private final List<Region> regions;
-    private final int numPartitions;
-    private CountDownLatch startSignal;
-    private AtomicIntegerArray counters;
-    private List<CountDownLatch> countDowns;
+    private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <readsPerPartition:Int>";
 
-    private static final int MAX_THREADS = 20;
-    private static final int READ_KEYS = 3;
-    private static final int READ_DELAY = 200;
-    private static final int REGION_READS = 15;
-    private static final int REGION_CLIENTS = 3;
-
-    public ReadGenerator(ScheduledThreadPoolExecutor scheduler, int delay, int keys,
-    int readsPerRegion, int clientsPerRegion) {
-        this.scheduler = scheduler;
-        this.delay = delay;
-        this.keys = keys;
-        this.readsPerRegion = readsPerRegion;
-        this.clientsPerRegion = clientsPerRegion;
-        this.regions = Config.getRegions().stream().collect(Collectors.toUnmodifiableList());
-        this.numPartitions = Config.getPartitions().size();
-        this.startSignal = new CountDownLatch(1);
-        this.counters = new AtomicIntegerArray(Collections.nCopies(this.regions.size(), 0).stream().mapToInt(i -> i).toArray());
-        this.countDowns = new ArrayList<>();
-        this.init();
+    public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
+            int regionPartitions, int delay, int readsPerPartition, int clients) {
+        super(scheduler, readAddress, writeAddresses, regionPartitions, delay, readsPerPartition, clients);
+        this.readsPerPartition = readsPerPartition;
+        this.init(readAddress, writeAddresses);
     }
 
     public static void main(String[] args) {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(MAX_THREADS);
+        int regionPartitions = 0;
+        Address readAddress;
+        List<Address> writeAddresses = new ArrayList<>();
+
+        if (args.length < 6) {
+            System.err.println(USAGE);
+            return;
+        }
+
         try {
-            int delay = args.length > 0 ? Integer.parseInt(args[0]) : READ_DELAY;
-            int bytes = args.length > 1 ? Integer.parseInt(args[1]) : READ_KEYS;
-            int readsPerRegion = args.length > 2 ? Integer.parseInt(args[2]) : REGION_READS;
-            int clientsPerRegion = args.length > 3 ? Integer.parseInt(args[3]) : REGION_CLIENTS;
-            ReadGenerator readGenerator = new ReadGenerator(scheduler, delay, bytes,
-                    readsPerRegion, clientsPerRegion);
+            regionPartitions = Integer.parseInt(args[0]);
+            readAddress = new Address(Integer.parseInt(args[1]), args[2]);
+            int addressesEndIndex = regionPartitions * 3 + 3;
+            for (int i = 3; i < addressesEndIndex; i += 3) {
+                writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
+            }
+
+            int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
+            int readsPerPartition = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
+                    : READS_PER_PARTITION;
+            int clients = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[regionPartitions + 2]) : CLIENTS;
+
+            ReadGenerator readGenerator = new ReadGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
+                    delay, readsPerPartition, clients);
             readGenerator.run();
-        } catch (NumberFormatException e) {
-            System.err.println("Usage: WriteGenerator <delay:Int> <bytes:Int>");
+        } catch (Exception e) {
+            System.err.println(USAGE);
         }
     }
 
-    private void init() {
-        for (int i = 0; i < this.regions.size(); i++) {
-            CountDownLatch readSignal = new CountDownLatch(this.readsPerRegion);
-            countDowns.add(readSignal);
-            for (int j = 0; j < this.clientsPerRegion; j++) {
-                try {
-                    Client c = new Client(this.regions.get(i));
-                    this.scheduler.schedule(
-                            new RegionReadGenerator(c, this.regions.get(i), i, readSignal),
-                            0, TimeUnit.MILLISECONDS);
-                } catch (Exception e) {
-                    System.err.println(e.toString());
-                }
-            }
-        }
-    }
+    @Override
+    protected void init(Address readAddress, List<Address> writeAddresses) {
+       super.init(readAddress, writeAddresses);
 
-    public void run() {
-        startSignal.countDown();
-        for (int i = 0; i < this.regions.size(); i++) {
+        // Init clients
+        for (int j = 0; j < this.clients; j++) {
             try {
-                countDowns.get(i).await();
+                Client c = new Client(readAddress, writeAddresses);
+                this.scheduler.schedule(
+                        new ReadGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
-                e.printStackTrace();
+                System.err.println(e.toString());
             }
         }
-        this.scheduler.shutdown();
     }
 
-    private Set<String> getRandomKeys(Region region) {
-        Set<String> result = new HashSet<>();
-        for(int i = 0; i < this.keys; i++) {
-            String partition = getRandomPartition(region);
-            int partitionId = Integer.valueOf(partition.split("partition")[1]);
-            String aux = "";
-            do {
-                aux = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
-            } while ((Math.floorMod(aux.hashCode(), this.numPartitions) + 1) != partitionId);
-            result.add(aux);
-        }
-        return result;
-    }
-
-    private String getRandomPartition(Region region) {
-        List<String> partitions = new ArrayList<>(Config.getPartitions(region));
-        return partitions.get(ThreadLocalRandom.current().nextInt(partitions.size()));
-    }
-
-
-    private class RegionReadGenerator implements Runnable {
+    private class ReadGeneratorRequest implements Runnable {
         private Client client;
-        private Region region;
-        private int index;
-        private CountDownLatch readSignal;
 
-        public RegionReadGenerator(Client client, Region region, int index, CountDownLatch readSignal) {
+        public ReadGeneratorRequest(Client client) {
             this.client = client;
-            this.region = region;
-            this.index = index;
-            this.readSignal = readSignal;
         }
 
         @Override
         public void run() {
-            Set<String> keys = getRandomKeys(this.region);
+            ConcurrentMap<Integer, Set<String>> keys = getRandomKeys();
             try {
                 startSignal.await();
-                if (counters.getAndIncrement(index) < readsPerRegion) {
-                    this.client.requestROT(keys);
-                    scheduler.schedule(
-                            new RegionReadGenerator(this.client, this.region, this.index, this.readSignal),
-                            delay, TimeUnit.MILLISECONDS);
-                    this.readSignal.countDown();
+                for(Entry<Integer, Set<String>> entry: keys.entrySet()) {
+                    int counterPos = partitionIndexes.get(entry.getKey());
+                    if (counters.getAndIncrement(counterPos) < readsPerPartition) {
+                        this.client.requestROT(entry.getValue());
+                        scheduler.schedule(
+                                new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
+                        countDowns.updateAndGet(counterPos, (countDown) -> {
+                            countDown.countDown();
+                            return countDown;
+                        });
+                    }
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
             }
         }
-    } */
+    }
+
+    private ConcurrentMap<Integer, Set<String>> getRandomKeys() {
+        ConcurrentMap<Integer, Set<String>> keys = new ConcurrentHashMap<>();
+        int keysPerRead = ThreadLocalRandom.current().nextInt(1, MAX_KEYS_PER_READ + 1);
+        while(keys.size() < keysPerRead) {
+            KeyPartition keyPartition = this.getRandomKey(); 
+            if(!keys.containsKey(keyPartition.getPartitionId())) {
+                keys.put(keyPartition.getPartitionId(), new HashSet<>());
+            }
+            keys.get(keyPartition.getPartitionId()).add(keyPartition.getKey());
+        }
+        return keys;
+    }
 }

@@ -84,6 +84,38 @@
             </configuration>
           </execution>
           <execution>
+            <id>read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>readGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.ReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>write-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>writeGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.WriteGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
             <id>client-interface</id>
             <phase>package</phase>
             <goals>

@@ -56,8 +56,8 @@ writeNode2:
 client:
 	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
 
-# writeGenerator:
-# 	java -jar target/writeGenerator.jar
+writeGenerator:
+	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses)
 
-# readGenerator:
-# 	java -jar target/readGenerator.jar
+readGenerator:
+	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses)

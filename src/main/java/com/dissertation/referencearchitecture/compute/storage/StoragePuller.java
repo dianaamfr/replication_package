@@ -38,7 +38,7 @@ public class StoragePuller implements Runnable {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                System.err.println(String.format("Error when pulling from partition %s", entry.getKey()));
+                System.err.println(String.format("Error when pulling from partition %d", entry.getKey()));
             }
         }
     }

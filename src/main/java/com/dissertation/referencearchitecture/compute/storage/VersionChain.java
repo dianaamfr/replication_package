@@ -1,18 +1,18 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
 public class VersionChain {
-    private TreeMap<String, ByteString> versions;
+    private ConcurrentSkipListMap<String, ByteString> versions;
 
     public VersionChain() {
-        this.versions = new TreeMap<>();
+        this.versions = new ConcurrentSkipListMap<>();
     }
 
     public void put(String timestamp, ByteString value) {
