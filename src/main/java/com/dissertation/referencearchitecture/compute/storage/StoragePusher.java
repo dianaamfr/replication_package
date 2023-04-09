@@ -39,9 +39,9 @@ public class StoragePusher implements Runnable {
         }
          
         // Push if new writes have been made
-        // TODO: Save timestamp of last successful write and push it
-        if(currentTime.isInactive()) {
-            this.push(currentTime.toString());
+        ClockState safePushTime = this.hlc.getAndResetSafePushTime();
+        if(!safePushTime.isZero()) {
+            this.push(safePushTime.toString());
         }
     }
 
@@ -60,13 +60,6 @@ public class StoragePusher implements Runnable {
         } catch (InvalidTimestampException e) {
             System.err.println(String.format("Invalid recent timestamp"));
             return;
-        }
-
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
         }
 
         // Try to sync clock

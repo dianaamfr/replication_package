@@ -76,8 +76,8 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
-            ClockState lastTimestamp = new ClockState();
-            String writeTimestamp = Utils.MIN_TIMESTAMP;
+            ClockState lastTime = new ClockState();
+            ClockState writeTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
 
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
@@ -86,7 +86,7 @@ public class WriteNode extends ComputeNode {
                         .setError(true);
             } else {
                 try {
-                    lastTimestamp = ClockState.fromString(request.getLastWriteTimestamp(), State.WRITE);
+                    lastTime = ClockState.fromString(request.getLastWriteTimestamp(), State.WRITE);
                 } catch (InvalidTimestampException e) {
                     responseBuilder
                             .setStatus(e.toString())
@@ -95,10 +95,11 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                writeTimestamp = hlc.writeEvent(lastTimestamp).toString();
-                storage.put(request.getKey(), writeTimestamp, request.getValue());
-                responseBuilder.setWriteTimestamp(writeTimestamp);
-                hlc.writeComplete(); // TODO: probably can be removed
+                writeTime = hlc.writeEvent(lastTime);
+                storage.put(request.getKey(), writeTime.toString(), request.getValue());
+                responseBuilder.setWriteTimestamp(writeTime.toString());
+                hlc.writeComplete();
+                hlc.setSafePushTime(writeTime);
             }
 
             responseObserver.onNext(responseBuilder.build());

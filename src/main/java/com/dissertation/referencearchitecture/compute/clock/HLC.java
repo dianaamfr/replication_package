@@ -14,6 +14,7 @@ public class HLC {
     private final UnaryOperator<ClockState> writeCompleteOperator;
     private final UnaryOperator<ClockState> syncCompleteOperator;
     private AtomicReference<ClockState> currentTime;
+    private AtomicReference<ClockState> safePushTime;
 
     public HLC(TimeProvider timeProvider) {
         this.timeProvider = timeProvider;
@@ -22,7 +23,8 @@ public class HLC {
         this.requestSyncOperator = this::setSyncEvent;
         this.writeCompleteOperator = this::setWriteComplete;
         this.syncCompleteOperator = this::setSyncComplete;
-        this.currentTime = new AtomicReference<ClockState>(new ClockState());
+        this.currentTime = new AtomicReference<>(new ClockState());
+        this.safePushTime = new AtomicReference<>(new ClockState());
     }
 
     public ClockState writeEvent(ClockState recvEvent) {
@@ -43,6 +45,14 @@ public class HLC {
 
     public ClockState syncComplete() {
         return this.currentTime.updateAndGet(this.syncCompleteOperator);
+    }
+
+    public void setSafePushTime(ClockState safeTime) {
+        this.safePushTime.set(safeTime);
+    }
+
+    public ClockState getAndResetSafePushTime() {
+        return this.safePushTime.getAndSet(new ClockState());
     }
 
     private ClockState updateClock(ClockState prevTime, ClockState recvTime) {
