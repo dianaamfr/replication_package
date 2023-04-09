@@ -31,8 +31,9 @@ This repository holds a Maven project with the following structure:
     - `utils`: Util functions, constants and classes.
     - `validation`: Comprises classes that can be used to test the prototype, namely:
         - `ClientInterface`: To test the prototype through a command-line interface.
-        - `WriteGenerator`: *(To be refactored)* To generate random write load. The delay between client writes, number of clients per partition, number of writes per partition and number of bytes per object can be customized. 
-        - `ReadGenerator`: *(To be refactored)* To generate random read load. The delay between client ROTs, number of clients per region, number of ROTs per region and number of keys per ROT can be customized.
+        - `WriteGenerator`: To generate random write load in a region. The delay between client writes, number of clients, number of writes per partition and number of bytes per object can be customized. 
+        - `ReadGenerator`: To generate random read load in a region. The delay between client ROTs, number of clients and number of ROTs per partition can be customized.
+        - `LoadGenerator`: Abstract class that provides the basic functionality to generate load in a region. It can be extended to implement a load generator for a specific type of load.
 - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
 
 ### Dependencies
@@ -41,36 +42,35 @@ This repository holds a Maven project with the following structure:
 - [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/) can be used to test the project locally.
 
 ### Execution Instructions
-**User-friendly CLI**:
+#### LocalStack (locally)
+The project can be tested locally using LocalStack. To do so, follow the instructions below:
+
+**Set up the buckets and the read and write nodes**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
 3. Create buckets: `make createBuckets`. This command creates the following buckets:
     - bucket `reference-architecture-partition1`;
     - bucket `reference-architecture-partition2`;
+    - bucket `reference-architecture-partition3`;
     - bucket `reference-architecture-clock`, which is used to persist the clock values.
 4. `make`
-5. Start a Read Compute Node:
-    - `make readNode`
+5. Start the Read Compute Nodes:
+    - `make readNode1` (reads from partition 1 and partition 2)
+    - `make readNode2` (reads from partition 3)
 6. Start the Write Compute Nodes, one on each terminal:
-    - `make writeNode1` (partition1)
-    - `make writeNode2` (partition2)
-7. To test using the command-line interface:
-    1. Start the desired number of Clients with the following command:
-        - `make client`
+    - `make writeNode1` (writes in partition 1)
+    - `make writeNode2` (writes in partition 2)
+    - `make writeNode3` (writes in partition 3)
+
+**Issue read and write requests**:
+- Using the command-line interface:
+    1. Start the desired number of clients: `make client1` / `make client2`
     2. Issue the desired ROT and write requests:
         - ROT example: `R x y`
         - Write example: `W x 3`
-
-**Load Generators**:
-1. Open a terminal and start LocalStack: `localstack start` 
-2. Open a new terminal in the root folder
-3. Create buckets: `make createBuckets`. This command creates the following buckets:
-    - bucket `reference-architecture-partition1`;
-    - bucket `reference-architecture-partition2`;
-    - bucket `reference-architecture-clock`, which is used to persist the clock values.
-4. `make`
-5. Start the Write Generator: `make writeGenerator`
-6. Start the Read Generator: `make readGenerator`
+- Generate random load with the load generators:
+    1. Start the Write Generator: `make writeGenerator1` / `make writeGenerator2`
+    2. Start the Read Generator: `make readGenerator1` / `make readGenerator2`
 
 ## Candidate Reference Architecture
 
