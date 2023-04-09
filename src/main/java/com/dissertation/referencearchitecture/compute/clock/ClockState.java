@@ -58,6 +58,10 @@ public class ClockState {
         return this.state.equals(State.WRITE);
     }
 
+    public boolean isInactive() {
+        return this.state.equals(State.INACTIVE);
+    }
+
     public static ClockState fromString(String timestamp, State state) throws InvalidTimestampException {
         String[] parts = timestamp.split("\\.");
         if (parts.length != 2) {

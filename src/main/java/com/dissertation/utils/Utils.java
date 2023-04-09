@@ -13,6 +13,7 @@ public class Utils {
     public static final String MIN_TIMESTAMP = "0.0";
     public static final int SYNC_DELAY = 10000;
     public static final int PULL_DELAY = 10000;
+    public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
 
     public static final Region DEFAULT_REGION = Region.EU_NORTH_1;

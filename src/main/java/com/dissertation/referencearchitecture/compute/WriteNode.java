@@ -5,7 +5,6 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.dissertation.referencearchitecture.compute.clock.ClockSyncHandler;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -26,24 +25,22 @@ import io.grpc.stub.StreamObserver;
 
 public class WriteNode extends ComputeNode {
     private Storage storage;
-    private StoragePusher storagePusher;
     private HLC hlc;
     private int partition;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage,
-            StoragePusher storagePusher, HLC hlc) throws URISyntaxException, IOException, InterruptedException {
+            HLC hlc) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper);
         this.partition = partition;
         this.storage = storage;
-        this.storagePusher = storagePusher;
         this.hlc = hlc;
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher),
-                Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition), Utils.PUSH_DELAY,
+        Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
 
@@ -59,10 +56,9 @@ public class WriteNode extends ComputeNode {
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
             S3Helper s3Helper = new S3Helper(Utils.getCurrentRegion());
             Storage storage = new Storage();
-            StoragePusher storagePusher = new StoragePusher(storage, s3Helper, partition);
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
-            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, storagePusher, hlc);
+            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc);
             WriteServiceImpl writeService = writeNode.new WriteServiceImpl();
             Server server = ServerBuilder.forPort(port).addService(writeService).build();
             writeNode.init(server);
@@ -99,23 +95,10 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                try {
-                    writeTimestamp = hlc.writeEvent(lastTimestamp).toString();
-                    storage.put(request.getKey(), writeTimestamp, request.getValue());
-                    if (storagePusher.push(writeTimestamp)) {
-                        responseBuilder.setWriteTimestamp(writeTimestamp);
-                    } else {
-                        storage.delete(request.getKey(), writeTimestamp);
-                        responseBuilder
-                                .setStatus("Write to data store failed")
-                                .setError(true);
-                    }
-                } catch (Exception e) {
-                    responseBuilder
-                            .setStatus(e.toString())
-                            .setError(true);
-                }
-                hlc.writeComplete();
+                writeTimestamp = hlc.writeEvent(lastTimestamp).toString();
+                storage.put(request.getKey(), writeTimestamp, request.getValue());
+                responseBuilder.setWriteTimestamp(writeTimestamp);
+                hlc.writeComplete(); // TODO: probably can be removed
             }
 
             responseObserver.onNext(responseBuilder.build());

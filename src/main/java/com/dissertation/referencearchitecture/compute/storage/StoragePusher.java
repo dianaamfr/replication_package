@@ -7,24 +7,86 @@ import java.util.concurrent.ConcurrentMap;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.dissertation.referencearchitecture.compute.clock.ClockState;
+import com.dissertation.referencearchitecture.compute.clock.HLC;
+import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
+import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
+import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
-public class StoragePusher {
+public class StoragePusher implements Runnable {
+    private HLC hlc;
     private Storage storage;
     private S3Helper s3Helper;
     private int partition;
 
-    public StoragePusher(Storage storage, S3Helper s3Helper, int partition) {
+    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition) {
+        this.hlc = hlc;
         this.storage = storage;
-        this.partition = partition;
         this.s3Helper = s3Helper;
+        this.partition = partition;
     }
 
-    public boolean push(String timestamp) {
+    @Override
+    public void run() {
+        ClockState currentTime = this.hlc.trySyncAndGetClock();
+        // Sync in the absence of writes
+        if (currentTime.isSync()) {
+            this.sync(currentTime);
+            return;
+        }
+         
+        // Push if new writes have been made
+        // TODO: Save timestamp of last successful write and push it
+        if(currentTime.isInactive()) {
+            this.push(currentTime.toString());
+        }
+    }
+
+    private void sync(ClockState currentTime) {
+        S3ReadResponse response = this.s3Helper.getClocksAfter(currentTime.toString());
+        if (!response.hasTimestamp()) {
+            return;
+        }
+        // System.out.println("SYNC: current=" + currentTimestamp + " recv=" +
+        // response.getTimestamp());
+
+        // Get the most recent timestamp
+        ClockState recvTime;
         try {
-            JSONObject json = toJson(this.storage.getState(), timestamp);
+            recvTime = ClockState.fromString(response.getTimestamp(), State.SYNC);
+        } catch (InvalidTimestampException e) {
+            System.err.println(String.format("Invalid recent timestamp"));
+            return;
+        }
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        // Try to sync clock
+        ClockState newTime = this.hlc.syncEvent(recvTime);
+
+        // If a write occurred, abort sync
+        if (!newTime.isSync()) {
+            return;
+        }
+
+        // Push log with new timestamp
+        String newTimestamp = newTime.toString();
+
+        this.push(newTimestamp);
+        this.hlc.syncComplete();
+    }
+
+    private boolean push(String timestamp) {
+        try {
+            JSONObject json = this.toJson(this.storage.getState(), timestamp);
             // System.out.println(json);
             this.s3Helper.persistClock(timestamp);
             return this.s3Helper.persistLog(Utils.getPartitionBucket(partition), timestamp, json.toString());

@@ -25,10 +25,6 @@ public class HLC {
         this.currentTime = new AtomicReference<ClockState>(new ClockState());
     }
 
-    public ClockState getCurrentTimestamp() {
-        return this.currentTime.get();
-    }
-
     public ClockState writeEvent(ClockState recvEvent) {
         return this.currentTime.accumulateAndGet(recvEvent, this.updateClockOperator);
     }
@@ -37,7 +33,7 @@ public class HLC {
         return this.currentTime.updateAndGet(this.writeCompleteOperator);
     }
 
-    public ClockState updateAndGetState() {
+    public ClockState trySyncAndGetClock() {
         return this.currentTime.updateAndGet(this.requestSyncOperator);
     }
 
