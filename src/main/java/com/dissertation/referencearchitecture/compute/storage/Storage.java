@@ -16,16 +16,20 @@ public class Storage {
     }
 
     public void put(String key, String timestamp, ByteString value) {
-        if(!this.keyVersions.containsKey(key)){
-            this.keyVersions.put(key, new VersionChain());
-        }
-        this.keyVersions.get(key).put(timestamp, value);
+        this.keyVersions.compute(key, (k, v) -> {
+            if(v == null) {
+                v = new VersionChain();
+            }
+            v.put(timestamp, value);
+            return v;
+        });
     }
 
-    public void delete(String key, String timestamp) {
-        if(this.keyVersions.containsKey(key)){
-            this.keyVersions.get(key).delete(timestamp);
-        }
+    public void delete(String key, String timestamp) { 
+        this.keyVersions.computeIfPresent(key, (k, v) -> {
+            v.delete(timestamp);
+            return v;
+        });
     }
 
     public Entry<String, ByteString> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
