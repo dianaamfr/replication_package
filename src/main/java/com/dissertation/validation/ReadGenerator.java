@@ -16,7 +16,7 @@ import com.dissertation.utils.Address;
 
 public class ReadGenerator extends LoadGenerator {
     private final int readsPerPartition;
-   
+
     private static final int READS_PER_PARTITION = 15;
     private static final int MAX_KEYS_PER_READ = 2;
 
@@ -63,7 +63,7 @@ public class ReadGenerator extends LoadGenerator {
 
     @Override
     protected void init(Address readAddress, List<Address> writeAddresses) {
-       super.init(readAddress, writeAddresses);
+        super.init(readAddress, writeAddresses);
 
         // Init clients
         for (int j = 0; j < this.clients; j++) {
@@ -89,7 +89,7 @@ public class ReadGenerator extends LoadGenerator {
             ConcurrentMap<Integer, Set<String>> keys = getRandomKeys();
             try {
                 startSignal.await();
-                for(Entry<Integer, Set<String>> entry: keys.entrySet()) {
+                for (Entry<Integer, Set<String>> entry : keys.entrySet()) {
                     int counterPos = partitionIndexes.get(entry.getKey());
                     if (counters.getAndIncrement(counterPos) < readsPerPartition) {
                         this.client.requestROT(entry.getValue());
@@ -110,9 +110,9 @@ public class ReadGenerator extends LoadGenerator {
     private ConcurrentMap<Integer, Set<String>> getRandomKeys() {
         ConcurrentMap<Integer, Set<String>> keys = new ConcurrentHashMap<>();
         int keysPerRead = ThreadLocalRandom.current().nextInt(1, MAX_KEYS_PER_READ + 1);
-        while(keys.size() < keysPerRead) {
-            KeyPartition keyPartition = this.getRandomKey(); 
-            if(!keys.containsKey(keyPartition.getPartitionId())) {
+        while (keys.size() < keysPerRead) {
+            KeyPartition keyPartition = this.getRandomKey();
+            if (!keys.containsKey(keyPartition.getPartitionId())) {
                 keys.put(keyPartition.getPartitionId(), new HashSet<>());
             }
             keys.get(keyPartition.getPartitionId()).add(keyPartition.getKey());

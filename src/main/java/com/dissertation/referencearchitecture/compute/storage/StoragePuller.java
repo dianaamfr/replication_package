@@ -25,15 +25,16 @@ public class StoragePuller implements Runnable {
     }
 
     private void pull() {
-        for(Entry<Integer, String> entry: this.storage.getPartitionsMaxTimestamp().entrySet()) {
+        for (Entry<Integer, String> entry : this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
                 String partitionBucket = Utils.getPartitionBucket(entry.getKey());
-                S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket, String.valueOf(entry.getValue()));
-                if(s3Response.hasContent() && s3Response.hasTimestamp()) {
+                S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
+                        String.valueOf(entry.getValue()));
+                if (s3Response.hasContent() && s3Response.hasTimestamp()) {
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent());
-                    //System.out.println(s3Response.getContent());    
-                } else if(s3Response.isError()) {
+                    // System.out.println(s3Response.getContent());
+                } else if (s3Response.isError()) {
                     System.err.println(s3Response.getStatus());
                 }
             } catch (Exception e) {
@@ -47,20 +48,20 @@ public class StoragePuller implements Runnable {
         JSONObject response = new JSONObject(json);
         JSONArray versionChainsJson = response.getJSONArray(Utils.LOG_STATE);
 
-        for(int i = 0; i < versionChainsJson.length(); i++) {
+        for (int i = 0; i < versionChainsJson.length(); i++) {
             JSONObject versionChainJson = versionChainsJson.getJSONObject(i);
             JSONArray versionChainArray = versionChainJson.getJSONArray(Utils.LOG_VERSIONS);
             String key = versionChainJson.getString(Utils.LOG_KEY);
             int lastIdx = this.storage.getLastParsedIndex(key);
-            for(int j = lastIdx; j < versionChainArray.length(); j++) {
+            for (int j = lastIdx; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
                 this.storage.put(
-                    key, 
-                    versionJson.getString(Utils.LOG_TIMESTAMP), 
-                    Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
+                        key,
+                        versionJson.getString(Utils.LOG_TIMESTAMP),
+                        Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
             }
             this.storage.setLastParsedIndex(key, versionChainArray.length());
         }
     }
-    
+
 }

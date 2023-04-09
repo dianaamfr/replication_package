@@ -17,6 +17,7 @@ import com.google.protobuf.ByteString;
 public class ClientInterface {
     private final Client client;
     private static final String USAGE = "Usage: ClientInterface <readPort> <readAddress> (<writePort:Int> <writeIp:String>)+";
+
     private ClientInterface(Client client) {
         this.client = client;
     }
@@ -25,20 +26,20 @@ public class ClientInterface {
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
 
-        if(args.length < 5 || (args.length - 2) % 3 != 0) {
+        if (args.length < 5 || (args.length - 2) % 3 != 0) {
             System.err.println(USAGE);
             return;
         }
 
         try {
             readAddress = new Address(Integer.parseInt(args[0]), args[1]);
-            for(int i=2; i < args.length; i+=3) {
-                writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i+1], Integer.parseInt(args[i+2])));
+            for (int i = 2; i < args.length; i += 3) {
+                writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
             Client client = new Client(readAddress, writeAddresses);
             (new ClientInterface(client)).run();
-        } catch(NumberFormatException e) {
+        } catch (NumberFormatException e) {
             System.err.println(USAGE);
         } catch (Exception e) {
             System.err.println(e.getMessage());
@@ -111,7 +112,7 @@ public class ClientInterface {
 
         if (!writeResponse.getError()) {
             System.out.println(String.format(
-                    "Write response: %s = %s at %s ", 
+                    "Write response: %s = %s at %s ",
                     key, commands[1], writeResponse.getWriteTimestamp()));
         } else {
             System.err.println(writeResponse.getStatus());

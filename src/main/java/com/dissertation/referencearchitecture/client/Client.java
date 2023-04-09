@@ -24,7 +24,7 @@ public class Client {
     private ROTServiceGrpc.ROTServiceBlockingStub readStub;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
-    
+
     public Client(Address readAddress, List<Address> writeAddresses) {
         this.cache = new HashMap<>();
         this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
@@ -44,10 +44,10 @@ public class Client {
         Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
-        
+
         try {
-            for(String key: keys) {
-                if(!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+            for (String key : keys) {
+                if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
                     throw new KeyNotFoundException();
                 }
             }
@@ -55,46 +55,46 @@ public class Client {
             rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
             rotResponse = this.readStub.rot(rotRequest);
 
-            if(!rotResponse.getError()) {
+            if (!rotResponse.getError()) {
                 pruneCache(rotResponse.getStableTime());
                 builder
-                    .putAllValues(getReadResponse(rotResponse.getValuesMap()))
-                    .setStableTime(rotResponse.getStableTime());
+                        .putAllValues(getReadResponse(rotResponse.getValuesMap()))
+                        .setStableTime(rotResponse.getStableTime());
                 return builder.build();
             }
             return rotResponse;
         } catch (KeyNotFoundException e) {
             return builder
-                .setStatus(e.toString())
-                .setError(true).build();
+                    .setStatus(e.toString())
+                    .setError(true).build();
         }
     }
 
     public WriteResponse requestWrite(String key, ByteString value) {
         try {
             int partitionId = Utils.getKeyPartitionId(key);
-            if(!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+            if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
                 throw new KeyNotFoundException();
             }
 
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
             WriteRequest writeRequest = WriteRequest.newBuilder()
-                .setKey(key)
-                .setValue(value)
-                .setLastWriteTimestamp(this.lastWriteTimestamp)
-                .build();
+                    .setKey(key)
+                    .setValue(value)
+                    .setLastWriteTimestamp(this.lastWriteTimestamp)
+                    .build();
 
             WriteResponse writeResponse = writeStub.write(writeRequest);
-            if(!writeResponse.getError()) {
+            if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
             }
             return writeResponse;
         } catch (KeyNotFoundException e) {
             return WriteResponse.newBuilder()
-                .setStatus(e.toString())
-                .setError(true)
-                .build();
+                    .setStatus(e.toString())
+                    .setError(true)
+                    .build();
         }
     }
 

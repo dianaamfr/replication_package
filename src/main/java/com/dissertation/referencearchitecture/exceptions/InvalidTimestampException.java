@@ -1,7 +1,7 @@
 package com.dissertation.referencearchitecture.exceptions;
 
 public class InvalidTimestampException extends Exception {
-    public InvalidTimestampException(){
+    public InvalidTimestampException() {
         super();
     }
 

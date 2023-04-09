@@ -11,7 +11,7 @@ public class ReaderStorage extends Storage {
     private ConcurrentMap<Integer, String> partitionsMaxTimestamp;
     private ConcurrentMap<String, Integer> keyLastParsedIndex;
     private String stableTime;
-    
+
     public ReaderStorage() {
         super();
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
@@ -20,7 +20,7 @@ public class ReaderStorage extends Storage {
     }
 
     public void init(Set<Integer> partitions) {
-        for(Integer partition: partitions) {
+        for (Integer partition : partitions) {
             this.partitionsMaxTimestamp.put(partition, Utils.MIN_TIMESTAMP);
         }
     }
@@ -51,8 +51,8 @@ public class ReaderStorage extends Storage {
     }
 
     public void setPartitionMaxTimestamp(Integer partition, String timestamp) {
-        this.partitionsMaxTimestamp.compute(partition, (k,v) -> {
-            if(timestamp.compareTo(v) > 0) {
+        this.partitionsMaxTimestamp.compute(partition, (k, v) -> {
+            if (timestamp.compareTo(v) > 0) {
                 return timestamp;
             }
             return v;

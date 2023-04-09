@@ -49,7 +49,6 @@ public class HLC {
         return this.currentTime.updateAndGet(this.syncCompleteOperator);
     }
 
-   
     private ClockState updateClock(ClockState prevTime, ClockState recvTime) {
         ClockState newTime = new ClockState();
         long inc = recvTime.isWrite() ? 1 : 0;
@@ -80,21 +79,21 @@ public class HLC {
     }
 
     private ClockState setSyncEvent(ClockState prevTime) {
-        if(prevTime.isWrite()) {
+        if (prevTime.isWrite()) {
             return prevTime;
         }
-        if(prevTime.isActive()) {
+        if (prevTime.isActive()) {
             return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
         }
         return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.SYNC);
     }
 
     private ClockState syncClock(ClockState prevTime, ClockState recvTime) {
-        if(prevTime.isWrite()) {
+        if (prevTime.isWrite()) {
             return prevTime;
         }
 
-        if(prevTime.isActive()) {
+        if (prevTime.isActive()) {
             return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
         }
 
@@ -102,7 +101,7 @@ public class HLC {
     }
 
     private ClockState setSyncComplete(ClockState prevTime) {
-        if(prevTime.isWrite()) {
+        if (prevTime.isWrite()) {
             return prevTime;
         }
         return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);

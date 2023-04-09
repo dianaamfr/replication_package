@@ -3,7 +3,7 @@ package com.dissertation.referencearchitecture.compute.clock;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 
 public class ClockState {
-    private long logicalTime;      
+    private long logicalTime;
     private long logicalCount;
     private State state;
 
@@ -14,7 +14,6 @@ public class ClockState {
         ACTIVE
     }
 
-    
     public ClockState() {
         this.logicalTime = 0;
         this.logicalCount = 0;
@@ -27,7 +26,6 @@ public class ClockState {
         this.state = state;
     }
 
-
     public void setLogicalTime(long logicalTime) {
         this.logicalTime = logicalTime;
     }
@@ -39,7 +37,6 @@ public class ClockState {
     public void setState(State state) {
         this.state = state;
     }
-
 
     public long getLogicalTime() {
         return this.logicalTime;
@@ -61,10 +58,9 @@ public class ClockState {
         return this.state.equals(State.WRITE);
     }
 
-
     public static ClockState fromString(String timestamp, State state) throws InvalidTimestampException {
-        String[] parts = timestamp.split("\\.");  
-        if(parts.length != 2) {
+        String[] parts = timestamp.split("\\.");
+        if (parts.length != 2) {
             throw new InvalidTimestampException();
         }
         return new ClockState(Long.valueOf(parts[0]), Long.valueOf(parts[1]), state);
@@ -77,7 +73,7 @@ public class ClockState {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof ClockState)) {
+        if (!(o instanceof ClockState)) {
             return false;
         }
         ClockState timestamp = (ClockState) o;

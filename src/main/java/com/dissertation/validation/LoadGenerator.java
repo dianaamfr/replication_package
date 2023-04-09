@@ -22,7 +22,7 @@ public abstract class LoadGenerator {
     protected final int delay;
     protected final int clients;
     protected final int operationsPerPartition;
-    
+
     protected CountDownLatch startSignal;
     protected AtomicIntegerArray counters;
     protected ConcurrentMap<Integer, Integer> partitionIndexes;
@@ -32,8 +32,8 @@ public abstract class LoadGenerator {
     protected static final int DELAY = 200;
     protected static final int CLIENTS = 3;
 
-
-    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses, int regionPartitions, int delay, int operationsPerPartition, int clients) {
+    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
+            int regionPartitions, int delay, int operationsPerPartition, int clients) {
         this.scheduler = scheduler;
 
         this.regionPartitions = regionPartitions;
@@ -49,9 +49,10 @@ public abstract class LoadGenerator {
     }
 
     protected void init(Address readAddress, List<Address> writeAddresses) {
-        // Init countdowns to wait until all partitions handle the same number of operations
+        // Init countdowns to wait until all partitions handle the same number of
+        // operations
         for (int i = 0; i < this.regionPartitions; i++) {
-            this.countDowns.set(i, new CountDownLatch(this.operationsPerPartition)); 
+            this.countDowns.set(i, new CountDownLatch(this.operationsPerPartition));
             this.partitionIndexes.put(writeAddresses.get(i).getPartitionId(), i);
         }
     }
@@ -75,9 +76,9 @@ public abstract class LoadGenerator {
             key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
             partitionId = Utils.getKeyPartitionId(key);
         } while (!this.partitionIndexes.keySet().contains(partitionId));
-        
+
         return new KeyPartition(key, partitionId);
-    } 
+    }
 
     protected class KeyPartition {
         private String key;

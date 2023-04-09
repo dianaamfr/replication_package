@@ -32,9 +32,9 @@ public class Address {
 
     public ManagedChannel getChannel() {
         return ManagedChannelBuilder
-        .forAddress(this.ip, this.port)
-        .usePlaintext()
-        .build();
+                .forAddress(this.ip, this.port)
+                .usePlaintext()
+                .build();
     }
 
 }

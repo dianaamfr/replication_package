@@ -17,7 +17,7 @@ public class Storage {
 
     public void put(String key, String timestamp, ByteString value) {
         this.keyVersions.compute(key, (k, v) -> {
-            if(v == null) {
+            if (v == null) {
                 v = new VersionChain();
             }
             v.put(timestamp, value);
@@ -25,21 +25,22 @@ public class Storage {
         });
     }
 
-    public void delete(String key, String timestamp) { 
+    public void delete(String key, String timestamp) {
         this.keyVersions.computeIfPresent(key, (k, v) -> {
             v.delete(timestamp);
             return v;
         });
     }
 
-    public Entry<String, ByteString> get(String key, String maxTimestamp) throws KeyNotFoundException, KeyVersionNotFoundException {
-        if(!this.keyVersions.containsKey(key)) {
+    public Entry<String, ByteString> get(String key, String maxTimestamp)
+            throws KeyNotFoundException, KeyVersionNotFoundException {
+        if (!this.keyVersions.containsKey(key)) {
             throw new KeyNotFoundException();
         }
         return this.keyVersions.get(key).get(maxTimestamp);
     }
 
-    public ConcurrentMap<String,VersionChain> getState() {
+    public ConcurrentMap<String, VersionChain> getState() {
         return this.keyVersions;
     }
 
@@ -49,5 +50,5 @@ public class Storage {
         builder.append(this.keyVersions.toString());
         return builder.toString();
     }
-    
+
 }

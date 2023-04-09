@@ -20,7 +20,7 @@ public class VersionChain {
     }
 
     public void delete(String timestamp) {
-        if(this.versions.containsKey(timestamp)) {
+        if (this.versions.containsKey(timestamp)) {
             this.versions.remove(timestamp);
         }
     }
@@ -28,11 +28,11 @@ public class VersionChain {
     public Entry<String, ByteString> get(String maxTimestamp) throws KeyVersionNotFoundException {
         try {
             Entry<String, ByteString> entry = this.versions.floorEntry(maxTimestamp);
-            if(entry == null) {
+            if (entry == null) {
                 throw new KeyVersionNotFoundException();
             }
             return entry;
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new KeyVersionNotFoundException();
         }
     }

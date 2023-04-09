@@ -9,7 +9,7 @@ import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 public class ClockSyncHandler implements Runnable {
     private HLC hlc;
     private S3Helper s3Helper;
-    private StoragePusher storagePusher; 
+    private StoragePusher storagePusher;
 
     public ClockSyncHandler(HLC hlc, S3Helper s3Helper, StoragePusher storagePusher) {
         this.hlc = hlc;
@@ -21,16 +21,17 @@ public class ClockSyncHandler implements Runnable {
     public void run() {
         // Cancel sync if new writes have been performed
         ClockState currentTime = this.hlc.updateAndGetState();
-        if(!currentTime.isSync()) {
+        if (!currentTime.isSync()) {
             return;
         }
-        
+
         ClockState currentTimestamp = this.hlc.getCurrentTimestamp();
         S3ReadResponse response = this.s3Helper.getClocksAfter(currentTimestamp.toString());
-        if(!response.hasTimestamp()) {
+        if (!response.hasTimestamp()) {
             return;
         }
-        //System.out.println("SYNC: current=" + currentTimestamp + " recv=" + response.getTimestamp());     
+        // System.out.println("SYNC: current=" + currentTimestamp + " recv=" +
+        // response.getTimestamp());
 
         ClockState recvTime;
         try {
@@ -41,9 +42,9 @@ public class ClockSyncHandler implements Runnable {
         }
         // Try to sync clock with received clock
         ClockState newTime = this.hlc.syncEvent(recvTime);
-        if(!newTime.isSync()) {
+        if (!newTime.isSync()) {
             return;
-        } 
+        }
 
         String newTimestamp = newTime.toString();
         this.storagePusher.push(newTimestamp);

@@ -15,7 +15,7 @@ public class WriteGenerator extends LoadGenerator {
 
     private static final int OBJECT_BYTES = 8;
     private static final int WRITES_PER_PARTITION = 15;
-    
+
     private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <clients:Int> <writesPerPartition:Int> <bytes:Int> ";
 
     public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
@@ -37,7 +37,7 @@ public class WriteGenerator extends LoadGenerator {
             return;
         }
 
-        try {            
+        try {
             regionPartitions = Integer.parseInt(args[0]);
             readAddress = new Address(Integer.parseInt(args[1]), args[2]);
             int addressesEndIndex = regionPartitions * 3 + 3;
@@ -51,8 +51,8 @@ public class WriteGenerator extends LoadGenerator {
             int writesPerPartition = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[addressesEndIndex + 2])
                     : WRITES_PER_PARTITION;
             int clients = args.length > addressesEndIndex + 3 ? Integer.parseInt(args[addressesEndIndex + 3]) : CLIENTS;
-            WriteGenerator writeGenerator = new WriteGenerator(scheduler, readAddress, writeAddresses, regionPartitions, delay,
-                    bytes, writesPerPartition, clients);
+            WriteGenerator writeGenerator = new WriteGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
+                    delay, bytes, writesPerPartition, clients);
             writeGenerator.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -67,7 +67,7 @@ public class WriteGenerator extends LoadGenerator {
             try {
                 Client c = new Client(readAddress, writeAddresses);
                 this.scheduler.schedule(
-                    new WriteGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
+                        new WriteGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
             } catch (Exception e) {
                 System.err.println(e.toString());
             }

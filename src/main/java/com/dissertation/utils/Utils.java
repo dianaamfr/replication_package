@@ -32,11 +32,11 @@ public class Utils {
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
 
     public static ByteString byteStringFromString(String encodedBuffer) {
-        return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.ISO_8859_1));    
+        return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.ISO_8859_1));
     }
-    
+
     public static String stringFromByteString(ByteString byteString) {
-        if(byteString.isEmpty()) {
+        if (byteString.isEmpty()) {
             return null;
         }
         return byteString.toString(StandardCharsets.ISO_8859_1);
@@ -55,7 +55,7 @@ public class Utils {
         try {
             region = regionLookup.getRegion();
         } catch (SdkClientException e) {
-            System.err.println("Warning: Failed to get region. Using default."); 
+            System.err.println("Warning: Failed to get region. Using default.");
         }
         return region;
     }

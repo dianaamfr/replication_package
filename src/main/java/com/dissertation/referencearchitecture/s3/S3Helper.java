@@ -31,19 +31,19 @@ public class S3Helper {
 
     private static S3Client s3Client(Region region) throws URISyntaxException {
         S3ClientBuilder s3ClientBuilder = S3Client.builder()
-            .region(region)
-            .forcePathStyle(true);
+                .region(region)
+                .forcePathStyle(true);
 
-        if(Utils.S3_ENDPOINT != null) {
+        if (Utils.S3_ENDPOINT != null) {
             return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
-                .endpointOverride(URI.create(Utils.S3_ENDPOINT)).build();
+                    .endpointOverride(URI.create(Utils.S3_ENDPOINT)).build();
         }
         return s3ClientBuilder.credentialsProvider(InstanceProfileCredentialsProvider.create())
-            .build();
+                .build();
     }
 
     public boolean persistLog(String bucketName, String timestamp, String logJson) {
-        try {   
+        try {
             createObject(bucketName, Utils.S3_LOG_PREFIX, timestamp, RequestBody.fromString(logJson));
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,9 +51,9 @@ public class S3Helper {
         }
         return true;
     }
-    
+
     public boolean persistClock(String timestamp) {
-        try {   
+        try {
             createObject(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, RequestBody.empty());
         } catch (Exception e) {
             e.printStackTrace();
@@ -107,14 +107,14 @@ public class S3Helper {
 
     private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key) {
         ListObjectsV2Request listObjects = ListObjectsV2Request
-                    .builder()
-                    .maxKeys(Utils.S3_MAX_KEYS)
-                    .prefix(prefix)
-                    .startAfter(prefix + key)
-                    .bucket(bucketName)
-                    .build();
+                .builder()
+                .maxKeys(Utils.S3_MAX_KEYS)
+                .prefix(prefix)
+                .startAfter(prefix + key)
+                .bucket(bucketName)
+                .build();
 
-            ListObjectsV2Response res = this.s3Client.listObjectsV2(listObjects);
+        ListObjectsV2Response res = this.s3Client.listObjectsV2(listObjects);
         return res.contents();
     }
 
@@ -127,7 +127,7 @@ public class S3Helper {
         this.s3Client.putObject(objectRequest, body);
     }
 
-    private S3ReadResponse getObject(String bucketName, String key) {   
+    private S3ReadResponse getObject(String bucketName, String key) {
         GetObjectRequest getObject = GetObjectRequest
                 .builder()
                 .bucket(bucketName)

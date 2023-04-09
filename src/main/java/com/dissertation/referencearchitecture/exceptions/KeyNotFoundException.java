@@ -1,7 +1,7 @@
 package com.dissertation.referencearchitecture.exceptions;
 
 public class KeyNotFoundException extends Exception {
-    public KeyNotFoundException(){
+    public KeyNotFoundException() {
         super();
     }
 

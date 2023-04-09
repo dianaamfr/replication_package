@@ -10,7 +10,7 @@ public class TimeProvider {
     public TimeProvider(ScheduledThreadPoolExecutor scheduler, long delay) {
         this.scheduler = scheduler;
         this.currentTime = 0;
-        
+
         TimeRetriever timeRetriever = new TimeRetriever();
         this.scheduler.scheduleWithFixedDelay(timeRetriever, 0, delay, TimeUnit.MILLISECONDS);
     }
@@ -18,12 +18,12 @@ public class TimeProvider {
     private class TimeRetriever implements Runnable {
         @Override
         public void run() {
-            currentTime = System.currentTimeMillis(); 
+            currentTime = System.currentTimeMillis();
         }
     }
 
     public long getTime() {
         return this.currentTime;
     }
-    
+
 }

@@ -28,28 +28,30 @@ import io.grpc.stub.StreamObserver;
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
- 
-    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage) throws URISyntaxException {
+
+    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage)
+            throws URISyntaxException {
         super(scheduler, s3Helper);
         this.storage = storage;
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), Utils.PULL_DELAY, Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), Utils.PULL_DELAY,
+                Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
-    
+
     public static void main(String[] args) {
-        if(args.length < 2) {
+        if (args.length < 2) {
             System.err.println(USAGE);
             return;
-        } 
+        }
 
         try {
             Set<Integer> partitionIds = new HashSet<>();
             int port = Integer.valueOf(args[0]);
-            for(int i = 1; i < args.length; i++) {
+            for (int i = 1; i < args.length; i++) {
                 partitionIds.add(Integer.valueOf(args[i]));
             }
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
@@ -78,8 +80,8 @@ public class ReadNode extends ComputeNode {
             String stableTime = storage.getStableTime();
             Builder responseBuilder = ROTResponse.newBuilder().setError(false);
             Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
-    
-            for (String key: request.getKeysList()) {
+
+            for (String key : request.getKeysList()) {
                 try {
                     ByteString value = storage.get(key, stableTime).getValue();
                     values.put(key, value);
@@ -88,17 +90,17 @@ public class ReadNode extends ComputeNode {
                 } catch (Exception e) {
                     responseBuilder.setStatus(e.toString());
                     responseBuilder.setError(true);
-                }    
+                }
             }
 
-            if(!responseBuilder.getError()) {
+            if (!responseBuilder.getError()) {
                 responseBuilder
-                    .setStableTime(stableTime)
-                    .putAllValues(values);
+                        .setStableTime(stableTime)
+                        .putAllValues(values);
             }
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
-    }   
+    }
 }

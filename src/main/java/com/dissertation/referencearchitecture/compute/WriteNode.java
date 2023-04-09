@@ -25,29 +25,31 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 public class WriteNode extends ComputeNode {
-    private Storage storage;  
+    private Storage storage;
     private StoragePusher storagePusher;
     private HLC hlc;
     private int partition;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
 
-    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage, StoragePusher storagePusher, HLC hlc) throws URISyntaxException, IOException, InterruptedException {
+    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage,
+            StoragePusher storagePusher, HLC hlc) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper);
         this.partition = partition;
-        this.storage = storage;        
+        this.storage = storage;
         this.storagePusher = storagePusher;
         this.hlc = hlc;
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher), Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ClockSyncHandler(this.hlc, this.s3Helper, this.storagePusher),
+                Utils.SYNC_DELAY, Utils.SYNC_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
 
     public static void main(String[] args) {
-        if(args.length < 2) {
-            System.err.println(USAGE);   
+        if (args.length < 2) {
+            System.err.println(USAGE);
             return;
         }
 
@@ -81,37 +83,37 @@ public class WriteNode extends ComputeNode {
             ClockState lastTimestamp = new ClockState();
             String writeTimestamp = Utils.MIN_TIMESTAMP;
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
-            
-            if(Utils.getKeyPartitionId(request.getKey()) != partition) {
+
+            if (Utils.getKeyPartitionId(request.getKey()) != partition) {
                 responseBuilder
-                    .setStatus(String.format("Key %s not found", request.getKey()))
-                    .setError(true);
+                        .setStatus(String.format("Key %s not found", request.getKey()))
+                        .setError(true);
             } else {
                 try {
                     lastTimestamp = ClockState.fromString(request.getLastWriteTimestamp(), State.WRITE);
                 } catch (InvalidTimestampException e) {
                     responseBuilder
-                        .setStatus(e.toString())
-                        .setError(true);
+                            .setStatus(e.toString())
+                            .setError(true);
                 }
             }
-            
-            if(!responseBuilder.getError()) {
+
+            if (!responseBuilder.getError()) {
                 try {
                     writeTimestamp = hlc.writeEvent(lastTimestamp).toString();
                     storage.put(request.getKey(), writeTimestamp, request.getValue());
-                    if(storagePusher.push(writeTimestamp)) {
+                    if (storagePusher.push(writeTimestamp)) {
                         responseBuilder.setWriteTimestamp(writeTimestamp);
                     } else {
                         storage.delete(request.getKey(), writeTimestamp);
                         responseBuilder
-                            .setStatus("Write to data store failed")
-                            .setError(true);
+                                .setStatus("Write to data store failed")
+                                .setError(true);
                     }
-                } catch(Exception e) {
+                } catch (Exception e) {
                     responseBuilder
-                        .setStatus(e.toString())
-                        .setError(true);
+                            .setStatus(e.toString())
+                            .setError(true);
                 }
                 hlc.writeComplete();
             }
