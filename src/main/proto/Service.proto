@@ -1,0 +1,34 @@
+syntax="proto3";
+option java_multiple_files = true;
+package com.dissertation.referencearchitecture;
+
+message WriteRequest {
+    string key = 1;
+    bytes value = 2;
+    string lastWriteTimestamp = 3;
+}
+
+message WriteResponse {
+    string writeTimestamp = 1;
+    bool error = 2;
+    string status = 3;
+}
+
+message ROTRequest {
+    repeated string keys = 1;
+}
+
+message ROTResponse {
+    map<string, bytes> values = 1;
+    string stableTime = 2;
+    bool error = 3;
+    string status = 4;
+}
+
+service WriteService {
+    rpc write (WriteRequest) returns (WriteResponse);
+}
+
+service ROTService {
+    rpc rot (ROTRequest) returns (ROTResponse);
+}

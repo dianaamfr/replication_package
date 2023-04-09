@@ -1,4 +1,4 @@
-package com.dissertation.utils;
+package com.dissertation.referencearchitecture.s3;
 
 import java.io.Serializable;
 

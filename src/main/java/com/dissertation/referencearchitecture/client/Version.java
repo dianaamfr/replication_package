@@ -1,11 +1,13 @@
 package com.dissertation.referencearchitecture.client;
 
+import com.google.protobuf.ByteString;
+
 public class Version {
     private String key;
     private String timestamp;
-    private byte[] value;
+    private ByteString value;
 
-    Version(String key, byte[] value, String timestamp) {
+    Version(String key, ByteString value, String timestamp) {
         this.key = key;
         this.value = value;
         this.timestamp = timestamp;
@@ -15,7 +17,7 @@ public class Version {
         return key;
     }
 
-    public byte[] getValue() {
+    public ByteString getValue() {
         return this.value;
     }
 

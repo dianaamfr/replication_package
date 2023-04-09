@@ -36,7 +36,7 @@ public class ClockSyncHandler implements Runnable {
         try {
             recvTime = ClockState.fromString(response.getTimestamp(), State.SYNC);
         } catch (InvalidTimestampException e) {
-            System.err.println(String.format("Error: Invalid recent timestamp"));
+            System.err.println(String.format("Invalid recent timestamp"));
             return;
         }
         // Try to sync clock with received clock

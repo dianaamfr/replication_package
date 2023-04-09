@@ -1,20 +1,21 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.SortedMap;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 public class VersionChain {
-    private TreeMap<String, byte[]> versions;
+    private ConcurrentSkipListMap<String, ByteString> versions;
 
     public VersionChain() {
-        this.versions = new TreeMap<>();
+        this.versions = new ConcurrentSkipListMap<>();
     }
 
-    public void put(String timestamp, byte[] value) {
+    public void put(String timestamp, ByteString value) {
         this.versions.put(timestamp, value);
     }
 
@@ -24,9 +25,9 @@ public class VersionChain {
         }
     }
 
-    public Entry<String, byte[]> get(String maxTimestamp) throws KeyVersionNotFoundException {
+    public Entry<String, ByteString> get(String maxTimestamp) throws KeyVersionNotFoundException {
         try {
-            Entry<String, byte[]> entry = this.versions.floorEntry(maxTimestamp);
+            Entry<String, ByteString> entry = this.versions.floorEntry(maxTimestamp);
             if(entry == null) {
                 throw new KeyVersionNotFoundException();
             }
@@ -41,7 +42,7 @@ public class VersionChain {
         return this.versions.toString();
     }
 
-    public SortedMap<String, byte[]> getVersionChain(String maxKey) {
+    public SortedMap<String, ByteString> getVersionChain(String maxKey) {
         return this.versions.subMap(Utils.MIN_TIMESTAMP, true, maxKey, true);
     }
 }

@@ -1,9 +1,5 @@
 package com.dissertation.referencearchitecture.client;
 
-import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,101 +7,115 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
-import com.dissertation.referencearchitecture.config.Config;
-import com.dissertation.referencearchitecture.exceptions.InvalidRegionException;
+import com.dissertation.referencearchitecture.ROTRequest;
+import com.dissertation.referencearchitecture.ROTResponse;
+import com.dissertation.referencearchitecture.ROTServiceGrpc;
+import com.dissertation.referencearchitecture.WriteRequest;
+import com.dissertation.referencearchitecture.WriteResponse;
+import com.dissertation.referencearchitecture.WriteServiceGrpc;
+import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.remoteInterface.ReadRemoteInterface;
-import com.dissertation.referencearchitecture.remoteInterface.WriteRemoteInterface;
-import com.dissertation.referencearchitecture.remoteInterface.response.ROTError;
-import com.dissertation.referencearchitecture.remoteInterface.response.ROTResponse;
-import com.dissertation.referencearchitecture.remoteInterface.response.WriteError;
-import com.dissertation.referencearchitecture.remoteInterface.response.WriteResponse;
+import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
+import com.google.protobuf.ByteString;
 
 public class Client {
-    private Map<String, WriteRemoteInterface> writeStubs;
+    private Map<Integer, WriteServiceGrpc.WriteServiceBlockingStub> writeStubs;
+    private ROTServiceGrpc.ROTServiceBlockingStub readStub;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
-    private ReadRemoteInterface readStub;
-    private String region;
-
-    public Client(String region) throws InvalidRegionException, RemoteException, NotBoundException {
-        if(!Config.isRegion(region)) {
-            throw new InvalidRegionException();
-        }
-
-        this.region = region;
+    
+    public Client(Address readAddress, List<Address> writeAddresses) {
         this.cache = new HashMap<>();
         this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
-        initStubs();
+        initStubs(readAddress, writeAddresses);
     }
 
-    public void initStubs() throws RemoteException, NotBoundException {
-        Set<String> partitions = Config.getPartitions(this.region);
-        String readNodeId = String.format("r%s", this.region);
-        Registry registry = LocateRegistry.getRegistry();
-        this.readStub = (ReadRemoteInterface) registry.lookup(readNodeId);
+    public void initStubs(Address readAddress, List<Address> writeAddresses) {
+        this.readStub = ROTServiceGrpc.newBlockingStub(readAddress.getChannel());
         this.writeStubs = new HashMap<>();
 
-        for(String partition: partitions) {
-            String writeNodeId = String.format("w%s", partition);
-            WriteRemoteInterface writeStub = (WriteRemoteInterface) registry.lookup(writeNodeId);
-            this.writeStubs.put(partition, writeStub);
+        for (Address address : writeAddresses) {
+            this.writeStubs.put(address.getPartitionId(), WriteServiceGrpc.newBlockingStub(address.getChannel()));
         }
     }
 
-
     public ROTResponse requestROT(Set<String> keys) {
+        Builder builder = ROTResponse.newBuilder();
+        ROTRequest rotRequest;
+        ROTResponse rotResponse;
+        
         try {
             for(String key: keys) {
-                if(!Config.isKeyInRegion(this.region, key)) {
+                if(!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
                     throw new KeyNotFoundException();
                 }
             }
-            ROTResponse rotResponse = this.readStub.rot(keys);
-            if(!rotResponse.isError()) {
+
+            rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
+            rotResponse = this.readStub.rot(rotRequest);
+
+            if(!rotResponse.getError()) {
                 pruneCache(rotResponse.getStableTime());
-                return new ROTResponse(getReadResponse(rotResponse.getValues()), rotResponse.getStableTime());
+                builder
+                    .putAllValues(getReadResponse(rotResponse.getValuesMap()))
+                    .setStableTime(rotResponse.getStableTime());
+                return builder.build();
             }
             return rotResponse;
-        } catch (RemoteException | KeyNotFoundException e) {
-            return new ROTError(e.toString());
+        } catch (KeyNotFoundException e) {
+            return builder
+                .setStatus(e.toString())
+                .setError(true).build();
         }
     }
 
-    public WriteResponse requestWrite(String key, byte[] value) {
+    public WriteResponse requestWrite(String key, ByteString value) {
         try {
-            String partition = Config.getKeyPartition(this.region, key);
-            WriteRemoteInterface writeStub = this.writeStubs.get(partition);
-            WriteResponse writeResponse = writeStub.write(key, value, this.lastWriteTimestamp);
+            int partitionId = Utils.getKeyPartitionId(key);
+            if(!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+                throw new KeyNotFoundException();
+            }
 
-            if(!writeResponse.isError()) {
-                this.lastWriteTimestamp = writeResponse.getTimestamp();
+            WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
+            WriteRequest writeRequest = WriteRequest.newBuilder()
+                .setKey(key)
+                .setValue(value)
+                .setLastWriteTimestamp(this.lastWriteTimestamp)
+                .build();
+
+            WriteResponse writeResponse = writeStub.write(writeRequest);
+            if(!writeResponse.getError()) {
+                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
             }
             return writeResponse;
-        } catch (KeyNotFoundException | RemoteException e) {
-            return new WriteError(e.toString());
+        } catch (KeyNotFoundException e) {
+            return WriteResponse.newBuilder()
+                .setStatus(e.toString())
+                .setError(true)
+                .build();
         }
     }
 
     private void pruneCache(String stableTime) {
         List<String> toPrune = new ArrayList<>();
-        for(Entry<String,Version> entry :this.cache.entrySet()) {
-            if(entry.getValue().getTimestamp().compareTo(stableTime) <= 0) {
+        for (Entry<String, Version> entry : this.cache.entrySet()) {
+            if (entry.getValue().getTimestamp().compareTo(stableTime) <= 0) {
                 toPrune.add(entry.getKey());
-            }   
+            }
         }
         this.cache.keySet().removeAll(toPrune);
     }
 
-    private Map<String, byte[]> getReadResponse(Map<String, byte[]> response) {
-        Map<String, byte[]> values = new HashMap<>();
+    private Map<String, ByteString> getReadResponse(Map<String, ByteString> response) {
+        Map<String, ByteString> values = new HashMap<>();
 
-        for(Entry<String, byte[]> entry: response.entrySet()) {
+        for (Entry<String, ByteString> entry : response.entrySet()) {
             Version v = this.cache.getOrDefault(entry.getKey(), null);
             values.put(entry.getKey(), v != null ? v.getValue() : entry.getValue());
         }
         return values;
     }
+
 }

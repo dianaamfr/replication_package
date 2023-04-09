@@ -6,11 +6,15 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.dissertation.utils.Utils;
+
+import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
@@ -20,29 +24,27 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class S3Helper {
     private final S3Client s3Client;
-    private final static String s3Uri = "http://localhost:4566";
-    private final static Integer maxKeys = 5;
-    private final static String logPrefix = "Logs/";
-    private final static String clockPrefix = "Clock/";
-    private final static String clockBucket = "clock";
 
-    public S3Helper() throws URISyntaxException {
-        this.s3Client = s3Client();
+    public S3Helper(Region region) throws URISyntaxException {
+        this.s3Client = s3Client(region);
     }
 
-    private static S3Client s3Client() throws URISyntaxException {
-        ProfileCredentialsProvider credentialsProvider = ProfileCredentialsProvider.create();
-        return S3Client.builder()
-                .region(Region.US_WEST_2)
-                .credentialsProvider(credentialsProvider)
-                .endpointOverride(URI.create(s3Uri))
-                .forcePathStyle(true)
-                .build();
+    private static S3Client s3Client(Region region) throws URISyntaxException {
+        S3ClientBuilder s3ClientBuilder = S3Client.builder()
+            .region(region)
+            .forcePathStyle(true);
+
+        if(Utils.S3_ENDPOINT != null) {
+            return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
+                .endpointOverride(URI.create(Utils.S3_ENDPOINT)).build();
+        }
+        return s3ClientBuilder.credentialsProvider(InstanceProfileCredentialsProvider.create())
+            .build();
     }
 
     public boolean persistLog(String bucketName, String timestamp, String logJson) {
         try {   
-            createObject(bucketName, logPrefix, timestamp, RequestBody.fromString(logJson));
+            createObject(bucketName, Utils.S3_LOG_PREFIX, timestamp, RequestBody.fromString(logJson));
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -52,7 +54,7 @@ public class S3Helper {
     
     public boolean persistClock(String timestamp) {
         try {   
-            createObject(clockBucket, clockPrefix, timestamp, RequestBody.empty());
+            createObject(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, RequestBody.empty());
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -64,7 +66,7 @@ public class S3Helper {
         List<S3Object> objects = new ArrayList<>();
 
         try {
-            objects = getObjectsAfter(bucketName, logPrefix, timestamp);
+            objects = getObjectsAfter(bucketName, Utils.S3_LOG_PREFIX, timestamp);
 
             if (objects.isEmpty()) {
                 return new S3ReadResponse();
@@ -86,7 +88,7 @@ public class S3Helper {
         List<S3Object> objects = new ArrayList<>();
 
         try {
-            objects = getObjectsAfter(clockBucket, clockPrefix, timestamp);
+            objects = getObjectsAfter(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp);
 
             if (objects.isEmpty()) {
                 return new S3ReadResponse();
@@ -94,7 +96,7 @@ public class S3Helper {
 
             S3Object last = objects.get(objects.size() - 1);
             if (last.key().compareTo(timestamp) > 0) {
-                String recvTimestamp = last.key().split("Clock/")[1];
+                String recvTimestamp = last.key().split(Utils.S3_CLOCK_PREFIX)[1];
                 return new S3ReadResponse(recvTimestamp);
             }
             return new S3ReadResponse();
@@ -106,7 +108,7 @@ public class S3Helper {
     private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key) {
         ListObjectsV2Request listObjects = ListObjectsV2Request
                     .builder()
-                    .maxKeys(maxKeys)
+                    .maxKeys(Utils.S3_MAX_KEYS)
                     .prefix(prefix)
                     .startAfter(prefix + key)
                     .bucket(bucketName)
@@ -133,7 +135,7 @@ public class S3Helper {
                 .build();
 
         ResponseBytes<GetObjectResponse> objectBytes = this.s3Client.getObjectAsBytes(getObject);
-        String recvTimestamp = key.split("Logs/")[1];
+        String recvTimestamp = key.split(Utils.S3_LOG_PREFIX)[1];
         return new S3ReadResponse(recvTimestamp, objectBytes.asUtf8String());
     }
 }
