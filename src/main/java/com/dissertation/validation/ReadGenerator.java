@@ -4,28 +4,37 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 
 public class ReadGenerator extends LoadGenerator {
-    private final int readsPerPartition;
+    private final int totalReads;
 
-    private static final int READS_PER_PARTITION = 15;
+    private static final int TOTAL_READS = 100;
     private static final int MAX_KEYS_PER_READ = 2;
 
-    private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <readsPerPartition:Int>";
+    private AtomicInteger counter;
+    private CountDownLatch countDown;
+    private final Set<Integer> partitions;
+
+    private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <totalReads:Int>";
 
     public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int readsPerPartition, int clients) {
-        super(scheduler, readAddress, writeAddresses, regionPartitions, delay, readsPerPartition, clients);
-        this.readsPerPartition = readsPerPartition;
+            int regionPartitions, int delay, int totalReads, int clients) {
+        super(scheduler, regionPartitions, delay, clients);
+        this.totalReads = totalReads;
+        
+        this.counter = new AtomicInteger(0);
+        this.countDown = new CountDownLatch(this.totalReads);
+        this.partitions = writeAddresses.stream()
+            .map(address -> address.getPartitionId()).collect(Collectors.toUnmodifiableSet());
         this.init(readAddress, writeAddresses);
     }
 
@@ -49,22 +58,19 @@ public class ReadGenerator extends LoadGenerator {
             }
 
             int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
-            int readsPerPartition = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
-                    : READS_PER_PARTITION;
+            int totalReads = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
+                    : TOTAL_READS;
             int clients = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[regionPartitions + 2]) : CLIENTS;
 
             ReadGenerator readGenerator = new ReadGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
-                    delay, readsPerPartition, clients);
+                    delay, totalReads, clients);
             readGenerator.run();
         } catch (Exception e) {
             System.err.println(USAGE);
         }
     }
 
-    @Override
-    protected void init(Address readAddress, List<Address> writeAddresses) {
-        super.init(readAddress, writeAddresses);
-
+    private void init(Address readAddress, List<Address> writeAddresses) {
         // Init clients
         for (int j = 0; j < this.clients; j++) {
             try {
@@ -77,6 +83,16 @@ public class ReadGenerator extends LoadGenerator {
         }
     }
 
+    public void run() {
+        this.startSignal.countDown();
+        try {
+            this.countDown.await();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        this.scheduler.shutdown();
+    }
+
     private class ReadGeneratorRequest implements Runnable {
         private Client client;
 
@@ -86,20 +102,15 @@ public class ReadGenerator extends LoadGenerator {
 
         @Override
         public void run() {
-            ConcurrentMap<Integer, Set<String>> keys = getRandomKeys();
+            Set<String> keys = getRandomKeys();
             try {
                 startSignal.await();
-                for (Entry<Integer, Set<String>> entry : keys.entrySet()) {
-                    int counterPos = partitionIndexes.get(entry.getKey());
-                    if (counters.getAndIncrement(counterPos) < readsPerPartition) {
-                        this.client.requestROT(entry.getValue());
-                        scheduler.schedule(
-                                new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
-                        countDowns.updateAndGet(counterPos, (countDown) -> {
-                            countDown.countDown();
-                            return countDown;
-                        });
-                    }
+                int count = counter.getAndIncrement();
+                if (count < totalReads) {
+                    this.client.requestROT(keys);
+                    scheduler.schedule(
+                            new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
+                    countDown.countDown();
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
@@ -107,15 +118,12 @@ public class ReadGenerator extends LoadGenerator {
         }
     }
 
-    private ConcurrentMap<Integer, Set<String>> getRandomKeys() {
-        ConcurrentMap<Integer, Set<String>> keys = new ConcurrentHashMap<>();
+    private Set<String> getRandomKeys() {
+        Set<String> keys = new HashSet<>();
         int keysPerRead = ThreadLocalRandom.current().nextInt(1, MAX_KEYS_PER_READ + 1);
         while (keys.size() < keysPerRead) {
-            KeyPartition keyPartition = this.getRandomKey();
-            if (!keys.containsKey(keyPartition.getPartitionId())) {
-                keys.put(keyPartition.getPartitionId(), new HashSet<>());
-            }
-            keys.get(keyPartition.getPartitionId()).add(keyPartition.getKey());
+            KeyPartition keyPartition = this.getRandomKey(this.partitions);
+            keys.add(keyPartition.getKey());
         }
         return keys;
     }
