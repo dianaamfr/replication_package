@@ -1,11 +1,9 @@
 package com.dissertation.validation;
 
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 
 import io.grpc.netty.shaded.io.netty.util.internal.ThreadLocalRandom;
@@ -23,8 +21,7 @@ public abstract class LoadGenerator {
     protected static final int DELAY = 200;
     protected static final int CLIENTS = 3;
 
-    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int operationsPerPartition, int clients) {
+    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, int regionPartitions, int delay, int clients) {
         this.scheduler = scheduler;
 
         this.regionPartitions = regionPartitions;

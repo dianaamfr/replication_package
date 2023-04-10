@@ -31,7 +31,7 @@ public class WriteGenerator extends LoadGenerator {
 
     public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
             int regionPartitions, int delay, int clients, int writesPerPartition, int bytes) {
-        super(scheduler, readAddress, writeAddresses, regionPartitions, delay, writesPerPartition, clients);
+        super(scheduler, regionPartitions, delay, clients);
         this.writesPerPartition = writesPerPartition;
         this.bytes = bytes;
 

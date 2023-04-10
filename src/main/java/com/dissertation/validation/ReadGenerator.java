@@ -28,7 +28,7 @@ public class ReadGenerator extends LoadGenerator {
 
     public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
             int regionPartitions, int delay, int totalReads, int clients) {
-        super(scheduler, readAddress, writeAddresses, regionPartitions, delay, totalReads, clients);
+        super(scheduler, regionPartitions, delay, clients);
         this.totalReads = totalReads;
         
         this.counter = new AtomicInteger(0);
