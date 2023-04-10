@@ -105,8 +105,7 @@ public class ReadGenerator extends LoadGenerator {
             Set<String> keys = getRandomKeys();
             try {
                 startSignal.await();
-                int count = counter.getAndIncrement();
-                if (count < totalReads) {
+                if (counter.getAndIncrement() < totalReads) {
                     this.client.requestROT(keys);
                     scheduler.schedule(
                             new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
