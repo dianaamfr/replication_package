@@ -1,5 +1,7 @@
 package com.dissertation.validation;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -106,7 +108,10 @@ public class ReadGenerator extends LoadGenerator {
             try {
                 startSignal.await();
                 if (counter.getAndIncrement() < totalReads) {
+                    Instant start = Instant.now();
                     this.client.requestROT(keys);
+                    Instant end = Instant.now();
+                    System.out.println(Duration.between(start, end).toMillis());
                     scheduler.schedule(
                             new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
                     countDown.countDown();
