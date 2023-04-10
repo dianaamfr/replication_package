@@ -32,7 +32,7 @@ This repository holds a Maven project with the following structure:
     - `validation`: Comprises classes that can be used to test the prototype, namely:
         - `ClientInterface`: To test the prototype through a command-line interface.
         - `WriteGenerator`: To generate random write load in a region. The delay between client writes, number of clients, number of writes per partition and number of bytes per object can be customized. 
-        - `ReadGenerator`: To generate random read load in a region. The delay between client ROTs, number of clients and number of ROTs per partition can be customized.
+        - `ReadGenerator`: To generate random read load in a region. The delay between client ROTs, number of clients and the number of ROTs can be customized.
         - `LoadGenerator`: Abstract class that provides the basic functionality to generate load in a region. It can be extended to implement a load generator for a specific type of load.
 - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
 
