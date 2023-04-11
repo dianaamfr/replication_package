@@ -2,7 +2,6 @@ package com.dissertation.utils;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
@@ -37,10 +36,12 @@ public class Utils {
     public static final String LOG_VALUE = "value";
     public static final String LOG_TIMESTAMP = "timestamp";
 
-    public static final String CSV_SEPARATOR = ",";
-
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
+
+    public static final String CSV_SEPARATOR = ",";
+    public static final String READ_NODE_ID = "readNode";
+    public static final String WRITE_NODE_ID = "writeNode";
 
     public static ByteString byteStringFromString(String encodedBuffer) {
         return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.ISO_8859_1));

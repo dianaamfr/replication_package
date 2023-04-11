@@ -2,6 +2,7 @@ package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.SortedMap;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import org.json.JSONArray;
@@ -14,6 +15,7 @@ import com.dissertation.referencearchitecture.exceptions.InvalidTimestampExcepti
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.log.Log;
 import com.google.protobuf.ByteString;
 
 public class StoragePusher implements Runnable {
@@ -21,12 +23,16 @@ public class StoragePusher implements Runnable {
     private Storage storage;
     private S3Helper s3Helper;
     private int partition;
+    private String nodeId;
+    private ConcurrentLinkedQueue<Log> logs;
 
-    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition) {
+    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String nodeId, ConcurrentLinkedQueue<Log> logs) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
         this.partition = partition;
+        this.nodeId = nodeId;
+        this.logs = logs;
     }
 
     @Override
@@ -42,6 +48,10 @@ public class StoragePusher implements Runnable {
         ClockState safePushTime = this.hlc.getAndResetSafePushTime();
         if(!safePushTime.isZero()) {
             this.push(safePushTime.toString());
+            this.logs.add(new Log(
+                safePushTime.toString(), 
+                this.nodeId,
+                Log.Operation.LOG_PUSH));
         }
     }
 

@@ -54,6 +54,7 @@ emptyBuckets:
 
 clear:
 	make emptyBuckets
+	rm -rf logs/*.csv
 	mvn -q clean
 	
 # Compute Nodes

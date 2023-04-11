@@ -19,7 +19,7 @@ public class WriteGenerator extends LoadGenerator {
     private final int writesPerPartition;
 
     private static final int OBJECT_BYTES = 8;
-    private static final int WRITES_PER_PARTITION = 15;
+    private static final int WRITES_PER_PARTITION = 10;
 
     private AtomicIntegerArray counters;
     private AtomicReferenceArray<CountDownLatch> countDowns;
@@ -35,7 +35,7 @@ public class WriteGenerator extends LoadGenerator {
         this.counters = new AtomicIntegerArray((new ArrayList<Integer>(Collections.nCopies(this.regionPartitions, 0)))
                 .stream().mapToInt(i -> i).toArray());
         this.countDowns = new AtomicReferenceArray<>(this.regionPartitions);
-
+            
         this.init(readAddress, writeAddresses);
     }
 

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +20,7 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.log.Log;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
@@ -26,6 +28,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 public class ReadNode extends ComputeNode {
+    private ConcurrentLinkedQueue<Log> logs;
     private ReaderStorage storage;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
 
@@ -33,11 +36,18 @@ public class ReadNode extends ComputeNode {
             throws URISyntaxException {
         super(scheduler, s3Helper);
         this.storage = storage;
+        this.logs = new ConcurrentLinkedQueue<>();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                Utils.logToFile(logs, Utils.READ_NODE_ID);
+            }
+        });
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), Utils.PULL_DELAY,
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.logs), Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }

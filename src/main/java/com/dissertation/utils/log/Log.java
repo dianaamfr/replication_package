@@ -16,6 +16,7 @@ public class Log {
       WRITE,
       STABLE,
       LOG_PULL,
+      STORE,
       LOG_PUSH
    }
 
@@ -29,6 +30,10 @@ public class Log {
    }
 
    public Log(String version, String nodeId, Operation operation) {
+      this(version, "", nodeId, operation);
+   }
+
+   public Log(String version, String nodeId, Operation operation, int partition) {
       this(version, "", nodeId, operation);
    }
 

@@ -2,6 +2,7 @@ package com.dissertation.referencearchitecture.compute;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -18,28 +19,39 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.log.Log;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 public class WriteNode extends ComputeNode {
+    private ConcurrentLinkedQueue<Log> logs;
     private Storage storage;
     private HLC hlc;
     private int partition;
+    private String nodeId;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage,
             HLC hlc) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper);
         this.partition = partition;
+        this.nodeId = String.format("%s%d", Utils.WRITE_NODE_ID, partition);
         this.storage = storage;
         this.hlc = hlc;
+        this.logs = new ConcurrentLinkedQueue<>();
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                Utils.logToFile(logs, String.format("%s%d", Utils.WRITE_NODE_ID , partition));
+            }
+        });
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition), Utils.PUSH_DELAY,
+        this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.nodeId, this.logs), Utils.PUSH_DELAY,
         Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
@@ -100,6 +112,12 @@ public class WriteNode extends ComputeNode {
                 responseBuilder.setWriteTimestamp(writeTime.toString());
                 hlc.writeComplete();
                 hlc.setSafePushTime(writeTime);
+
+                logs.add(new Log(
+                    writeTime.toString(), 
+                    request.getKey(), 
+                    nodeId,
+                    Log.Operation.WRITE));
             }
 
             responseObserver.onNext(responseBuilder.build());
