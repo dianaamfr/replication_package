@@ -37,7 +37,6 @@ writeAddresses2 = $(writePort3) $(writeIp3) $(partitionId3)
 
 # Setup
 all:
-	make emptyBuckets
 	mvn clean
 	mvn package
 

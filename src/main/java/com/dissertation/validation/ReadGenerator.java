@@ -11,7 +11,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
@@ -24,19 +23,16 @@ public class ReadGenerator extends LoadGenerator {
 
     private AtomicInteger counter;
     private CountDownLatch countDown;
-    private final Set<Integer> partitions;
 
     private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <totalReads:Int>";
 
     public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int totalReads, int clients) {
-        super(scheduler, regionPartitions, delay, clients);
+            int regionPartitions, int delay, int totalReads) {
+        super(scheduler, writeAddresses, regionPartitions, delay);
         this.totalReads = totalReads;
         
         this.counter = new AtomicInteger(0);
         this.countDown = new CountDownLatch(this.totalReads);
-        this.partitions = writeAddresses.stream()
-            .map(address -> address.getPartitionId()).collect(Collectors.toUnmodifiableSet());
         this.init(readAddress, writeAddresses);
     }
 
@@ -62,10 +58,9 @@ public class ReadGenerator extends LoadGenerator {
             int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
             int totalReads = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
                     : TOTAL_READS;
-            int clients = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[regionPartitions + 2]) : CLIENTS;
 
             ReadGenerator readGenerator = new ReadGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
-                    delay, totalReads, clients);
+                    delay, totalReads);
             readGenerator.run();
         } catch (Exception e) {
             System.err.println(USAGE);
@@ -74,15 +69,9 @@ public class ReadGenerator extends LoadGenerator {
 
     private void init(Address readAddress, List<Address> writeAddresses) {
         // Init clients
-        for (int j = 0; j < this.clients; j++) {
-            try {
-                Client c = new Client(readAddress, writeAddresses);
-                this.scheduler.schedule(
-                        new ReadGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                System.err.println(e.toString());
-            }
-        }
+        Client c = new Client(readAddress, writeAddresses);
+        this.scheduler.schedule(
+                    new ReadGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
     }
 
     public void run() {
@@ -108,10 +97,7 @@ public class ReadGenerator extends LoadGenerator {
             try {
                 startSignal.await();
                 if (counter.getAndIncrement() < totalReads) {
-                    Instant start = Instant.now();
                     this.client.requestROT(keys);
-                    Instant end = Instant.now();
-                    System.out.println(Duration.between(start, end).toMillis());
                     scheduler.schedule(
                             new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
                     countDown.countDown();
@@ -126,7 +112,7 @@ public class ReadGenerator extends LoadGenerator {
         Set<String> keys = new HashSet<>();
         int keysPerRead = ThreadLocalRandom.current().nextInt(1, MAX_KEYS_PER_READ + 1);
         while (keys.size() < keysPerRead) {
-            KeyPartition keyPartition = this.getRandomKey(this.partitions);
+            KeyPartition keyPartition = this.getRandomKey();
             keys.add(keyPartition.getKey());
         }
         return keys;

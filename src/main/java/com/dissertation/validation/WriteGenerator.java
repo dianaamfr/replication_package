@@ -24,18 +24,16 @@ public class WriteGenerator extends LoadGenerator {
     private static final int WRITES_PER_PARTITION = 15;
 
     private AtomicIntegerArray counters;
-    private ConcurrentMap<Integer, Integer> partitionIndexes;
     private AtomicReferenceArray<CountDownLatch> countDowns;
 
-    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <clients:Int> <writesPerPartition:Int> <bytes:Int> ";
+    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <writesPerPartition:Int> <bytes:Int> ";
 
     public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int clients, int writesPerPartition, int bytes) {
-        super(scheduler, regionPartitions, delay, clients);
+            int regionPartitions, int delay, int bytes, int writesPerPartition) {
+        super(scheduler, writeAddresses, regionPartitions, delay);
         this.writesPerPartition = writesPerPartition;
         this.bytes = bytes;
 
-        this.partitionIndexes = new ConcurrentHashMap<>();
         this.counters = new AtomicIntegerArray((new ArrayList<Integer>(Collections.nCopies(this.regionPartitions, 0)))
                 .stream().mapToInt(i -> i).toArray());
         this.countDowns = new AtomicReferenceArray<>(this.regionPartitions);
@@ -67,9 +65,9 @@ public class WriteGenerator extends LoadGenerator {
                     : OBJECT_BYTES;
             int writesPerPartition = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[addressesEndIndex + 2])
                     : WRITES_PER_PARTITION;
-            int clients = args.length > addressesEndIndex + 3 ? Integer.parseInt(args[addressesEndIndex + 3]) : CLIENTS;
+          
             WriteGenerator writeGenerator = new WriteGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
-                    delay, bytes, writesPerPartition, clients);
+                    delay, bytes, writesPerPartition);
             writeGenerator.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -78,22 +76,14 @@ public class WriteGenerator extends LoadGenerator {
 
 
     private void init(Address readAddress, List<Address> writeAddresses) {
-        // Init countdowns to wait until all partitions handle the same number of
-        // operations
+        // Init countdowns and clients
         for (int i = 0; i < this.regionPartitions; i++) {
-            this.countDowns.set(i, new CountDownLatch(this.writesPerPartition));
-            this.partitionIndexes.put(writeAddresses.get(i).getPartitionId(), i);
-        }
+            CountDownLatch countDown = new CountDownLatch(this.writesPerPartition);
+            this.countDowns.set(i, countDown);
 
-        // Init clients
-        for (int j = 0; j < this.clients; j++) {
-            try {
-                Client c = new Client(readAddress, writeAddresses);
-                this.scheduler.schedule(
-                        new WriteGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                System.err.println(e.toString());
-            }
+            Client c = new Client(readAddress, writeAddresses);
+            this.scheduler.schedule(
+                    new WriteGeneratorRequest(c, countDown, i), 0, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -110,28 +100,28 @@ public class WriteGenerator extends LoadGenerator {
     }
 
     private class WriteGeneratorRequest implements Runnable {
-        private Client client;
+        private final Client client;
+        private final CountDownLatch countDown;
+        private final int counterPos;
 
-        public WriteGeneratorRequest(Client client) {
+        public WriteGeneratorRequest(Client client, CountDownLatch countDown, int counterPos) {
             this.client = client;
+            this.countDown = countDown;
+            this.counterPos = counterPos;
         }
 
         @Override
         public void run() {
-            KeyPartition keyPartition = getRandomKey(partitionIndexes.keySet());
+            KeyPartition keyPartition = getRandomKey();
             ByteString value = Utils.getRandomByteString(bytes);
             try {
                 startSignal.await();
-                int counterPos = partitionIndexes.get(keyPartition.getPartitionId());
                 if (counters.getAndIncrement(counterPos) < writesPerPartition) {
                     this.client.requestWrite(keyPartition.getKey(), value);
                     scheduler.schedule(
-                            new WriteGeneratorRequest(this.client),
+                            new WriteGeneratorRequest(this.client, this.countDown, this.counterPos),
                             delay, TimeUnit.MILLISECONDS);
-                    countDowns.updateAndGet(counterPos, (countDown) -> {
-                        countDown.countDown();
-                        return countDown;
-                    });
+                    this.countDown.countDown();
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
