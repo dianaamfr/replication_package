@@ -17,7 +17,9 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
 
 public class Utils {
-    public static final String MIN_TIMESTAMP = "0.0";
+    public static final String TIMESTAMP_SEPARATOR = "-";
+    public static final String TIMESTAMP_FORMAT = "%020d%s%020d";
+    public static final String MIN_TIMESTAMP = String.format(TIMESTAMP_FORMAT, 0, TIMESTAMP_SEPARATOR, 0);
     public static final int PULL_DELAY = 10000;
     public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
