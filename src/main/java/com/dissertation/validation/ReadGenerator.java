@@ -1,7 +1,5 @@
 package com.dissertation.validation;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -70,8 +68,7 @@ public class ReadGenerator extends LoadGenerator {
     private void init(Address readAddress, List<Address> writeAddresses) {
         // Init clients
         Client c = new Client(readAddress, writeAddresses);
-        this.scheduler.schedule(
-                    new ReadGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(c), 0, this.delay, TimeUnit.MILLISECONDS);
     }
 
     public void run() {
@@ -98,8 +95,6 @@ public class ReadGenerator extends LoadGenerator {
                 startSignal.await();
                 if (counter.getAndIncrement() < totalReads) {
                     this.client.requestROT(keys);
-                    scheduler.schedule(
-                            new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
                     countDown.countDown();
                 }
             } catch (Exception e) {

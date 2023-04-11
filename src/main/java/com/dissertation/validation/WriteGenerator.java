@@ -3,8 +3,6 @@ package com.dissertation.validation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -82,8 +80,7 @@ public class WriteGenerator extends LoadGenerator {
             this.countDowns.set(i, countDown);
 
             Client c = new Client(readAddress, writeAddresses);
-            this.scheduler.schedule(
-                    new WriteGeneratorRequest(c, countDown, i), 0, TimeUnit.MILLISECONDS);
+            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(c, countDown, i), 0, this.delay, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -118,9 +115,6 @@ public class WriteGenerator extends LoadGenerator {
                 startSignal.await();
                 if (counters.getAndIncrement(counterPos) < writesPerPartition) {
                     this.client.requestWrite(keyPartition.getKey(), value);
-                    scheduler.schedule(
-                            new WriteGeneratorRequest(this.client, this.countDown, this.counterPos),
-                            delay, TimeUnit.MILLISECONDS);
                     this.countDown.countDown();
                 }
             } catch (Exception e) {
