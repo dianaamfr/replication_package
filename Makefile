@@ -59,18 +59,18 @@ client1:
 	java -Dpartitions=$(partitions) -jar target/clientInterface.jar $(readAddress1) $(writeAddresses1)
 
 # Validation
-readDelay1 = 0
+readDelay1 = 1
 totalReads1 = 100
 
 readTest1:
 	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
 
 
-writeDelay1 = 0
-writesPerPartition1 = 50
+writeDelay1 = 1
 bytes1 = 8
+writesPerPartition1 = 50
 
 writeTest1:
-	java -Dpartitions=$(partitions) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(writeDelay1) $(writesPerPartition1) $(bytes1)
+	java -Dpartitions=$(partitions) -jar target/writeGenerator.jar  $(region1Partitions) $(readAddress1) $(writeAddresses1) $(writeDelay1) $(bytes1) $(writesPerPartition1)
 
 	

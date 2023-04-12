@@ -14,6 +14,8 @@ import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
+import io.grpc.netty.shaded.io.netty.util.internal.ThreadLocalRandom;
+
 public class WriteGenerator extends LoadGenerator {
     private final int bytes;
     private final int writesPerPartition;
@@ -24,10 +26,10 @@ public class WriteGenerator extends LoadGenerator {
     private AtomicIntegerArray counters;
     private AtomicReferenceArray<CountDownLatch> countDowns;
 
-    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <writesPerPartition:Int> <bytes:Int> ";
+    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <bytes:Int> <writesPerPartition:Int>";
 
     public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int bytes, int writesPerPartition) {
+            int regionPartitions, long delay, int bytes, int writesPerPartition) {
         super(scheduler, writeAddresses, regionPartitions, delay);
         this.writesPerPartition = writesPerPartition;
         this.bytes = bytes;
@@ -58,12 +60,12 @@ public class WriteGenerator extends LoadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
+            long delay = args.length > addressesEndIndex ? Long.parseLong(args[addressesEndIndex]) : DELAY;
             int bytes = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
                     : OBJECT_BYTES;
             int writesPerPartition = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[addressesEndIndex + 2])
                     : WRITES_PER_PARTITION;
-          
+
             WriteGenerator writeGenerator = new WriteGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
                     delay, bytes, writesPerPartition);
             writeGenerator.run();
@@ -124,5 +126,13 @@ public class WriteGenerator extends LoadGenerator {
                 System.err.println(e.getMessage());
             }
         }
+    }
+
+    private String getRandomPartitionKey(int partitionId) {
+        String key = "";
+        do {
+            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
+        } while (partitionId != Utils.getKeyPartitionId(key));
+        return key;
     }
 }

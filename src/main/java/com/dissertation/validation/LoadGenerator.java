@@ -7,23 +7,20 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 import com.dissertation.utils.Address;
-import com.dissertation.utils.Utils;
-
-import io.grpc.netty.shaded.io.netty.util.internal.ThreadLocalRandom;
 
 public abstract class LoadGenerator {
     protected ScheduledThreadPoolExecutor scheduler;
 
     protected final int regionPartitions;
-    protected final int delay;
+    protected final long delay;
 
     protected CountDownLatch startSignal;
     protected final Set<Integer> partitions;
 
     protected static final int MAX_THREADS = 20;
-    protected static final int DELAY = 500;
+    protected static final long DELAY = 500;
 
-    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, List<Address> writeAddresses, int regionPartitions, int delay) {
+    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, List<Address> writeAddresses, int regionPartitions, long delay) {
         this.scheduler = scheduler;
 
         this.regionPartitions = regionPartitions;
@@ -32,25 +29,6 @@ public abstract class LoadGenerator {
         this.partitions = writeAddresses.stream()
         .map(address -> address.getPartitionId()).collect(Collectors.toUnmodifiableSet());
         this.startSignal = new CountDownLatch(1);
-    }
-
-    protected KeyPartition getRandomKey() {
-        int partitionId = -1;
-        String key = "";
-        do {
-            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
-            partitionId = Utils.getKeyPartitionId(key);
-        } while (!this.partitions.contains(partitionId));
-
-        return new KeyPartition(key, partitionId);
-    }
-
-    protected String getRandomPartitionKey(int partitionId) {
-        String key = "";
-        do {
-            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
-        } while (partitionId != Utils.getKeyPartitionId(key));
-        return key;
     }
 
     protected class KeyPartition {

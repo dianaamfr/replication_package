@@ -26,7 +26,7 @@ public class ReadGenerator extends LoadGenerator {
     private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <totalReads:Int>";
 
     public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int totalReads) {
+            int regionPartitions, long delay, int totalReads) {
         super(scheduler, writeAddresses, regionPartitions, delay);
         this.totalReads = totalReads;
         
@@ -54,7 +54,7 @@ public class ReadGenerator extends LoadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
+            long delay = args.length > addressesEndIndex ? Long.parseLong(args[addressesEndIndex]) : DELAY;
             int totalReads = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
                     : TOTAL_READS;
 
@@ -112,5 +112,16 @@ public class ReadGenerator extends LoadGenerator {
             keys.add(keyPartition.getKey());
         }
         return keys;
+    }
+
+    private KeyPartition getRandomKey() {
+        int partitionId = -1;
+        String key = "";
+        do {
+            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
+            partitionId = Utils.getKeyPartitionId(key);
+        } while (!this.partitions.contains(partitionId));
+
+        return new KeyPartition(key, partitionId);
     }
 }
