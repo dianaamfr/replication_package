@@ -8,7 +8,7 @@ public class WriteResponseRecord extends Record {
    private final int partition;
 
    public WriteResponseRecord(NodeType nodeType, String nodeId, String key, int partition, String version) {
-      super(nodeType, nodeId, LogType.WRITE_RESPOND);
+      super(nodeType, nodeId, LogType.WRITE_RESPONSE);
       this.key = key;
       this.partition = partition;
       this.version = version;

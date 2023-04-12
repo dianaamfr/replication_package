@@ -18,12 +18,13 @@ import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.ROTRequestRecord;
-import com.dissertation.utils.record.ROTResponseRecord;
+import com.dissertation.utils.record.ROTRecord;
 import com.dissertation.utils.record.Record;
 import com.dissertation.utils.record.WriteRequestRecord;
 import com.dissertation.utils.record.WriteResponseRecord;
+import com.dissertation.utils.record.Record.LogType;
 import com.dissertation.utils.record.Record.NodeType;
+import com.dissertation.utils.record.Record.Phase;
 import com.google.protobuf.ByteString;
 
 public class Client {
@@ -62,7 +63,7 @@ public class Client {
     }
 
     public ROTResponse requestROT(Set<String> keys) {
-        long requestTime = System.nanoTime();
+        long t1 = System.nanoTime();
         Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
@@ -75,17 +76,20 @@ public class Client {
             }
 
             rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
+            long t2 = System.nanoTime();
             rotResponse = this.readStub.rot(rotRequest);
+            long t3 = System.nanoTime();
 
             if (!rotResponse.getError()) {
-                this.logs.add(new ROTRequestRecord(NodeType.CLIENT, id, rotResponse.getId(), rotRequest.getKeysList(),
-                requestTime));
+                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.RECEIVE, t1));
+                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.SEND, t2));
+                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(), Phase.RECEIVE, t3));
 
                 pruneCache(rotResponse.getStableTime());
                 builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
                         .setStableTime(rotResponse.getStableTime());
 
-                this.logs.add(new ROTResponseRecord(NodeType.CLIENT, id, rotResponse.getId(), rotResponse.getStableTime()));
+                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, Phase.SEND, rotResponse.getId()));
                 return builder.build();
             }
             return rotResponse;

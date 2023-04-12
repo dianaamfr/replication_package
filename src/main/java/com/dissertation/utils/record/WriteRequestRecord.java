@@ -7,7 +7,7 @@ public class WriteRequestRecord extends Record {
    private final int partition;
 
    public WriteRequestRecord(NodeType nodeType, String nodeId, String key, int partition, long time) {
-      super(nodeType, nodeId, LogType.WRITE_RECEIVE, time);
+      super(nodeType, nodeId, LogType.WRITE_REQUEST, time);
       this.key = key;
       this.partition = partition;
    }

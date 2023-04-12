@@ -13,6 +13,11 @@ public abstract class Record {
     protected final long time;
     protected final LogType logType;
 
+    public enum Phase {
+        RECEIVE,
+        SEND
+    }
+
     public enum NodeType {
         WRITER,
         READER,
@@ -20,10 +25,10 @@ public abstract class Record {
     }
 
     public enum LogType {
-        WRITE_RECEIVE,
-        ROT_RECEIVE,
-        WRITE_RESPOND,
-        ROT_RESPOND,
+        WRITE_REQUEST,
+        ROT_REQUEST,
+        WRITE_RESPONSE,
+        ROT_RESPONSE,
         STABLE_TIME,
         LOG_PULL,
         LOG_PUSH,
