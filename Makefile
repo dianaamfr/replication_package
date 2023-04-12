@@ -54,7 +54,7 @@ emptyBuckets:
 
 clear:
 	make emptyBuckets
-	rm -rf logs/*.csv
+	rm -rf logs/*.json
 	mvn -q clean
 	
 # Compute Nodes

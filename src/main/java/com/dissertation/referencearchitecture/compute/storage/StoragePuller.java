@@ -18,11 +18,13 @@ import com.dissertation.utils.record.Record.NodeType;
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
     private ReaderStorage storage;
+    private String id;
     private ConcurrentLinkedQueue<Record> logs;
 
-    public StoragePuller(ReaderStorage storage, S3Helper s3Helper, ConcurrentLinkedQueue<Record> logs) {
+    public StoragePuller(ReaderStorage storage, S3Helper s3Helper,  String id, ConcurrentLinkedQueue<Record> logs) {
         this.s3Helper = s3Helper;
         this.storage = storage;
+        this.id = id;
         this.logs = logs;
     }
 
@@ -32,7 +34,7 @@ public class StoragePuller implements Runnable {
         this.storage.setStableTime();
         this.logs.add(new StableTimeRecord(
             NodeType.READER,
-            Utils.READ_NODE_ID,
+            this.id,
             this.storage.getStableTime()));
     }
 
@@ -45,7 +47,7 @@ public class StoragePuller implements Runnable {
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
                     this.logs.add(new LogOperationRecord(
                         NodeType.READER,
-                        Utils.READ_NODE_ID,
+                        this.id,
                         s3Response.getTimestamp(), 
                         entry.getKey(),
                         false));
@@ -80,7 +82,7 @@ public class StoragePuller implements Runnable {
                         Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
                 this.logs.add(new StoreRecord(
                     NodeType.READER,
-                    Utils.READ_NODE_ID,
+                    this.id,
                     timestamp,
                     key,
                     partition));

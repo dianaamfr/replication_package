@@ -25,15 +25,15 @@ public class StoragePusher implements Runnable {
     private Storage storage;
     private S3Helper s3Helper;
     private int partition;
-    private String nodeId;
+    private String id;
     private ConcurrentLinkedQueue<Record> logs;
 
-    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String nodeId, ConcurrentLinkedQueue<Record> logs) {
+    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String id, ConcurrentLinkedQueue<Record> logs) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
         this.partition = partition;
-        this.nodeId = nodeId;
+        this.id = id;
         this.logs = logs;
     }
 
@@ -52,7 +52,7 @@ public class StoragePusher implements Runnable {
             this.push(safePushTime.toString());
             this.logs.add(new LogOperationRecord(
                 NodeType.WRITER,
-                this.nodeId,
+                this.id,
                 safePushTime.toString(),
                 this.partition,
                 true));
