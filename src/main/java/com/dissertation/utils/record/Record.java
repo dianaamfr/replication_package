@@ -39,7 +39,7 @@ public abstract class Record {
     }
 
     protected Record(NodeType nodeType, String nodeId, LogType logType) {
-        this(nodeType, nodeId, logType, System.currentTimeMillis());
+        this(nodeType, nodeId, logType, System.nanoTime());
     }
 
     public JSONObject toJson() {
