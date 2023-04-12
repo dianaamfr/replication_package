@@ -19,14 +19,16 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.log.Log;
+import com.dissertation.utils.record.Record;
+import com.dissertation.utils.record.WriteRecord;
+import com.dissertation.utils.record.Record.NodeType;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 public class WriteNode extends ComputeNode {
-    private ConcurrentLinkedQueue<Log> logs;
+    private ConcurrentLinkedQueue<Record> logs;
     private Storage storage;
     private HLC hlc;
     private int partition;
@@ -113,11 +115,13 @@ public class WriteNode extends ComputeNode {
                 hlc.writeComplete();
                 hlc.setSafePushTime(writeTime);
 
-                logs.add(new Log(
+                logs.add(new WriteRecord(
+                    NodeType.WRITER,
+                    nodeId,
                     writeTime.toString(), 
                     request.getKey(), 
-                    nodeId,
-                    Log.Operation.WRITE));
+                    partition,
+                    false));
             }
 
             responseObserver.onNext(responseBuilder.build());

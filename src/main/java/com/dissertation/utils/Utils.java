@@ -2,13 +2,16 @@ package com.dissertation.utils;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
-import com.dissertation.utils.log.Log;
+import org.json.JSONArray;
+
+import com.dissertation.utils.record.Record;
 import com.google.protobuf.ByteString;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
@@ -39,7 +42,6 @@ public class Utils {
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
 
-    public static final String CSV_SEPARATOR = ",";
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";
 
@@ -80,19 +82,20 @@ public class Utils {
         return String.format(Utils.S3_PARTITION_FORMAT, partitionId);
     }
 
-    public static void logToFile(ConcurrentLinkedQueue<Log> logs, String file) {
+    public static void logToFile(ConcurrentLinkedQueue<Record> logs, String file) {
+        FileWriter fw;
         try {
-            BufferedWriter bw = new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream("logs/" + file.toLowerCase() + ".csv"), "UTF-8"));
+            fw = new FileWriter("logs/" + file.toLowerCase() + ".json", false);
+            
+            JSONArray jsonLogs = new JSONArray();
             while (!logs.isEmpty()) {
-                Log log = logs.poll();
-                bw.write(log.toString());
-                bw.newLine();
-            }
-            bw.flush();
-            bw.close();
+                jsonLogs.put(logs.poll().toJson());
+            }   
+            jsonLogs.write(fw);
+            fw.close();
+
         } catch (IOException e) {
-            e.printStackTrace();
+            System.err.println("Failed to write logs to file.");
         }
     }
 }

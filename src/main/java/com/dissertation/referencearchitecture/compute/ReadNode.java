@@ -20,7 +20,7 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.log.Log;
+import com.dissertation.utils.record.Record;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
@@ -28,7 +28,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 public class ReadNode extends ComputeNode {
-    private ConcurrentLinkedQueue<Log> logs;
+    private ConcurrentLinkedQueue<Record> logs;
     private ReaderStorage storage;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
 
