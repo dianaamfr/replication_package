@@ -27,12 +27,14 @@ import io.grpc.stub.StreamObserver;
 
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
+    private long rotId;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
 
     public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage)
             throws URISyntaxException {
-        super(scheduler, s3Helper, String.format("%s-%d", Utils.READ_NODE_ID, Utils.getCurrentRegion()));
+        super(scheduler, s3Helper, String.format("%s-%s", Utils.READ_NODE_ID, Utils.getCurrentRegion().toString()));
         this.storage = storage;
+        this.rotId = 1;
     }
 
     @Override
@@ -77,8 +79,10 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
+            //logs.add(new ROTRequestRecord(NodeType.READER, id, rotId, request.getKeysList()));
+
             String stableTime = storage.getStableTime();
-            Builder responseBuilder = ROTResponse.newBuilder().setError(false);
+            Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
 
             for (String key : request.getKeysList()) {
@@ -101,6 +105,9 @@ public class ReadNode extends ComputeNode {
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
+            
+            //logs.add(new ROTResponseRecord(NodeType.READER, id, rotId, stableTime));
+            rotId++;
         }
     }
 }

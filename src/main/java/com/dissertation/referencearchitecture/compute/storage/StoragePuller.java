@@ -9,11 +9,7 @@ import org.json.JSONArray;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.LogOperationRecord;
 import com.dissertation.utils.record.Record;
-import com.dissertation.utils.record.StableTimeRecord;
-import com.dissertation.utils.record.StoreRecord;
-import com.dissertation.utils.record.Record.NodeType;
 
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
@@ -32,10 +28,10 @@ public class StoragePuller implements Runnable {
     public void run() {
         this.pull();
         this.storage.setStableTime();
-        this.logs.add(new StableTimeRecord(
+        /*this.logs.add(new StableTimeRecord(
             NodeType.READER,
             this.id,
-            this.storage.getStableTime()));
+            this.storage.getStableTime()));*/
     }
 
     private void pull() {
@@ -45,12 +41,12 @@ public class StoragePuller implements Runnable {
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
                         String.valueOf(entry.getValue()));
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
-                    this.logs.add(new LogOperationRecord(
+                    /*this.logs.add(new LogOperationRecord(
                         NodeType.READER,
                         this.id,
                         s3Response.getTimestamp(), 
                         entry.getKey(),
-                        false));
+                        false));*/
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent(), entry.getKey());
                     // System.out.println(s3Response.getContent());
@@ -80,12 +76,12 @@ public class StoragePuller implements Runnable {
                         key,
                         timestamp,
                         Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
-                this.logs.add(new StoreRecord(
+                /*this.logs.add(new StoreRecord(
                     NodeType.READER,
                     this.id,
                     timestamp,
                     key,
-                    partition));
+                    partition));*/
             }
             this.storage.setLastParsedIndex(key, versionChainArray.length());
         }

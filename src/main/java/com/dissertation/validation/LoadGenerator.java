@@ -21,7 +21,7 @@ public abstract class LoadGenerator {
     protected final Set<Integer> partitions;
 
     protected static final int MAX_THREADS = 20;
-    protected static final int DELAY = 200;
+    protected static final int DELAY = 500;
 
     public LoadGenerator(ScheduledThreadPoolExecutor scheduler, List<Address> writeAddresses, int regionPartitions, int delay) {
         this.scheduler = scheduler;
@@ -43,6 +43,14 @@ public abstract class LoadGenerator {
         } while (!this.partitions.contains(partitionId));
 
         return new KeyPartition(key, partitionId);
+    }
+
+    protected String getRandomPartitionKey(int partitionId) {
+        String key = "";
+        do {
+            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
+        } while (partitionId != Utils.getKeyPartitionId(key));
+        return key;
     }
 
     protected class KeyPartition {

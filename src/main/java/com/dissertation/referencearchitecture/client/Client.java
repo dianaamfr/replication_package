@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -17,6 +18,12 @@ import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.record.ROTRequestRecord;
+import com.dissertation.utils.record.ROTResponseRecord;
+import com.dissertation.utils.record.Record;
+import com.dissertation.utils.record.WriteRequestRecord;
+import com.dissertation.utils.record.WriteResponseRecord;
+import com.dissertation.utils.record.Record.NodeType;
 import com.google.protobuf.ByteString;
 
 public class Client {
@@ -24,11 +31,25 @@ public class Client {
     private ROTServiceGrpc.ROTServiceBlockingStub readStub;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
+    private ConcurrentLinkedQueue<Record> logs;
+    private final String id;
 
-    public Client(Address readAddress, List<Address> writeAddresses) {
+    public Client(Address readAddress, List<Address> writeAddresses, String id) {
         this.cache = new HashMap<>();
         this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
+        this.logs = new ConcurrentLinkedQueue<>();
+        this.id = id;
         initStubs(readAddress, writeAddresses);
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                Utils.logToFile(logs, id);
+            }
+        });
+    }
+
+    public Client(Address readAddress, List<Address> writeAddresses) {
+        this(readAddress, writeAddresses, "");
     }
 
     public void initStubs(Address readAddress, List<Address> writeAddresses) {
@@ -41,6 +62,7 @@ public class Client {
     }
 
     public ROTResponse requestROT(Set<String> keys) {
+        long requestTime = System.nanoTime();
         Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
@@ -56,10 +78,14 @@ public class Client {
             rotResponse = this.readStub.rot(rotRequest);
 
             if (!rotResponse.getError()) {
+                this.logs.add(new ROTRequestRecord(NodeType.CLIENT, id, rotResponse.getId(), rotRequest.getKeysList(),
+                requestTime));
+
                 pruneCache(rotResponse.getStableTime());
-                builder
-                        .putAllValues(getReadResponse(rotResponse.getValuesMap()))
+                builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
                         .setStableTime(rotResponse.getStableTime());
+
+                this.logs.add(new ROTResponseRecord(NodeType.CLIENT, id, rotResponse.getId(), rotResponse.getStableTime()));
                 return builder.build();
             }
             return rotResponse;
@@ -71,6 +97,8 @@ public class Client {
     }
 
     public WriteResponse requestWrite(String key, ByteString value) {
+        long requestTime = System.nanoTime();
+
         try {
             int partitionId = Utils.getKeyPartitionId(key);
             if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
@@ -88,6 +116,10 @@ public class Client {
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
+
+                logs.add(new WriteRequestRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId, requestTime));
+                logs.add(new WriteResponseRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId,
+                        writeResponse.getWriteTimestamp()));
             }
             return writeResponse;
         } catch (KeyNotFoundException e) {

@@ -1,10 +1,7 @@
 package com.dissertation.utils;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
@@ -44,6 +41,8 @@ public class Utils {
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";
+    public static final String READ_CLIENT_ID = "readClient";
+    public static final String WRITE_CLIENT_ID = "writeClient";
 
     public static ByteString byteStringFromString(String encodedBuffer) {
         return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.ISO_8859_1));

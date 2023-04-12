@@ -18,8 +18,6 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.WriteRecord;
-import com.dissertation.utils.record.Record.NodeType;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -41,8 +39,10 @@ public class WriteNode extends ComputeNode {
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.id, this.logs), Utils.PUSH_DELAY,
-        Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
+        this.scheduler.scheduleWithFixedDelay(
+                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.id, this.logs),
+                Utils.PUSH_DELAY,
+                Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
 
@@ -78,6 +78,7 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
+            //long requestTime = System.nanoTime();
             ClockState lastTime = new ClockState();
             ClockState writeTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
@@ -97,19 +98,16 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
+                //logs.add(new WriteRequestRecord(NodeType.WRITER, id, request.getKey(), partition, requestTime));
+
                 writeTime = hlc.writeEvent(lastTime);
                 storage.put(request.getKey(), writeTime.toString(), request.getValue());
                 responseBuilder.setWriteTimestamp(writeTime.toString());
                 hlc.writeComplete();
                 hlc.setSafePushTime(writeTime);
 
-                logs.add(new WriteRecord(
-                    NodeType.WRITER,
-                    id,
-                    writeTime.toString(), 
-                    request.getKey(), 
-                    partition,
-                    false));
+                /* logs.add(new WriteResponseRecord(NodeType.WRITER, id, request.getKey(), partition,
+                        writeTime.toString())); */
             }
 
             responseObserver.onNext(responseBuilder.build());

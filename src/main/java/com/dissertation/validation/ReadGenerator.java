@@ -12,11 +12,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
+import com.dissertation.utils.Utils;
 
 public class ReadGenerator extends LoadGenerator {
     private final int totalReads;
 
-    private static final int TOTAL_READS = 100;
+    private static final int TOTAL_READS = 20;
     private static final int MAX_KEYS_PER_READ = 2;
 
     private AtomicInteger counter;
@@ -66,8 +67,8 @@ public class ReadGenerator extends LoadGenerator {
     }
 
     private void init(Address readAddress, List<Address> writeAddresses) {
-        // Init clients
-        Client c = new Client(readAddress, writeAddresses);
+        // Init client
+        Client c = new Client(readAddress, writeAddresses, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(c), 0, this.delay, TimeUnit.MILLISECONDS);
     }
 

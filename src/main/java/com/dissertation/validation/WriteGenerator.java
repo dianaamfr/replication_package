@@ -78,9 +78,10 @@ public class WriteGenerator extends LoadGenerator {
         for (int i = 0; i < this.regionPartitions; i++) {
             CountDownLatch countDown = new CountDownLatch(this.writesPerPartition);
             this.countDowns.set(i, countDown);
+            int partitionId = writeAddresses.get(i).getPartitionId();
 
-            Client c = new Client(readAddress, writeAddresses);
-            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(c, countDown, i), 0, this.delay, TimeUnit.MILLISECONDS);
+            Client c = new Client(readAddress, writeAddresses, String.format("%s-%d", Utils.WRITE_CLIENT_ID, partitionId));
+            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(c, countDown, i, partitionId), 0, this.delay, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -100,21 +101,23 @@ public class WriteGenerator extends LoadGenerator {
         private final Client client;
         private final CountDownLatch countDown;
         private final int counterPos;
+        private final int partitionId;
 
-        public WriteGeneratorRequest(Client client, CountDownLatch countDown, int counterPos) {
+        public WriteGeneratorRequest(Client client, CountDownLatch countDown, int counterPos, int partitionId) {
             this.client = client;
             this.countDown = countDown;
             this.counterPos = counterPos;
+            this.partitionId = partitionId;
         }
 
         @Override
         public void run() {
-            KeyPartition keyPartition = getRandomKey();
+            String key = getRandomPartitionKey(partitionId);
             ByteString value = Utils.getRandomByteString(bytes);
             try {
                 startSignal.await();
                 if (counters.getAndIncrement(counterPos) < writesPerPartition) {
-                    this.client.requestWrite(keyPartition.getKey(), value);
+                    this.client.requestWrite(key, value);
                     this.countDown.countDown();
                 }
             } catch (Exception e) {
