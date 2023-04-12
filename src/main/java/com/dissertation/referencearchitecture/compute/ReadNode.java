@@ -19,6 +19,10 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.record.ROTRecord;
+import com.dissertation.utils.record.Record.LogType;
+import com.dissertation.utils.record.Record.NodeType;
+import com.dissertation.utils.record.Record.Phase;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
@@ -79,7 +83,7 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
-            //logs.add(new ROTRequestRecord(NodeType.READER, id, rotId, request.getKeysList()));
+            logs.add(new ROTRecord(NodeType.READER, LogType.ROT_REQUEST, id, rotId, Phase.RECEIVE));
 
             String stableTime = storage.getStableTime();
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
@@ -106,7 +110,7 @@ public class ReadNode extends ComputeNode {
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
             
-            //logs.add(new ROTResponseRecord(NodeType.READER, id, rotId, stableTime));
+            logs.add(new ROTRecord(NodeType.READER, LogType.ROT_RESPONSE, id, rotId, Phase.SEND));
             rotId++;
         }
     }

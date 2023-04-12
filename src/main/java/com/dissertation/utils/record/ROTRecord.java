@@ -12,7 +12,7 @@ public class ROTRecord extends Record {
         this.phase = phase;
     }
 
-    public ROTRecord(NodeType nodeType, LogType logType, String nodeId, Phase phase, long id) {
+    public ROTRecord(NodeType nodeType, LogType logType, String nodeId, long id, Phase phase) {
         super(nodeType, nodeId, logType);
         this.id = id;
         this.phase = phase;
