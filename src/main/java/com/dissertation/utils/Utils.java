@@ -38,6 +38,8 @@ public class Utils {
 
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
+    public static final boolean ROT_LOGS = Boolean.parseBoolean(System.getProperty("rotLogs"));
+    public static final boolean WRITE_LOGS = Boolean.parseBoolean(System.getProperty("writeLogs"));
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";

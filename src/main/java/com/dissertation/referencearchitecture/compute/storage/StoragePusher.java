@@ -15,7 +15,9 @@ import com.dissertation.referencearchitecture.exceptions.InvalidTimestampExcepti
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.record.LogOperationRecord;
 import com.dissertation.utils.record.Record;
+import com.dissertation.utils.record.Record.NodeType;
 import com.google.protobuf.ByteString;
 
 public class StoragePusher implements Runnable {
@@ -48,12 +50,10 @@ public class StoragePusher implements Runnable {
         ClockState safePushTime = this.hlc.getAndResetSafePushTime();
         if(!safePushTime.isZero()) {
             this.push(safePushTime.toString());
-            /*this.logs.add(new LogOperationRecord(
-                NodeType.WRITER,
-                this.id,
-                safePushTime.toString(),
-                this.partition,
-                true));*/
+
+            if(Utils.WRITE_LOGS) {
+                this.logs.add(new LogOperationRecord(NodeType.WRITER, this.id, safePushTime.toString(), this.partition, true));
+            }
         }
     }
 

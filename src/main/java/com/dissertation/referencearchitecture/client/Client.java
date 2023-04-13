@@ -42,11 +42,13 @@ public class Client {
         this.id = id;
         initStubs(readAddress, writeAddresses);
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                Utils.logToFile(logs, id);
-            }
-        });
+        if(Utils.ROT_LOGS || Utils.WRITE_LOGS) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    Utils.logToFile(logs, id);
+                }
+            });
+        }
     }
 
     public Client(Address readAddress, List<Address> writeAddresses) {
@@ -81,15 +83,20 @@ public class Client {
             long t3 = System.nanoTime();
 
             if (!rotResponse.getError()) {
-                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.RECEIVE, t1));
-                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.SEND, t2));
-                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(), Phase.RECEIVE, t3));
-
+                if(Utils.ROT_LOGS) {
+                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.RECEIVE, t1));
+                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.SEND, t2));
+                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(), Phase.RECEIVE, t3));    
+                }
+                
                 pruneCache(rotResponse.getStableTime());
                 builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
                         .setStableTime(rotResponse.getStableTime());
-
-                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(),Phase.SEND));
+                
+                if(Utils.ROT_LOGS) {
+                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(),Phase.SEND));
+                }
+                
                 return builder.build();
             }
             return rotResponse;
@@ -121,9 +128,11 @@ public class Client {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
 
-                logs.add(new WriteRequestRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId, requestTime));
-                logs.add(new WriteResponseRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId,
-                        writeResponse.getWriteTimestamp()));
+                if(Utils.WRITE_LOGS) {
+                    logs.add(new WriteRequestRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId, requestTime));
+                    logs.add(new WriteResponseRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId,
+                            writeResponse.getWriteTimestamp()));
+                }
             }
             return writeResponse;
         } catch (KeyNotFoundException e) {

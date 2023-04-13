@@ -24,11 +24,13 @@ public abstract class ComputeNode {
         this.id = id;
         this.logs = new ConcurrentLinkedQueue<>();
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                Utils.logToFile(logs, id);
-            }
-        });
+        if(Utils.ROT_LOGS || Utils.WRITE_LOGS) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    Utils.logToFile(logs, id);
+                }
+            });
+        }
     }
 
     public void init(Server server) throws IOException, InterruptedException {
