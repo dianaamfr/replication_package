@@ -26,8 +26,8 @@ public class Utils {
     public static final Region DEFAULT_REGION = Region.EU_NORTH_1;
     public static final String S3_LOG_PREFIX = "Logs/";
     public static final String S3_CLOCK_PREFIX = "Clock/";
-    public static final String S3_CLOCK_BUCKET = "reference-architecture-clock";
-    public static final String S3_PARTITION_FORMAT = "reference-architecture-partition%d";
+    public static final String S3_CLOCK_BUCKET = "clock" + System.getProperty("bucketSuffix");
+    public static final String S3_PARTITION_FORMAT = "partition%d" + System.getProperty("bucketSuffix");
     public static final int S3_MAX_KEYS = 5;
 
     public static final String LOG_STATE = "state";

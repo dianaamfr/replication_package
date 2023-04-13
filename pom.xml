@@ -17,7 +17,6 @@
         <exec-maven-plugin.version>1.6.0</exec-maven-plugin.version>
         <aws.java.sdk.version>2.20.27</aws.java.sdk.version>
         <aws.lambda.java.version>1.2.0</aws.lambda.java.version>
-        <junit5.version>5.8.1</junit5.version>
         <slf4j.version>2.0.7</slf4j.version>
         <json.version>20230227</json.version>
         <commons-net.version>3.9.0</commons-net.version>
@@ -124,11 +123,11 @@
                 <version>0.6.1</version>
                 <configuration>
                     <protocArtifact>
-                        com.google.protobuf:protoc:3.3.0:exe:${os.detected.classifier}
+                        com.google.protobuf:protoc:3.21.12:exe:${os.detected.classifier}
                     </protocArtifact>
                     <pluginId>grpc-java</pluginId>
                     <pluginArtifact>
-                        io.grpc:protoc-gen-grpc-java:1.4.0:exe:${os.detected.classifier}
+                        io.grpc:protoc-gen-grpc-java:1.54.0:exe:${os.detected.classifier}
                     </pluginArtifact>
                 </configuration>
                 <executions>

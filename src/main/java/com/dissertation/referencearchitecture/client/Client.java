@@ -89,7 +89,7 @@ public class Client {
                 builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
                         .setStableTime(rotResponse.getStableTime());
 
-                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, Phase.SEND, rotResponse.getId()));
+                this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(),Phase.SEND));
                 return builder.build();
             }
             return rotResponse;
