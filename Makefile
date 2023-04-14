@@ -47,7 +47,7 @@ emptyBuckets:
 	
 # Compute Nodes
 readNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
+	java -DrotLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
 
 writeNode1:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
@@ -60,16 +60,16 @@ client1:
 	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar $(readAddress1) $(writeAddresses1)
 
 # Validation
-readDelay1 = 1
-totalReads1 = 100
+readDelay1 = 100
+totalReads1 = 500
 
 readTest1:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
+	java -DrotLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
 
 
 writeDelay1 = 1
 bytes1 = 8
-writesPerPartition1 = 50
+writesPerPartition1 = 100
 
 writeTest1:
 	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeGenerator.jar  $(region1Partitions) $(readAddress1) $(writeAddresses1) $(writeDelay1) $(bytes1) $(writesPerPartition1)

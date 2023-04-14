@@ -83,10 +83,7 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
-            if(Utils.ROT_LOGS) {
-                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_REQUEST, id, rotId, Phase.RECEIVE));
-            }
-
+            long t1 = System.nanoTime();
             String stableTime = storage.getStableTime();
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
@@ -111,11 +108,13 @@ public class ReadNode extends ComputeNode {
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
-            
-            if(Utils.ROT_LOGS) {
-                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_RESPONSE, id, rotId, Phase.SEND));
-            }
             rotId++;
+
+            long t2 = System.nanoTime();    
+            if(Utils.ROT_LOGS) {
+                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_REQUEST, id, rotId, Phase.RECEIVE, t1));
+                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_RESPONSE, id, rotId, Phase.SEND, t2));
+            }
         }
     }
 }

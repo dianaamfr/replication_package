@@ -83,18 +83,15 @@ public class Client {
             long t3 = System.nanoTime();
 
             if (!rotResponse.getError()) {
+                pruneCache(rotResponse.getStableTime());
+                builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
+                        .setStableTime(rotResponse.getStableTime());
+                long t4 = System.nanoTime();
                 if(Utils.ROT_LOGS) {
                     this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.RECEIVE, t1));
                     this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.SEND, t2));
                     this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(), Phase.RECEIVE, t3));    
-                }
-                
-                pruneCache(rotResponse.getStableTime());
-                builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
-                        .setStableTime(rotResponse.getStableTime());
-                
-                if(Utils.ROT_LOGS) {
-                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(),Phase.SEND));
+                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(),Phase.SEND, t4));
                 }
                 
                 return builder.build();

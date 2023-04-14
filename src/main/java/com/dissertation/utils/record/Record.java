@@ -2,41 +2,36 @@ package com.dissertation.utils.record;
 
 import org.json.JSONObject;
 
-import com.dissertation.utils.Utils;
-
-import software.amazon.awssdk.regions.Region;
-
 public abstract class Record {
-    protected final Region region;
     protected final NodeType nodeType;
     protected final String nodeId;
     protected final long time;
     protected final LogType logType;
 
-    public enum Phase {
-        RECEIVE,
-        SEND
-    }
+    
+public enum Phase {
+    RECEIVE,
+    SEND
+}
 
-    public enum NodeType {
-        WRITER,
-        READER,
-        CLIENT
-    }
+public enum NodeType {
+    WRITER,
+    READER,
+    CLIENT
+}
 
-    public enum LogType {
-        WRITE_REQUEST,
-        ROT_REQUEST,
-        WRITE_RESPONSE,
-        ROT_RESPONSE,
-        STABLE_TIME,
-        LOG_PULL,
-        LOG_PUSH,
-        STORE_VERSION
-    }
+public enum LogType {
+    WRITE_REQUEST,
+    ROT_REQUEST,
+    WRITE_RESPONSE,
+    ROT_RESPONSE,
+    STABLE_TIME,
+    LOG_PULL,
+    LOG_PUSH,
+    STORE_VERSION
+}
 
     protected Record(NodeType nodeType, String nodeId, LogType logType, long time) {
-        this.region = Utils.getCurrentRegion();
         this.nodeType = nodeType;
         this.nodeId = nodeId;
         this.logType = logType;
@@ -49,7 +44,6 @@ public abstract class Record {
 
     public JSONObject toJson() {
         return new JSONObject()
-                .put("region", this.region.toString())
                 .put("nodeType", this.nodeType.toString())
                 .put("nodeId", this.nodeId)
                 .put("time", this.time)
