@@ -6,7 +6,7 @@ fi
 
 NODE=writeNode
 BUCKET_SUFFIX=-reference-architecture
-IMAGE=dianaamfreitas/dissertation:v3.0.0
+IMAGE=dianaamfreitas/dissertation:v5.0.0
 N_PARTITIONS=$1
 PORT=$2
 PARTITION_ID=$3

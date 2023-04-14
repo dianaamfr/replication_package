@@ -6,7 +6,7 @@ fi
 
 NODE=writeGenerator
 BUCKET_SUFFIX=-reference-architecture
-IMAGE=dianaamfreitas/dissertation:v3.0.0
+IMAGE=dianaamfreitas/dissertation:v5.0.0
 N_PARTITIONS=$1
 REGION_PARTITIONS=$2
 READ_ADDRESS="${3} ${4}"
