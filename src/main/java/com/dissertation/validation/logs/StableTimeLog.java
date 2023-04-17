@@ -1,11 +1,11 @@
-package com.dissertation.utils.record;
+package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-public class StableTimeRecord extends Record {
+public class StableTimeLog extends Log {
     private final String stableTime;
 
-    public StableTimeRecord(NodeType nodeType, String nodeId, String stableTime) {
+    public StableTimeLog(NodeType nodeType, String nodeId, String stableTime) {
         super(nodeType, nodeId, LogType.STABLE_TIME);
         this.stableTime = stableTime;
     }

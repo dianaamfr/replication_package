@@ -1,8 +1,8 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.ArrayDeque;
 import java.util.SortedMap;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import org.json.JSONArray;
@@ -15,9 +15,9 @@ import com.dissertation.referencearchitecture.exceptions.InvalidTimestampExcepti
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.LogOperationRecord;
-import com.dissertation.utils.record.Record;
-import com.dissertation.utils.record.Record.NodeType;
+import com.dissertation.validation.logs.S3OperationLog;
+import com.dissertation.validation.logs.Log;
+import com.dissertation.validation.logs.Log.NodeType;
 import com.google.protobuf.ByteString;
 
 public class StoragePusher implements Runnable {
@@ -26,10 +26,10 @@ public class StoragePusher implements Runnable {
     private S3Helper s3Helper;
     private int partition;
     private String id;
-    private ConcurrentLinkedQueue<Record> logs;
+    private ArrayDeque<Log> logs;
     private final String region;
 
-    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String id, ConcurrentLinkedQueue<Record> logs, String region) {
+    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String id, ArrayDeque<Log> logs, String region) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
@@ -53,8 +53,8 @@ public class StoragePusher implements Runnable {
         if(!safePushTime.isZero()) {
             this.push(safePushTime.toString());
 
-            if(Utils.WRITE_LOGS) {
-                this.logs.add(new LogOperationRecord(NodeType.WRITER, this.id, safePushTime.toString(), this.partition, true));
+            if(Utils.VALIDATION_LOGS) {
+                this.logs.add(new S3OperationLog(NodeType.WRITER, this.id, safePushTime.toString(), this.partition, true));
             }
         }
     }

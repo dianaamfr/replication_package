@@ -1,18 +1,12 @@
-package com.dissertation.utils.record;
+package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-public abstract class Record {
+public abstract class Log {
     protected final NodeType nodeType;
     protected final String nodeId;
     protected final long time;
     protected final LogType logType;
-
-    
-public enum Phase {
-    RECEIVE,
-    SEND
-}
 
 public enum NodeType {
     WRITER,
@@ -28,17 +22,16 @@ public enum LogType {
     STABLE_TIME,
     LOG_PULL,
     LOG_PUSH,
-    STORE_VERSION
 }
 
-    protected Record(NodeType nodeType, String nodeId, LogType logType, long time) {
+    protected Log(NodeType nodeType, String nodeId, LogType logType, long time) {
         this.nodeType = nodeType;
         this.nodeId = nodeId;
         this.logType = logType;
         this.time = time;
     }
 
-    protected Record(NodeType nodeType, String nodeId, LogType logType) {
+    protected Log(NodeType nodeType, String nodeId, LogType logType) {
         this(nodeType, nodeId, logType, System.currentTimeMillis());
     }
 

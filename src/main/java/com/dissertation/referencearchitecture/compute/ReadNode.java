@@ -19,10 +19,9 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.ROTRecord;
-import com.dissertation.utils.record.Record.LogType;
-import com.dissertation.utils.record.Record.NodeType;
-import com.dissertation.utils.record.Record.Phase;
+import com.dissertation.validation.logs.ROTRequestLog;
+import com.dissertation.validation.logs.ROTResponseLog;
+import com.dissertation.validation.logs.Log.NodeType;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
@@ -46,7 +45,7 @@ public class ReadNode extends ComputeNode {
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.id, this.logs, this.region),
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.id, this.s3Logs, this.region),
                 Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -114,10 +113,9 @@ public class ReadNode extends ComputeNode {
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
 
-            long t2 = System.currentTimeMillis();
-            if (Utils.ROT_LOGS) {
-                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_REQUEST, id, rotId, Phase.RECEIVE, t1));
-                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_RESPONSE, id, rotId, Phase.SEND, t2));
+            if (Utils.VALIDATION_LOGS) {
+                logs.add(new ROTRequestLog(NodeType.READER, id, rotId, t1));
+                logs.add(new ROTResponseLog(NodeType.READER, id, rotId, stableTime));
             }
             rotId++;
         }

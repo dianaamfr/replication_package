@@ -1,12 +1,12 @@
 package com.dissertation.referencearchitecture.client;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -18,13 +18,12 @@ import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.ROTRecord;
-import com.dissertation.utils.record.Record;
-import com.dissertation.utils.record.WriteRequestRecord;
-import com.dissertation.utils.record.WriteResponseRecord;
-import com.dissertation.utils.record.Record.LogType;
-import com.dissertation.utils.record.Record.NodeType;
-import com.dissertation.utils.record.Record.Phase;
+import com.dissertation.validation.logs.ROTRequestLog;
+import com.dissertation.validation.logs.ROTResponseLog;
+import com.dissertation.validation.logs.Log;
+import com.dissertation.validation.logs.WriteRequestLog;
+import com.dissertation.validation.logs.WriteResponseLog;
+import com.dissertation.validation.logs.Log.NodeType;
 import com.google.protobuf.ByteString;
 
 public class Client {
@@ -32,17 +31,17 @@ public class Client {
     private ROTServiceGrpc.ROTServiceBlockingStub readStub;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
-    private ConcurrentLinkedQueue<Record> logs;
+    private ArrayDeque<Log> logs;
     private final String id;
 
     public Client(Address readAddress, List<Address> writeAddresses, String id) {
         this.cache = new HashMap<>();
         this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
-        this.logs = new ConcurrentLinkedQueue<>();
+        this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.id = id;
         initStubs(readAddress, writeAddresses);
 
-        if(Utils.ROT_LOGS || Utils.WRITE_LOGS) {
+        if(Utils.VALIDATION_LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     Utils.logToFile(logs, id);
@@ -78,20 +77,16 @@ public class Client {
             }
 
             rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
-            long t2 = System.currentTimeMillis();
             rotResponse = this.readStub.rot(rotRequest);
-            long t3 = System.currentTimeMillis();
 
             if (!rotResponse.getError()) {
                 pruneCache(rotResponse.getStableTime());
                 builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
                         .setStableTime(rotResponse.getStableTime());
-                long t4 = System.currentTimeMillis();
-                if(Utils.ROT_LOGS) {
-                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.RECEIVE, t1));
-                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.SEND, t2));
-                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(), Phase.RECEIVE, t3));    
-                    this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_RESPONSE, id, rotResponse.getId(),Phase.SEND, t4));
+
+                if(Utils.VALIDATION_LOGS) {
+                    this.logs.add(new ROTRequestLog(NodeType.CLIENT, id, rotResponse.getId(), t1));
+                    this.logs.add(new ROTResponseLog(NodeType.CLIENT, id, rotResponse.getId(), rotResponse.getStableTime()));
                 }
                 
                 return builder.build();
@@ -105,7 +100,7 @@ public class Client {
     }
 
     public WriteResponse requestWrite(String key, ByteString value) {
-        long requestTime = System.currentTimeMillis();
+        long t1 = System.currentTimeMillis();
 
         try {
             int partitionId = Utils.getKeyPartitionId(key);
@@ -125,9 +120,9 @@ public class Client {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
 
-                if(Utils.WRITE_LOGS) {
-                    logs.add(new WriteRequestRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId, requestTime));
-                    logs.add(new WriteResponseRecord(NodeType.WRITER, id, writeRequest.getKey(), partitionId,
+                if(Utils.VALIDATION_LOGS) {
+                    logs.add(new WriteRequestLog(NodeType.WRITER, id, writeRequest.getKey(), partitionId, t1));
+                    logs.add(new WriteResponseLog(NodeType.WRITER, id, writeRequest.getKey(), partitionId,
                             writeResponse.getWriteTimestamp()));
                 }
             }
