@@ -1,38 +1,56 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
-import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.record.LogOperationRecord;
+import com.dissertation.utils.record.Record;
+import com.dissertation.utils.record.StableTimeRecord;
+import com.dissertation.utils.record.StoreRecord;
+import com.dissertation.utils.record.Record.NodeType;
 
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
     private ReaderStorage storage;
+    private final String id;
+    private ConcurrentLinkedQueue<Record> logs;
+    private final String region;
 
-    public StoragePuller(ReaderStorage storage, S3Helper s3Helper) {
+    public StoragePuller(ReaderStorage storage, S3Helper s3Helper,  String id, ConcurrentLinkedQueue<Record> logs, String region) {
         this.s3Helper = s3Helper;
         this.storage = storage;
+        this.id = id;
+        this.logs = logs;
+        this.region = region;
     }
 
     @Override
     public void run() {
         this.pull();
         this.storage.setStableTime();
+        if(Utils.WRITE_LOGS) {
+            this.logs.add(new StableTimeRecord(NodeType.READER, this.id, this.storage.getStableTime()));
+        }
     }
 
     private void pull() {
         for (Entry<Integer, String> entry : this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
-                String partitionBucket = Utils.getPartitionBucket(entry.getKey());
+                String partitionBucket = Utils.getPartitionBucket(entry.getKey(), this.region);
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
                         String.valueOf(entry.getValue()));
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
+                    if(Utils.WRITE_LOGS) {
+                        this.logs.add(new LogOperationRecord(NodeType.READER, this.id, s3Response.getTimestamp(), entry.getKey(), false));
+                    }
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
-                    parseJson(s3Response.getContent());
+                    parseJson(s3Response.getContent(), entry.getKey());
                     // System.out.println(s3Response.getContent());
                 } else if (s3Response.isError()) {
                     System.err.println(s3Response.getStatus());
@@ -44,7 +62,7 @@ public class StoragePuller implements Runnable {
         }
     }
 
-    private void parseJson(String json) {
+    private void parseJson(String json, int partition) {
         JSONObject response = new JSONObject(json);
         JSONArray versionChainsJson = response.getJSONArray(Utils.LOG_STATE);
 
@@ -55,10 +73,15 @@ public class StoragePuller implements Runnable {
             int lastIdx = this.storage.getLastParsedIndex(key);
             for (int j = lastIdx; j < versionChainArray.length(); j++) {
                 JSONObject versionJson = versionChainArray.getJSONObject(j);
+                String timestamp = versionJson.getString(Utils.LOG_TIMESTAMP);
                 this.storage.put(
                         key,
-                        versionJson.getString(Utils.LOG_TIMESTAMP),
+                        timestamp,
                         Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
+
+                if(Utils.WRITE_LOGS) {
+                    this.logs.add(new StoreRecord(NodeType.READER, this.id, timestamp, key, partition));
+                }
             }
             this.storage.setLastParsedIndex(key, versionChainArray.length());
         }

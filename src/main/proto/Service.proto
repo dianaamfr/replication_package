@@ -21,8 +21,9 @@ message ROTRequest {
 message ROTResponse {
     map<string, bytes> values = 1;
     string stableTime = 2;
-    bool error = 3;
-    string status = 4;
+    int64 id = 3;
+    bool error = 4;
+    string status = 5;
 }
 
 service WriteService {

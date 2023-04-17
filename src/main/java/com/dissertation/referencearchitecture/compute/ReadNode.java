@@ -19,25 +19,35 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.record.ROTRecord;
+import com.dissertation.utils.record.Record.LogType;
+import com.dissertation.utils.record.Record.NodeType;
+import com.dissertation.utils.record.Record.Phase;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import software.amazon.awssdk.regions.Region;
 
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
+    private long rotId;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
+    private final String region;
 
-    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage)
+    public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage, Region region)
             throws URISyntaxException {
-        super(scheduler, s3Helper);
+        super(scheduler, s3Helper, String.format("%s-%s", Utils.READ_NODE_ID, region.toString()));
         this.storage = storage;
+        this.rotId = 1;
+        this.region = region.toString();
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper), Utils.PULL_DELAY,
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.id, this.logs, this.region),
+                Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
@@ -55,11 +65,12 @@ public class ReadNode extends ComputeNode {
                 partitionIds.add(Integer.valueOf(args[i]));
             }
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-            S3Helper s3Helper = new S3Helper(Utils.getCurrentRegion());
+            Region region = Utils.getCurrentRegion();
+            S3Helper s3Helper = new S3Helper(region);
             ReaderStorage storage = new ReaderStorage();
             storage.init(partitionIds);
 
-            ReadNode readNode = new ReadNode(scheduler, s3Helper, storage);
+            ReadNode readNode = new ReadNode(scheduler, s3Helper, storage, region);
             ROTServiceImpl readService = readNode.new ROTServiceImpl();
             Server server = ServerBuilder.forPort(port).addService(readService).build();
             readNode.init(server);
@@ -77,8 +88,9 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
+            long t1 = System.nanoTime();
             String stableTime = storage.getStableTime();
-            Builder responseBuilder = ROTResponse.newBuilder().setError(false);
+            Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
 
             for (String key : request.getKeysList()) {
@@ -101,6 +113,13 @@ public class ReadNode extends ComputeNode {
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
+
+            long t2 = System.nanoTime();
+            if (Utils.ROT_LOGS) {
+                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_REQUEST, id, rotId, Phase.RECEIVE, t1));
+                logs.add(new ROTRecord(NodeType.READER, LogType.ROT_RESPONSE, id, rotId, Phase.SEND, t2));
+            }
+            rotId++;
         }
     }
 }

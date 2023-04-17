@@ -1,45 +1,34 @@
 package com.dissertation.validation;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.stream.Collectors;
 
-import com.dissertation.utils.Utils;
-
-import io.grpc.netty.shaded.io.netty.util.internal.ThreadLocalRandom;
+import com.dissertation.utils.Address;
 
 public abstract class LoadGenerator {
     protected ScheduledThreadPoolExecutor scheduler;
 
     protected final int regionPartitions;
-    protected final int delay;
-    protected final int clients;
+    protected final long delay;
 
     protected CountDownLatch startSignal;
+    protected final Set<Integer> partitions;
 
     protected static final int MAX_THREADS = 20;
-    protected static final int DELAY = 200;
-    protected static final int CLIENTS = 3;
+    protected static final long DELAY = 500;
 
-    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, int regionPartitions, int delay, int clients) {
+    public LoadGenerator(ScheduledThreadPoolExecutor scheduler, List<Address> writeAddresses, int regionPartitions, long delay) {
         this.scheduler = scheduler;
 
         this.regionPartitions = regionPartitions;
         this.delay = delay;
-        this.clients = clients;
-
+        
+        this.partitions = writeAddresses.stream()
+        .map(address -> address.getPartitionId()).collect(Collectors.toUnmodifiableSet());
         this.startSignal = new CountDownLatch(1);
-    }
-
-    protected KeyPartition getRandomKey(Set<Integer> partitions) {
-        int partitionId = -1;
-        String key = "";
-        do {
-            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
-            partitionId = Utils.getKeyPartitionId(key);
-        } while (!partitions.contains(partitionId));
-
-        return new KeyPartition(key, partitionId);
     }
 
     protected class KeyPartition {

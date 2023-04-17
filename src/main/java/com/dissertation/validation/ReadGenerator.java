@@ -9,32 +9,29 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
+import com.dissertation.utils.Utils;
 
 public class ReadGenerator extends LoadGenerator {
     private final int totalReads;
 
-    private static final int TOTAL_READS = 100;
+    private static final int TOTAL_READS = 20;
     private static final int MAX_KEYS_PER_READ = 2;
 
     private AtomicInteger counter;
     private CountDownLatch countDown;
-    private final Set<Integer> partitions;
 
     private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <totalReads:Int>";
 
     public ReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int totalReads, int clients) {
-        super(scheduler, regionPartitions, delay, clients);
+            int regionPartitions, long delay, int totalReads) {
+        super(scheduler, writeAddresses, regionPartitions, delay);
         this.totalReads = totalReads;
         
         this.counter = new AtomicInteger(0);
         this.countDown = new CountDownLatch(this.totalReads);
-        this.partitions = writeAddresses.stream()
-            .map(address -> address.getPartitionId()).collect(Collectors.toUnmodifiableSet());
         this.init(readAddress, writeAddresses);
     }
 
@@ -57,13 +54,12 @@ public class ReadGenerator extends LoadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
+            long delay = args.length > addressesEndIndex ? Long.parseLong(args[addressesEndIndex]) : DELAY;
             int totalReads = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
                     : TOTAL_READS;
-            int clients = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[regionPartitions + 2]) : CLIENTS;
 
             ReadGenerator readGenerator = new ReadGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
-                    delay, totalReads, clients);
+                    delay, totalReads);
             readGenerator.run();
         } catch (Exception e) {
             System.err.println(USAGE);
@@ -71,16 +67,9 @@ public class ReadGenerator extends LoadGenerator {
     }
 
     private void init(Address readAddress, List<Address> writeAddresses) {
-        // Init clients
-        for (int j = 0; j < this.clients; j++) {
-            try {
-                Client c = new Client(readAddress, writeAddresses);
-                this.scheduler.schedule(
-                        new ReadGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                System.err.println(e.toString());
-            }
-        }
+        // Init client
+        Client c = new Client(readAddress, writeAddresses, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+        this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(c), 0, this.delay, TimeUnit.MILLISECONDS);
     }
 
     public void run() {
@@ -107,8 +96,6 @@ public class ReadGenerator extends LoadGenerator {
                 startSignal.await();
                 if (counter.getAndIncrement() < totalReads) {
                     this.client.requestROT(keys);
-                    scheduler.schedule(
-                            new ReadGeneratorRequest(this.client), delay, TimeUnit.MILLISECONDS);
                     countDown.countDown();
                 }
             } catch (Exception e) {
@@ -121,9 +108,20 @@ public class ReadGenerator extends LoadGenerator {
         Set<String> keys = new HashSet<>();
         int keysPerRead = ThreadLocalRandom.current().nextInt(1, MAX_KEYS_PER_READ + 1);
         while (keys.size() < keysPerRead) {
-            KeyPartition keyPartition = this.getRandomKey(this.partitions);
+            KeyPartition keyPartition = this.getRandomKey();
             keys.add(keyPartition.getKey());
         }
         return keys;
+    }
+
+    private KeyPartition getRandomKey() {
+        int partitionId = -1;
+        String key = "";
+        do {
+            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
+            partitionId = Utils.getKeyPartitionId(key);
+        } while (!this.partitions.contains(partitionId));
+
+        return new KeyPartition(key, partitionId);
     }
 }

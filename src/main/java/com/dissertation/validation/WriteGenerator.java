@@ -3,8 +3,6 @@ package com.dissertation.validation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -16,30 +14,30 @@ import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
+import io.grpc.netty.shaded.io.netty.util.internal.ThreadLocalRandom;
+
 public class WriteGenerator extends LoadGenerator {
     private final int bytes;
     private final int writesPerPartition;
 
     private static final int OBJECT_BYTES = 8;
-    private static final int WRITES_PER_PARTITION = 15;
+    private static final int WRITES_PER_PARTITION = 10;
 
     private AtomicIntegerArray counters;
-    private ConcurrentMap<Integer, Integer> partitionIndexes;
     private AtomicReferenceArray<CountDownLatch> countDowns;
 
-    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <clients:Int> <writesPerPartition:Int> <bytes:Int> ";
+    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String>)+ <delay:Int> <bytes:Int> <writesPerPartition:Int>";
 
     public WriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, int delay, int clients, int writesPerPartition, int bytes) {
-        super(scheduler, regionPartitions, delay, clients);
+            int regionPartitions, long delay, int bytes, int writesPerPartition) {
+        super(scheduler, writeAddresses, regionPartitions, delay);
         this.writesPerPartition = writesPerPartition;
         this.bytes = bytes;
 
-        this.partitionIndexes = new ConcurrentHashMap<>();
         this.counters = new AtomicIntegerArray((new ArrayList<Integer>(Collections.nCopies(this.regionPartitions, 0)))
                 .stream().mapToInt(i -> i).toArray());
         this.countDowns = new AtomicReferenceArray<>(this.regionPartitions);
-
+            
         this.init(readAddress, writeAddresses);
     }
 
@@ -62,14 +60,14 @@ public class WriteGenerator extends LoadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            int delay = args.length > addressesEndIndex ? Integer.parseInt(args[addressesEndIndex]) : DELAY;
+            long delay = args.length > addressesEndIndex ? Long.parseLong(args[addressesEndIndex]) : DELAY;
             int bytes = args.length > addressesEndIndex + 1 ? Integer.parseInt(args[addressesEndIndex + 1])
                     : OBJECT_BYTES;
             int writesPerPartition = args.length > addressesEndIndex + 2 ? Integer.parseInt(args[addressesEndIndex + 2])
                     : WRITES_PER_PARTITION;
-            int clients = args.length > addressesEndIndex + 3 ? Integer.parseInt(args[addressesEndIndex + 3]) : CLIENTS;
+
             WriteGenerator writeGenerator = new WriteGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
-                    delay, bytes, writesPerPartition, clients);
+                    delay, bytes, writesPerPartition);
             writeGenerator.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -78,22 +76,14 @@ public class WriteGenerator extends LoadGenerator {
 
 
     private void init(Address readAddress, List<Address> writeAddresses) {
-        // Init countdowns to wait until all partitions handle the same number of
-        // operations
+        // Init countdowns and clients
         for (int i = 0; i < this.regionPartitions; i++) {
-            this.countDowns.set(i, new CountDownLatch(this.writesPerPartition));
-            this.partitionIndexes.put(writeAddresses.get(i).getPartitionId(), i);
-        }
+            CountDownLatch countDown = new CountDownLatch(this.writesPerPartition);
+            this.countDowns.set(i, countDown);
+            int partitionId = writeAddresses.get(i).getPartitionId();
 
-        // Init clients
-        for (int j = 0; j < this.clients; j++) {
-            try {
-                Client c = new Client(readAddress, writeAddresses);
-                this.scheduler.schedule(
-                        new WriteGeneratorRequest(c), 0, TimeUnit.MILLISECONDS);
-            } catch (Exception e) {
-                System.err.println(e.toString());
-            }
+            Client c = new Client(readAddress, writeAddresses, String.format("%s-%d", Utils.WRITE_CLIENT_ID, partitionId));
+            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(c, countDown, i, partitionId), 0, this.delay, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -110,32 +100,39 @@ public class WriteGenerator extends LoadGenerator {
     }
 
     private class WriteGeneratorRequest implements Runnable {
-        private Client client;
+        private final Client client;
+        private final CountDownLatch countDown;
+        private final int counterPos;
+        private final int partitionId;
 
-        public WriteGeneratorRequest(Client client) {
+        public WriteGeneratorRequest(Client client, CountDownLatch countDown, int counterPos, int partitionId) {
             this.client = client;
+            this.countDown = countDown;
+            this.counterPos = counterPos;
+            this.partitionId = partitionId;
         }
 
         @Override
         public void run() {
-            KeyPartition keyPartition = getRandomKey(partitionIndexes.keySet());
+            String key = getRandomPartitionKey(partitionId);
             ByteString value = Utils.getRandomByteString(bytes);
             try {
                 startSignal.await();
-                int counterPos = partitionIndexes.get(keyPartition.getPartitionId());
                 if (counters.getAndIncrement(counterPos) < writesPerPartition) {
-                    this.client.requestWrite(keyPartition.getKey(), value);
-                    scheduler.schedule(
-                            new WriteGeneratorRequest(this.client),
-                            delay, TimeUnit.MILLISECONDS);
-                    countDowns.updateAndGet(counterPos, (countDown) -> {
-                        countDown.countDown();
-                        return countDown;
-                    });
+                    this.client.requestWrite(key, value);
+                    this.countDown.countDown();
                 }
             } catch (Exception e) {
                 System.err.println(e.getMessage());
             }
         }
+    }
+
+    private String getRandomPartitionKey(int partitionId) {
+        String key = "";
+        do {
+            key = String.valueOf((char) (ThreadLocalRandom.current().nextInt(26) + 'a'));
+        } while (partitionId != Utils.getKeyPartitionId(key));
+        return key;
     }
 }

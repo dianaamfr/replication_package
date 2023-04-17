@@ -1,6 +1,7 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
+import com.dissertation.utils.Utils;
 
 public class ClockState {
     private long logicalTime;
@@ -67,7 +68,7 @@ public class ClockState {
     }
 
     public static ClockState fromString(String timestamp, State state) throws InvalidTimestampException {
-        String[] parts = timestamp.split("\\.");
+        String[] parts = timestamp.split(Utils.TIMESTAMP_SEPARATOR);
         if (parts.length != 2) {
             throw new InvalidTimestampException();
         }
@@ -76,7 +77,7 @@ public class ClockState {
 
     @Override
     public String toString() {
-        return logicalTime + "." + logicalCount;
+        return String.format(Utils.TIMESTAMP_FORMAT, logicalTime, Utils.TIMESTAMP_SEPARATOR, logicalCount);
     }
 
     @Override

@@ -34,7 +34,7 @@ public class S3Helper {
                 .region(region)
                 .forcePathStyle(true);
 
-        if (Utils.S3_ENDPOINT != null) {
+        if (Utils.S3_ENDPOINT != null && !Utils.S3_ENDPOINT.isEmpty()) {
             return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
                     .endpointOverride(URI.create(Utils.S3_ENDPOINT)).build();
         }
