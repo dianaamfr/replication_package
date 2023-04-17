@@ -30,7 +30,7 @@ public abstract class ComputeNode {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     scheduler.shutdown();
-                    logs.addAll(s3Logs);
+                    Utils.logToFile(s3Logs, id + "-s3");
                     Utils.logToFile(logs, id);
                 }
             });

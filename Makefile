@@ -35,9 +35,9 @@ clear:
 
 # LocalStack
 createBuckets:
-	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
-	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
-	awslocal s3api create-bucket --bucket $(clockBucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
+	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region)
+	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region)
+	awslocal s3api create-bucket --bucket $(clockBucket) --region $(region)
 
 emptyBuckets:
 	awslocal s3 rm s3://$(partition1Bucket) --recursive
@@ -63,7 +63,7 @@ readDelay1 = 100
 totalReads1 = 500
 
 readTest1:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
+	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
 
 
 writeDelay1 = 1
