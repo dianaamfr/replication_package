@@ -39,7 +39,7 @@ public enum LogType {
     }
 
     protected Record(NodeType nodeType, String nodeId, LogType logType) {
-        this(nodeType, nodeId, logType, System.nanoTime());
+        this(nodeType, nodeId, logType, System.currentTimeMillis());
     }
 
     public JSONObject toJson() {

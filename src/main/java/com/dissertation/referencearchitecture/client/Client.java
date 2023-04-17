@@ -65,7 +65,7 @@ public class Client {
     }
 
     public ROTResponse requestROT(Set<String> keys) {
-        long t1 = System.nanoTime();
+        long t1 = System.currentTimeMillis();
         Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
@@ -78,15 +78,15 @@ public class Client {
             }
 
             rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
-            long t2 = System.nanoTime();
+            long t2 = System.currentTimeMillis();
             rotResponse = this.readStub.rot(rotRequest);
-            long t3 = System.nanoTime();
+            long t3 = System.currentTimeMillis();
 
             if (!rotResponse.getError()) {
                 pruneCache(rotResponse.getStableTime());
                 builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
                         .setStableTime(rotResponse.getStableTime());
-                long t4 = System.nanoTime();
+                long t4 = System.currentTimeMillis();
                 if(Utils.ROT_LOGS) {
                     this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.RECEIVE, t1));
                     this.logs.add(new ROTRecord(NodeType.CLIENT, LogType.ROT_REQUEST, id, rotResponse.getId(), Phase.SEND, t2));
@@ -105,7 +105,7 @@ public class Client {
     }
 
     public WriteResponse requestWrite(String key, ByteString value) {
-        long requestTime = System.nanoTime();
+        long requestTime = System.currentTimeMillis();
 
         try {
             int partitionId = Utils.getKeyPartitionId(key);

@@ -85,7 +85,7 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
-            long requestTime = System.nanoTime();
+            long requestTime = System.currentTimeMillis();
             ClockState lastTime = new ClockState();
             ClockState writeTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
