@@ -105,10 +105,6 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                if(Utils.WRITE_LOGS) {
-                    logs.add(new WriteRequestRecord(NodeType.WRITER, id, request.getKey(), partition, requestTime));
-                }
-
                 writeTime = hlc.writeEvent(lastTime);
                 storage.put(request.getKey(), writeTime.toString(), request.getValue());
                 responseBuilder.setWriteTimestamp(writeTime.toString());
@@ -116,6 +112,7 @@ public class WriteNode extends ComputeNode {
                 hlc.setSafePushTime(writeTime);
 
                 if(Utils.WRITE_LOGS) {
+                    logs.add(new WriteRequestRecord(NodeType.WRITER, id, request.getKey(), partition, requestTime));
                     logs.add(new WriteResponseRecord(NodeType.WRITER, id, request.getKey(), partition,
                     writeTime.toString()));
                 }

@@ -68,7 +68,7 @@ public class ClockState {
     }
 
     public static ClockState fromString(String timestamp, State state) throws InvalidTimestampException {
-        String[] parts = timestamp.split("-");
+        String[] parts = timestamp.split(Utils.TIMESTAMP_SEPARATOR);
         if (parts.length != 2) {
             throw new InvalidTimestampException();
         }

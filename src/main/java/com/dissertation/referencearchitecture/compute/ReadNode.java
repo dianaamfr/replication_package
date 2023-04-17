@@ -113,13 +113,13 @@ public class ReadNode extends ComputeNode {
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
-            rotId++;
 
             long t2 = System.nanoTime();
             if (Utils.ROT_LOGS) {
                 logs.add(new ROTRecord(NodeType.READER, LogType.ROT_REQUEST, id, rotId, Phase.RECEIVE, t1));
                 logs.add(new ROTRecord(NodeType.READER, LogType.ROT_RESPONSE, id, rotId, Phase.SEND, t2));
             }
+            rotId++;
         }
     }
 }

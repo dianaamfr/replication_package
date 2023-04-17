@@ -49,9 +49,9 @@ The project can be tested locally using LocalStack. To do so, follow the instruc
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
 3. Create buckets: `make createBuckets`. This command creates the following buckets:
-    - bucket `partition1-reference-architecture`;
-    - bucket `partition2-reference-architecture`;
-    - bucket `partition3-reference-architecture`;
+    - bucket `p1-us-east-1-reference-architecture`;
+    - bucket `p2-us-east-1-reference-architecture`;
+    - bucket `p3-us-east-1-reference-architecture`;
     - bucket `clock-reference-architecture`, which is used to persist the clock values.
 4. `make`
 5. Start the Read Compute Nodes:
