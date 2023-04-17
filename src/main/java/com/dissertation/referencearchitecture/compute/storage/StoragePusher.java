@@ -10,10 +10,7 @@ import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
-import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
-import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
-import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
 import com.dissertation.utils.record.LogOperationRecord;
 import com.dissertation.utils.record.Record;

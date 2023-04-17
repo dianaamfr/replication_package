@@ -84,13 +84,20 @@ public class HLC {
         if (prevTime.isActive()) {
             return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
         }
-        return new ClockState(Math.max(prevTime.getLogicalTime(), timeProvider.getTime()), prevTime.getLogicalCount(), State.SYNC);
+
+        long newLogicalTime = Math.max(prevTime.getLogicalTime(), timeProvider.getTime());
+        if(newLogicalTime > prevTime.getLogicalTime()) {
+            return new ClockState(newLogicalTime, 0, State.SYNC);
+        }
+    
+        return prevTime;
     }
 
     private ClockState setSyncComplete(ClockState prevTime) {
         if (prevTime.isWrite()) {
             return prevTime;
         }
+        
         return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
     }
 }
