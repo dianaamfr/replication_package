@@ -3,26 +3,22 @@
 suffix=-reference-architecture
 partition1Bucket = p1-us-east-1$(suffix)
 partition2Bucket = p2-us-east-1$(suffix)
-clockBucket = clock$(suffix)
 s3Endpoint = http://localhost:4566
 region = us-east-1
 
 partitions = 2
 region1Partitions = 2
 
+localIp = 0.0.0.0
 readPort1 = 8080
-readIp1 = 0.0.0.0
-
 writePort1 = 8081
-writeIp1 = 0.0.0.0
-partitionId1 = 1
-
 writePort2 = 8082
-writeIp2 = 0.0.0.0
+
+partitionId1 = 1
 partitionId2 = 2
 
-readAddress1 = $(readPort1) $(readIp1)
-writeAddresses1 = $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
+readAddress1 = $(readPort1) $(localIp)
+writeAddresses1 = $(writePort1) $(localIp) $(partitionId1) $(writePort2) $(localIp) $(partitionId2)
 
 # Setup
 all:
@@ -35,14 +31,12 @@ clear:
 
 # LocalStack
 createBuckets:
-	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
-	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
-	awslocal s3api create-bucket --bucket $(clockBucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
+	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region)
+	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region)
 
 emptyBuckets:
 	awslocal s3 rm s3://$(partition1Bucket) --recursive
 	awslocal s3 rm s3://$(partition2Bucket) --recursive
-	awslocal s3 rm s3://$(clockBucket) --recursive
 	
 # Compute Nodes
 readNode1:

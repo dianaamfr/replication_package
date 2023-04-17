@@ -52,16 +52,6 @@ public class S3Helper {
         return true;
     }
 
-    public boolean persistClock(String timestamp) {
-        try {
-            createObject(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, RequestBody.empty());
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
     public S3ReadResponse getLogAfter(String bucketName, String timestamp) {
         List<S3Object> objects = new ArrayList<>();
 
@@ -82,27 +72,6 @@ public class S3Helper {
             return new S3Error(e.toString());
         }
 
-    }
-
-    public S3ReadResponse getClocksAfter(String timestamp) {
-        List<S3Object> objects = new ArrayList<>();
-
-        try {
-            objects = getObjectsAfter(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp);
-
-            if (objects.isEmpty()) {
-                return new S3ReadResponse();
-            }
-
-            S3Object last = objects.get(objects.size() - 1);
-            if (last.key().compareTo(timestamp) > 0) {
-                String recvTimestamp = last.key().split(Utils.S3_CLOCK_PREFIX)[1];
-                return new S3ReadResponse(recvTimestamp);
-            }
-            return new S3ReadResponse();
-        } catch (Exception e) {
-            return new S3Error(e.toString());
-        }
     }
 
     private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key) {

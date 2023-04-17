@@ -41,10 +41,10 @@ public class StoragePusher implements Runnable {
 
     @Override
     public void run() {
-        ClockState currentTime = this.hlc.trySyncAndGetClock();
         // Sync in the absence of writes
-        if (currentTime.isSync()) {
-            this.sync(currentTime);
+        ClockState newTime = this.hlc.syncClock();
+        if (newTime.isSync()) {
+            this.sync(newTime.toString());
             return;
         }
          
@@ -59,35 +59,8 @@ public class StoragePusher implements Runnable {
         }
     }
 
-    private void sync(ClockState currentTime) {
-        S3ReadResponse response = this.s3Helper.getClocksAfter(currentTime.toString());
-        if (!response.hasTimestamp()) {
-            return;
-        }
-        // System.out.println("SYNC: current=" + currentTimestamp + " recv=" +
-        // response.getTimestamp());
-
-        // Get the most recent timestamp
-        ClockState recvTime;
-        try {
-            recvTime = ClockState.fromString(response.getTimestamp(), State.SYNC);
-        } catch (InvalidTimestampException e) {
-            System.err.println(String.format("Invalid recent timestamp"));
-            return;
-        }
-
-        // Try to sync clock
-        ClockState newTime = this.hlc.syncEvent(recvTime);
-
-        // If a write occurred, abort sync
-        if (!newTime.isSync()) {
-            return;
-        }
-
-        // Push log with new timestamp
-        String newTimestamp = newTime.toString();
-
-        this.push(newTimestamp);
+    private void sync(String timestamp) {
+        this.push(timestamp);
         this.hlc.syncComplete();
     }
 
@@ -95,7 +68,6 @@ public class StoragePusher implements Runnable {
         try {
             JSONObject json = this.toJson(this.storage.getState(), timestamp);
             // System.out.println(json);
-            this.s3Helper.persistClock(timestamp);
             return this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, json.toString());
         } catch (Exception e) {
             e.printStackTrace();
