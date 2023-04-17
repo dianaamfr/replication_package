@@ -18,14 +18,16 @@ import com.dissertation.utils.record.Record.NodeType;
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
     private ReaderStorage storage;
-    private String id;
+    private final String id;
     private ConcurrentLinkedQueue<Record> logs;
+    private final String region;
 
-    public StoragePuller(ReaderStorage storage, S3Helper s3Helper,  String id, ConcurrentLinkedQueue<Record> logs) {
+    public StoragePuller(ReaderStorage storage, S3Helper s3Helper,  String id, ConcurrentLinkedQueue<Record> logs, String region) {
         this.s3Helper = s3Helper;
         this.storage = storage;
         this.id = id;
         this.logs = logs;
+        this.region = region;
     }
 
     @Override
@@ -40,7 +42,7 @@ public class StoragePuller implements Runnable {
     private void pull() {
         for (Entry<Integer, String> entry : this.storage.getPartitionsMaxTimestamp().entrySet()) {
             try {
-                String partitionBucket = Utils.getPartitionBucket(entry.getKey());
+                String partitionBucket = Utils.getPartitionBucket(entry.getKey(), this.region);
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
                         String.valueOf(entry.getValue()));
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {

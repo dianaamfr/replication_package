@@ -27,14 +27,16 @@ public class StoragePusher implements Runnable {
     private int partition;
     private String id;
     private ConcurrentLinkedQueue<Record> logs;
+    private final String region;
 
-    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String id, ConcurrentLinkedQueue<Record> logs) {
+    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String id, ConcurrentLinkedQueue<Record> logs, String region) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
         this.partition = partition;
         this.id = id;
         this.logs = logs;
+        this.region = region;
     }
 
     @Override
@@ -94,7 +96,7 @@ public class StoragePusher implements Runnable {
             JSONObject json = this.toJson(this.storage.getState(), timestamp);
             // System.out.println(json);
             this.s3Helper.persistClock(timestamp);
-            return this.s3Helper.persistLog(Utils.getPartitionBucket(partition), timestamp, json.toString());
+            return this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, json.toString());
         } catch (Exception e) {
             e.printStackTrace();
             return false;

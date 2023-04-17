@@ -5,45 +5,48 @@ import java.net.URISyntaxException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.WriteResponse.Builder;
 import com.dissertation.referencearchitecture.WriteServiceGrpc.WriteServiceImplBase;
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
-import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
 import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
+import com.dissertation.referencearchitecture.compute.clock.HLC;
+import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
 import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
+import com.dissertation.utils.record.Record.NodeType;
 import com.dissertation.utils.record.WriteRequestRecord;
 import com.dissertation.utils.record.WriteResponseRecord;
-import com.dissertation.utils.record.Record.NodeType;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+import software.amazon.awssdk.regions.Region;
 
 public class WriteNode extends ComputeNode {
     private Storage storage;
     private HLC hlc;
     private int partition;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
+    private final String region;
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage,
-            HLC hlc) throws URISyntaxException, IOException, InterruptedException {
+            HLC hlc, Region region) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper, String.format("%s-%d", Utils.WRITE_NODE_ID, partition));
         this.partition = partition;
         this.storage = storage;
         this.hlc = hlc;
+        this.region = region.toString();
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
         this.scheduler.scheduleWithFixedDelay(
-                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.id, this.logs),
+                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.id, this.logs, this.region),
                 Utils.PUSH_DELAY,
                 Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -59,11 +62,12 @@ public class WriteNode extends ComputeNode {
             int partition = Integer.valueOf(args[0]);
             int port = Integer.valueOf(args[1]);
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
-            S3Helper s3Helper = new S3Helper(Utils.getCurrentRegion());
+            Region region = Utils.getCurrentRegion();
+            S3Helper s3Helper = new S3Helper(region);
             Storage storage = new Storage();
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
-            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc);
+            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc, region);
             WriteServiceImpl writeService = writeNode.new WriteServiceImpl();
             Server server = ServerBuilder.forPort(port).addService(writeService).build();
             writeNode.init(server);

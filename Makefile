@@ -1,15 +1,14 @@
 .ONESHELL: # Applies to every targets in the file!
 # Variables
 suffix=-reference-architecture
-partition1Bucket = partition1$(suffix)
-partition2Bucket = partition2$(suffix)
+partition1Bucket = p1-us-east-1$(suffix)
+partition2Bucket = p2-us-east-1$(suffix)
 clockBucket = clock$(suffix)
 s3Endpoint = http://localhost:4566
-region = eu-north-1
+region = us-east-1
 
 partitions = 2
 region1Partitions = 2
-region = eu-north-1
 
 readPort1 = 8080
 readIp1 = 0.0.0.0
@@ -47,13 +46,13 @@ emptyBuckets:
 	
 # Compute Nodes
 readNode1:
-	java -DrotLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
+	java -DwriteLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
+	java -DwriteLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2)
+	java -DwriteLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2)
 
 # CLI
 client1:
@@ -64,7 +63,7 @@ readDelay1 = 100
 totalReads1 = 500
 
 readTest1:
-	java -DrotLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
+	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
 
 
 writeDelay1 = 1
@@ -72,6 +71,6 @@ bytes1 = 8
 writesPerPartition1 = 100
 
 writeTest1:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeGenerator.jar  $(region1Partitions) $(readAddress1) $(writeAddresses1) $(writeDelay1) $(bytes1) $(writesPerPartition1)
+	java -DwriteLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeGenerator.jar  $(region1Partitions) $(readAddress1) $(writeAddresses1) $(writeDelay1) $(bytes1) $(writesPerPartition1)
 
 	

@@ -23,11 +23,12 @@ public class Utils {
     public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
 
-    public static final Region DEFAULT_REGION = Region.EU_NORTH_1;
+    public static final Region DEFAULT_REGION = Region.US_EAST_1;
     public static final String S3_LOG_PREFIX = "Logs/";
     public static final String S3_CLOCK_PREFIX = "Clock/";
-    public static final String S3_CLOCK_BUCKET = "clock" + System.getProperty("bucketSuffix");
-    public static final String S3_PARTITION_FORMAT = "partition%d" + System.getProperty("bucketSuffix");
+    private static final String BUCKET_SUFFIX = System.getProperty("bucketSuffix");
+    public static final String S3_CLOCK_BUCKET = "clock" + BUCKET_SUFFIX;
+    public static final String S3_PARTITION_FORMAT = "p%d-%s" + BUCKET_SUFFIX;
     public static final int S3_MAX_KEYS = 5;
 
     public static final String LOG_STATE = "state";
@@ -79,8 +80,8 @@ public class Utils {
         return Math.floorMod(key.hashCode(), NUM_PARTITIONS) + 1;
     }
 
-    public static String getPartitionBucket(int partitionId) {
-        return String.format(Utils.S3_PARTITION_FORMAT, partitionId);
+    public static String getPartitionBucket(int partitionId, String region) {
+        return String.format(Utils.S3_PARTITION_FORMAT, partitionId, region);
     }
 
     public static void logToFile(ConcurrentLinkedQueue<Record> logs, String file) {
