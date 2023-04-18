@@ -21,7 +21,7 @@ import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.ROTRequestLog;
 import com.dissertation.validation.logs.ROTResponseLog;
-import com.dissertation.validation.logs.Log.NodeType;
+
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
@@ -45,7 +45,7 @@ public class ReadNode extends ComputeNode {
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.id, this.s3Logs, this.region),
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper,this.s3Logs, this.region),
                 Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -88,6 +88,7 @@ public class ReadNode extends ComputeNode {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
             long t1 = System.currentTimeMillis();
+            int emptyValues = 0;
             String stableTime = storage.getStableTime();
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
@@ -98,6 +99,7 @@ public class ReadNode extends ComputeNode {
                     values.put(key, value);
                 } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
                     values.put(key, ByteString.EMPTY);
+                    emptyValues++;
                 } catch (Exception e) {
                     responseBuilder.setStatus(e.toString());
                     responseBuilder.setError(true);
@@ -113,9 +115,9 @@ public class ReadNode extends ComputeNode {
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
 
-            if (Utils.VALIDATION_LOGS) {
-                logs.add(new ROTRequestLog(NodeType.READER, id, rotId, t1));
-                logs.add(new ROTResponseLog(NodeType.READER, id, rotId, stableTime));
+            if (Utils.VALIDATION_LOGS && emptyValues != request.getKeysCount()) {
+                logs.add(new ROTRequestLog(rotId, t1));
+                logs.add(new ROTResponseLog(rotId, stableTime));
             }
             rotId++;
         }

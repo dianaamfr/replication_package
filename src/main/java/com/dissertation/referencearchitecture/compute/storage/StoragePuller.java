@@ -12,19 +12,16 @@ import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.S3OperationLog;
 import com.dissertation.validation.logs.Log;
 import com.dissertation.validation.logs.StableTimeLog;
-import com.dissertation.validation.logs.Log.NodeType;
 
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
     private ReaderStorage storage;
-    private final String id;
     private ArrayDeque<Log> s3Logs;
     private final String region;
 
-    public StoragePuller(ReaderStorage storage, S3Helper s3Helper,  String id, ArrayDeque<Log> s3Logs, String region) {
+    public StoragePuller(ReaderStorage storage, S3Helper s3Helper, ArrayDeque<Log> s3Logs, String region) {
         this.s3Helper = s3Helper;
         this.storage = storage;
-        this.id = id;
         this.s3Logs = s3Logs;
         this.region = region;
     }
@@ -34,7 +31,7 @@ public class StoragePuller implements Runnable {
         this.pull();
         this.storage.setStableTime();
         if(Utils.VALIDATION_LOGS) {
-            this.s3Logs.add(new StableTimeLog(NodeType.READER, this.id, this.storage.getStableTime()));
+            this.s3Logs.add(new StableTimeLog(this.storage.getStableTime()));
         }
     }
 
@@ -46,7 +43,7 @@ public class StoragePuller implements Runnable {
                         String.valueOf(entry.getValue()));
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
                     if(Utils.VALIDATION_LOGS) {
-                        this.s3Logs.add(new S3OperationLog(NodeType.READER, this.id, s3Response.getTimestamp(), entry.getKey(), false));
+                        this.s3Logs.add(new S3OperationLog(s3Response.getTimestamp(), entry.getKey(), false));
                     }
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent(), entry.getKey());

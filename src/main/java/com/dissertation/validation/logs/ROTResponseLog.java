@@ -6,8 +6,8 @@ public class ROTResponseLog extends Log {
     private final long id;
     private final String stableTime;
 
-    public ROTResponseLog(NodeType nodeType, String nodeId, long id, String stableTime) {
-        super(nodeType, nodeId, LogType.ROT_RESPONSE);
+    public ROTResponseLog(long id, String stableTime) {
+        super(LogType.ROT_RESPONSE);
         this.id = id;
         this.stableTime = stableTime;
     }

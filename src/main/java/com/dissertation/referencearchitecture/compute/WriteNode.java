@@ -20,7 +20,7 @@ import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.WriteRequestLog;
 import com.dissertation.validation.logs.WriteResponseLog;
-import com.dissertation.validation.logs.Log.NodeType;
+
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -46,7 +46,7 @@ public class WriteNode extends ComputeNode {
     @Override
     public void init(Server server) throws IOException, InterruptedException {
         this.scheduler.scheduleWithFixedDelay(
-                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.id, this.s3Logs, this.region),
+                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.s3Logs, this.region),
                 Utils.PUSH_DELAY,
                 Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -112,8 +112,8 @@ public class WriteNode extends ComputeNode {
                 hlc.setSafePushTime(writeTime);
 
                 if(Utils.VALIDATION_LOGS) {
-                    logs.add(new WriteRequestLog(NodeType.WRITER, id, request.getKey(), partition, requestTime));
-                    logs.add(new WriteResponseLog(NodeType.WRITER, id, request.getKey(), partition,
+                    logs.add(new WriteRequestLog(request.getKey(), partition, requestTime));
+                    logs.add(new WriteResponseLog(request.getKey(), partition,
                     writeTime.toString()));
                 }
             }

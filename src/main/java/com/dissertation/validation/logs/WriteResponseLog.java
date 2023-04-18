@@ -7,8 +7,8 @@ public class WriteResponseLog extends Log {
    private final String version;
    private final int partition;
 
-   public WriteResponseLog(NodeType nodeType, String nodeId, String key, int partition, String version) {
-      super(nodeType, nodeId, LogType.WRITE_RESPONSE);
+   public WriteResponseLog(String key, int partition, String version) {
+      super(LogType.WRITE_RESPONSE);
       this.key = key;
       this.partition = partition;
       this.version = version;

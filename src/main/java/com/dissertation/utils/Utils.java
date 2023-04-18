@@ -4,7 +4,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.json.JSONArray;
 
@@ -41,6 +40,7 @@ public class Utils {
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
     public static final boolean VALIDATION_LOGS = Boolean.parseBoolean(System.getProperty("logs"));
     public static final int MAX_LOGS = 500;
+    public static final int PAYLOAD_START = 512;
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";
@@ -48,20 +48,17 @@ public class Utils {
     public static final String WRITE_CLIENT_ID = "writeClient";
 
     public static ByteString byteStringFromString(String encodedBuffer) {
-        return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.ISO_8859_1));
+        return ByteString.copyFrom(encodedBuffer.getBytes(StandardCharsets.UTF_8));
     }
 
     public static String stringFromByteString(ByteString byteString) {
-        if (byteString.isEmpty()) {
-            return null;
+        try {
+            String value = byteString.toStringUtf8();
+            return value;
+        } catch(Exception e) {
+            e.printStackTrace();
         }
-        return byteString.toString(StandardCharsets.ISO_8859_1);
-    }
-
-    public static ByteString getRandomByteString(int sizeInBytes) {
-        byte[] b = new byte[sizeInBytes];
-        ThreadLocalRandom.current().nextBytes(b);
-        return ByteString.copyFrom(b);
+        return "";
     }
 
     public static Region getCurrentRegion() {

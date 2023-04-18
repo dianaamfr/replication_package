@@ -210,17 +210,17 @@
                         </goals>
                     </execution>
 
-                    <!-- READ GENERATOR -->
+                    <!-- BUSY READ GENERATOR -->
                     <execution>
                         <id>read-generator</id>
                         <configuration>
-                            <finalName>readGenerator</finalName>
+                            <finalName>busyReadGenerator</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.ReadGenerator</mainClass>
+                                    <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -230,17 +230,17 @@
                         </goals>
                     </execution>
 
-                    <!-- WRITE GENERATOR -->
+                    <!-- CONSTANT WRITE GENERATOR -->
                     <execution>
                         <id>write-generator</id>
                         <configuration>
-                            <finalName>writeGenerator</finalName>
+                            <finalName>constantWriteGenerator</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.WriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

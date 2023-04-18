@@ -23,7 +23,7 @@ import com.dissertation.validation.logs.ROTResponseLog;
 import com.dissertation.validation.logs.Log;
 import com.dissertation.validation.logs.WriteRequestLog;
 import com.dissertation.validation.logs.WriteResponseLog;
-import com.dissertation.validation.logs.Log.NodeType;
+
 import com.google.protobuf.ByteString;
 
 public class Client {
@@ -32,13 +32,11 @@ public class Client {
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
     private ArrayDeque<Log> logs;
-    private final String id;
 
     public Client(Address readAddress, List<Address> writeAddresses, String id) {
         this.cache = new HashMap<>();
         this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
-        this.id = id;
         initStubs(readAddress, writeAddresses);
 
         if(Utils.VALIDATION_LOGS) {
@@ -68,6 +66,8 @@ public class Client {
         Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
+        Map<String, ByteString> values = new HashMap<>();
+        int emptyValues = 0;
 
         try {
             for (String key : keys) {
@@ -81,12 +81,21 @@ public class Client {
 
             if (!rotResponse.getError()) {
                 pruneCache(rotResponse.getStableTime());
-                builder.putAllValues(getReadResponse(rotResponse.getValuesMap()))
-                        .setStableTime(rotResponse.getStableTime());
 
-                if(Utils.VALIDATION_LOGS) {
-                    this.logs.add(new ROTRequestLog(NodeType.CLIENT, id, rotResponse.getId(), t1));
-                    this.logs.add(new ROTResponseLog(NodeType.CLIENT, id, rotResponse.getId(), rotResponse.getStableTime()));
+                // Search cache
+                for (Entry<String, ByteString> entry : rotResponse.getValuesMap().entrySet()) {
+                    Version cacheVersion = this.cache.getOrDefault(entry.getKey(), null);
+                    ByteString version = cacheVersion != null ? cacheVersion.getValue() : entry.getValue();
+                    if(version.isEmpty()) {
+                        emptyValues++;
+                    }
+                    values.put(entry.getKey(), cacheVersion != null ? cacheVersion.getValue() : entry.getValue());
+                }
+                builder.putAllValues(values).setStableTime(rotResponse.getStableTime());
+
+                if(Utils.VALIDATION_LOGS && emptyValues != keys.size()) {
+                    this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
+                    this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime()));
                 }
                 
                 return builder.build();
@@ -121,8 +130,8 @@ public class Client {
                 this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
 
                 if(Utils.VALIDATION_LOGS) {
-                    logs.add(new WriteRequestLog(NodeType.WRITER, id, writeRequest.getKey(), partitionId, t1));
-                    logs.add(new WriteResponseLog(NodeType.WRITER, id, writeRequest.getKey(), partitionId,
+                    logs.add(new WriteRequestLog(writeRequest.getKey(), partitionId, t1));
+                    logs.add(new WriteResponseLog(writeRequest.getKey(), partitionId,
                             writeResponse.getWriteTimestamp()));
                 }
             }
@@ -143,16 +152,6 @@ public class Client {
             }
         }
         this.cache.keySet().removeAll(toPrune);
-    }
-
-    private Map<String, ByteString> getReadResponse(Map<String, ByteString> response) {
-        Map<String, ByteString> values = new HashMap<>();
-
-        for (Entry<String, ByteString> entry : response.entrySet()) {
-            Version v = this.cache.getOrDefault(entry.getKey(), null);
-            values.put(entry.getKey(), v != null ? v.getValue() : entry.getValue());
-        }
-        return values;
     }
 
 }
