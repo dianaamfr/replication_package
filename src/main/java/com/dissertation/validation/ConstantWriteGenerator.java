@@ -47,7 +47,7 @@ public class ConstantWriteGenerator {
         this.countDown = new CountDownLatch(totalWrites);
         this.logs = new ArrayDeque<>(this.totalWrites * 2);
         
-        if(Utils.VALIDATION_LOGS) {
+        if(Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
@@ -119,7 +119,7 @@ public class ConstantWriteGenerator {
                 WriteResponse writeResponse = client.requestWrite(key, value);
                 long t2 = System.currentTimeMillis();
 
-                if(Utils.VALIDATION_LOGS) {
+                if(Utils.LOGS) {
                     logs.add(new WriteRequestLog(key, partitionId, t1));
                     logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
                 }

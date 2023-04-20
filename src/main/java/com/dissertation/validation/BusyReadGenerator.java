@@ -31,7 +31,7 @@ public class BusyReadGenerator {
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.lastPayload = Utils.PAYLOAD_START-1;
 
-        if(Utils.VALIDATION_LOGS) {
+        if(Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
@@ -91,34 +91,38 @@ public class BusyReadGenerator {
             rotResponse = this.client.requestROT(keys);
             t2 = System.currentTimeMillis();
 
-            if(Utils.VALIDATION_LOGS && !rotResponse.getError()) {
-                for(ByteString value: rotResponse.getValuesMap().values()) {
-                    valueStr = Utils.stringFromByteString(value);
-                    if(valueStr.isBlank()) {
-                        continue;
-                    }
-
-                    try {
-                        valueInt = Integer.valueOf(valueStr);
-                        if(valueInt > this.lastPayload) {
-                            this.lastPayload = valueInt;
-                            newPayload = true;
-                        };
-                    } catch (NumberFormatException e) {
-                        continue;
-                    }
-                };
-
-                if(newPayload) {
-                    newPayload = false;
-                    this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
-                    this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
-                }
-
-                if(rotResponse.getValuesMap().containsValue(this.endMarker)) {
-                    break;
-                }
+            if(!Utils.LOGS || rotResponse.getError()) {
+                continue;
             }
+
+            for(ByteString value: rotResponse.getValuesMap().values()) {
+                valueStr = Utils.stringFromByteString(value);
+                if(valueStr.isBlank()) {
+                    continue;
+                }
+
+                try {
+                    valueInt = Integer.valueOf(valueStr);
+                    if(valueInt > this.lastPayload) {
+                        this.lastPayload = valueInt;
+                        newPayload = true;
+                    };
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            };
+
+            if(newPayload) {
+                newPayload = false;
+                this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
+                this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
+            }
+
+            if(rotResponse.getValuesMap().containsValue(this.endMarker)) {
+                break;
+            }
+        }
+
         }
     }
 }

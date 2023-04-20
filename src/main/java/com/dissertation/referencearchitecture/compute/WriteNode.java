@@ -112,7 +112,7 @@ public class WriteNode extends ComputeNode {
                 hlc.setSafePushTime(writeTime);
                 long t2 = System.currentTimeMillis();
 
-                if(Utils.VALIDATION_LOGS) {
+                if(Utils.LOGS) {
                     logs.add(new WriteRequestLog(request.getKey(), partition, t1));
                     logs.add(new WriteResponseLog(request.getKey(), partition,
                     writeTime.toString(), t2));

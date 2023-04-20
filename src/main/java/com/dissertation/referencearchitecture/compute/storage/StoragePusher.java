@@ -51,7 +51,7 @@ public class StoragePusher implements Runnable {
         if(!safePushTime.isZero()) {
             this.push(safePushTime.toString());
 
-            if(Utils.VALIDATION_LOGS) {
+            if(Utils.LOGS) {
                 this.logs.add(new S3OperationLog(safePushTime.toString(), this.partition, true));
             }
         }
