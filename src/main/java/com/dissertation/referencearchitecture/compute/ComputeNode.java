@@ -24,7 +24,7 @@ public abstract class ComputeNode {
         this.s3Helper = s3Helper;
         this.id = id;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
-        this.s3Logs = new ArrayDeque<>(50);
+        this.s3Logs = new ArrayDeque<>(Utils.MAX_LOGS);
 
         if(Utils.VALIDATION_LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {

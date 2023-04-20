@@ -12,6 +12,7 @@ import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.S3OperationLog;
 import com.dissertation.validation.logs.Log;
 import com.dissertation.validation.logs.StableTimeLog;
+import com.dissertation.validation.logs.StoreVersionLog;
 
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
@@ -74,6 +75,9 @@ public class StoragePuller implements Runnable {
                         key,
                         timestamp,
                         Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
+                if(Utils.VALIDATION_LOGS) {
+                    this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
+                }
             }
             this.storage.setLastParsedIndex(key, versionChainArray.length());
         }

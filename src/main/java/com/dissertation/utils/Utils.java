@@ -39,7 +39,7 @@ public class Utils {
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
     public static final boolean VALIDATION_LOGS = Boolean.parseBoolean(System.getProperty("logs"));
-    public static final int MAX_LOGS = 500;
+    public static final int MAX_LOGS = 300;
     public static final int PAYLOAD_START = 512;
 
     public static final String READ_NODE_ID = "readNode";
