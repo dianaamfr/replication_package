@@ -35,9 +35,9 @@ clear:
 
 # LocalStack
 createBuckets:
-	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
-	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
-	awslocal s3api create-bucket --bucket $(clockBucket) --region $(region) --create-bucket-configuration LocationConstraint=$(region)
+	awslocal s3api create-bucket --bucket $(partition1Bucket) --region $(region)
+	awslocal s3api create-bucket --bucket $(partition2Bucket) --region $(region)
+	awslocal s3api create-bucket --bucket $(clockBucket) --region $(region)
 
 emptyBuckets:
 	awslocal s3 rm s3://$(partition1Bucket) --recursive
