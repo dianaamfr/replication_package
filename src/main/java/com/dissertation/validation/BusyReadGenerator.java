@@ -123,6 +123,6 @@ public class BusyReadGenerator {
             }
         }
 
-        }
+        this.client.shutdown();
     }
 }

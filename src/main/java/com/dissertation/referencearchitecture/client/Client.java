@@ -20,24 +20,32 @@ import com.dissertation.utils.Utils;
 
 import com.google.protobuf.ByteString;
 
+import io.grpc.ManagedChannel;
+
 public class Client {
     private Map<Integer, WriteServiceGrpc.WriteServiceBlockingStub> writeStubs;
     private ROTServiceGrpc.ROTServiceBlockingStub readStub;
+    private List<ManagedChannel> channels;
     private Map<String, Version> cache;
     private String lastWriteTimestamp;
 
     public Client(Address readAddress, List<Address> writeAddresses) {
         this.cache = new HashMap<>();
         this.lastWriteTimestamp = Utils.MIN_TIMESTAMP;
+        this.channels = new ArrayList<>();
         initStubs(readAddress, writeAddresses);
     }
 
     public void initStubs(Address readAddress, List<Address> writeAddresses) {
-        this.readStub = ROTServiceGrpc.newBlockingStub(readAddress.getChannel());
+        ManagedChannel readChannel = readAddress.getChannel();
+        this.channels.add(readChannel);
+        this.readStub = ROTServiceGrpc.newBlockingStub(readChannel);
         this.writeStubs = new HashMap<>();
 
         for (Address address : writeAddresses) {
-            this.writeStubs.put(address.getPartitionId(), WriteServiceGrpc.newBlockingStub(address.getChannel()));
+            ManagedChannel writeChannel = address.getChannel();
+            this.channels.add(writeChannel);
+            this.writeStubs.put(address.getPartitionId(), WriteServiceGrpc.newBlockingStub(writeChannel));
         }
     }
 
@@ -114,6 +122,12 @@ public class Client {
             }
         }
         this.cache.keySet().removeAll(toPrune);
+    }
+
+    public void shutdown() {
+        for (ManagedChannel channel : this.channels) {
+            channel.shutdown();
+        }
     }
 
 }

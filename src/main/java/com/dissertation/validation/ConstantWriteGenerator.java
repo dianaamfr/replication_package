@@ -102,6 +102,7 @@ public class ConstantWriteGenerator {
             e.printStackTrace();
         }
         this.scheduler.shutdown();
+        this.client.shutdown();
     }
 
     private class WriteGeneratorRequest implements Runnable {
