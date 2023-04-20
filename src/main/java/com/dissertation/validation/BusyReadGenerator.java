@@ -1,5 +1,6 @@
 package com.dissertation.validation;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -9,19 +10,34 @@ import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
+import com.dissertation.validation.logs.Log;
+import com.dissertation.validation.logs.ROTRequestLog;
+import com.dissertation.validation.logs.ROTResponseLog;
 import com.google.protobuf.ByteString;
 
 public class BusyReadGenerator {
     private final Client client;
     private final ByteString endMarker;
     private final Set<String> keys;
+    private final ArrayDeque<Log> logs;
+    private int lastPayload;
 
     private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keys:String>";
 
     public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, int endMarker, Set<String> keys) {
-        this.client = new Client(readAddress, writeAddresses, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+        this.client = new Client(readAddress, writeAddresses);
         this.endMarker = Utils.byteStringFromString(String.valueOf(endMarker));
         this.keys = keys;
+        this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
+        this.lastPayload = Utils.PAYLOAD_START-1;
+
+        if(Utils.VALIDATION_LOGS) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+                }
+            });
+        }
     }
 
     public static void main(String[] args) {
@@ -64,10 +80,34 @@ public class BusyReadGenerator {
 
 
     public void run() {
+        ROTResponse rotResponse;
+        boolean newPayload = true;
+        long t1, t2;
+        int writeId;
+
         while(true) {
-            ROTResponse rotResponse = this.client.requestROT(keys);
-            if(!rotResponse.getError() && rotResponse.getValuesMap().containsValue(this.endMarker)) {
-                break;
+            t1 = System.currentTimeMillis();
+            rotResponse = this.client.requestROT(keys);
+            t2 = System.currentTimeMillis();
+
+            if(Utils.VALIDATION_LOGS && !rotResponse.getError()) {
+                for(ByteString value: rotResponse.getValuesMap().values()) {
+                    writeId = Integer.valueOf(Utils.stringFromByteString(value));
+                    if(writeId > this.lastPayload) {
+                        this.lastPayload = writeId;
+                        newPayload = true;
+                    }
+                };
+
+                if(newPayload) {
+                    newPayload = false;
+                    this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
+                    this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
+                }
+
+                if(rotResponse.getValuesMap().containsValue(this.endMarker)) {
+                    break;
+                }
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.dissertation.validation;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -10,6 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
+import com.dissertation.validation.logs.Log;
 import com.google.protobuf.ByteString;
 
 
@@ -22,13 +24,14 @@ public class ConstantWriteGenerator {
     private AtomicInteger payload;
     private AtomicInteger counter;
     private CountDownLatch countDown;
+    private final ArrayDeque<Log> logs;
 
     private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <keys:String>";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
             int regionPartitions, long delay, int totalWrites, List<String> keys) {
         
-        this.client = new Client(readAddress, writeAddresses, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));   
+        this.client = new Client(readAddress, writeAddresses);   
         this.delay = delay;
         this.totalWrites = totalWrites;
         this.keys = keys;
@@ -39,6 +42,15 @@ public class ConstantWriteGenerator {
 
         this.counter = new AtomicInteger(0);
         this.countDown = new CountDownLatch(totalWrites);
+        this.logs = new ArrayDeque<>(this.totalWrites * 2);
+        
+        if(Utils.VALIDATION_LOGS) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
+                }
+            });
+        }
     }
 
     public static void main(String[] args) {
@@ -97,7 +109,16 @@ public class ConstantWriteGenerator {
             String key = keys.get(count % keys.size());
             if (count < totalWrites) {
                 ByteString value = Utils.byteStringFromString(String.valueOf(payload.getAndIncrement()));
+
+                long t1 = System.currentTimeMillis();
                 client.requestWrite(key, value);
+                long t2 = System.currentTimeMillis();
+
+                if(Utils.VALIDATION_LOGS) {
+                    logs.add(new WriteRequestLog(writeRequest.getKey(), partitionId, t1));
+                    logs.add(new WriteResponseLog(writeRequest.getKey(), partitionId,
+                            writeResponse.getWriteTimestamp()));
+                }
                 countDown.countDown();
             }
         }

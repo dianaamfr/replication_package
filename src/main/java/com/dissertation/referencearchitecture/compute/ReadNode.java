@@ -87,8 +87,6 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
-            long t1 = System.currentTimeMillis();
-            int emptyValues = 0;
             String stableTime = storage.getStableTime();
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
@@ -99,7 +97,6 @@ public class ReadNode extends ComputeNode {
                     values.put(key, value);
                 } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
                     values.put(key, ByteString.EMPTY);
-                    emptyValues++;
                 } catch (Exception e) {
                     responseBuilder.setStatus(e.toString());
                     responseBuilder.setError(true);
@@ -115,10 +112,6 @@ public class ReadNode extends ComputeNode {
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
 
-            if (Utils.VALIDATION_LOGS && emptyValues != request.getKeysCount()) {
-                logs.add(new ROTRequestLog(rotId, t1));
-                logs.add(new ROTResponseLog(rotId, stableTime));
-            }
             rotId++;
         }
     }
