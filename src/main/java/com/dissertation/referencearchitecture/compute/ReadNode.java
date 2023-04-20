@@ -19,8 +19,6 @@ import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.validation.logs.ROTRequestLog;
-import com.dissertation.validation.logs.ROTResponseLog;
 
 import com.google.protobuf.ByteString;
 

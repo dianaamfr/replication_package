@@ -15,8 +15,6 @@ import com.dissertation.validation.logs.ROTRequestLog;
 import com.dissertation.validation.logs.ROTResponseLog;
 import com.google.protobuf.ByteString;
 
-import io.grpc.netty.shaded.io.netty.handler.codec.rtsp.RtspHeaders.Values;
-
 public class BusyReadGenerator {
     private final Client client;
     private final ByteString endMarker;
