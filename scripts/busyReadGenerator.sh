@@ -1,6 +1,6 @@
 if [ $# -lt 9 ]
 then
-  echo "Usage: readGenerator.sh <numberOfPartitions> <numberOfRegionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>+) <expectedWrites> (<key>)+"
+  echo "Usage: busyReadGenerator.sh <numberOfPartitions> <numberOfRegionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>+) <expectedWrites> (<key>)+"
   exit 1
 fi
 

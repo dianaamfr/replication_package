@@ -22,7 +22,7 @@ public class BusyReadGenerator {
     private final ArrayDeque<Log> logs;
     private int lastPayload;
 
-    private static final String USAGE = "Usage: ReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keys:String>";
+    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keys:String>";
 
     public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, int endMarker, Set<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
@@ -88,7 +88,7 @@ public class BusyReadGenerator {
 
         while(true) {
             t1 = System.currentTimeMillis();
-            rotResponse = this.client.requestROT(keys);
+            rotResponse = this.client.requestROT(this.keys);
             t2 = System.currentTimeMillis();
 
             if(!Utils.LOGS || rotResponse.getError()) {

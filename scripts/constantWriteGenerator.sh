@@ -1,6 +1,6 @@
 if [ $# -lt 10 ]
 then
-  echo "Usage: readGenerator.sh <numberOfPartitions> <numberOfRegionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>+) <delay> <totalWrites> (<keys>)+"
+  echo "Usage: constantWriteGenerator.sh <numberOfPartitions> <numberOfRegionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>+) <delay> <totalWrites> (<keys>)+"
   exit 1
 fi
 

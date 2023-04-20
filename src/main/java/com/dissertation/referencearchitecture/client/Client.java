@@ -74,7 +74,7 @@ public class Client {
                     ByteString version = cacheVersion != null ? cacheVersion.getValue() : entry.getValue();
                     values.put(entry.getKey(), version);
                 }
-                builder.putAllValues(values).setStableTime(rotResponse.getStableTime());
+                builder.putAllValues(values).setStableTime(rotResponse.getStableTime()).setId(rotResponse.getId());
                 
                 return builder.build();
             }

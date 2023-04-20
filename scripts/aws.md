@@ -1,6 +1,7 @@
 # RUN:
 **On every machine**
 docker rm -f $(docker ps -a -q)
+docker rmi $(docker images -a -q)
 
 ## Reader EU-WEST-1
 **Read Node**: ./readNode.sh 1 8080 1
@@ -27,24 +28,24 @@ docker rm -f $(docker ps -a -q)
 docker container cp readNode:/logs/readnode-eu-west-1.json .
 docker container cp readNode:/logs/readnode-eu-west-1-s3.json .
 
-scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.com:~/readnode-eu-west-1.json ./logs-ref-arch
-scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.com:~/readnode-eu-west-1-s3.json ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/readnode-eu-west-1.json ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/readnode-eu-west-1-s3.json ./logs-ref-arch
 
 **Read Generator**
 docker container cp busyReadGenerator:/logs/readclient-eu-west-1.json
-scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.com:~/readclient-eu-west-1.json ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/readclient-eu-west-1.json ./logs-ref-arch
 
 **Write Generator**
-docker container cp readNode:/logs/writeclient-eu-west-1.json .
-scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.com:~/writeclient-eu-west-1.json ./logs-ref-arch
+docker container cp constantWriteGenerator:/logs/writeclient-eu-west-1.json .
+scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/writeclient-eu-west-1.json ./logs-ref-arch
 
 ## Write Nodes EU-WEST-1
 **Write Node 1**
-docker container cp readNode:/logs/writenode-1.json .
-docker container cp readNode:/logs/writenode-1-s3.json .
+docker container cp writeNode:/logs/writenode-1.json .
+docker container cp writeNode:/logs/writenode-1-s3.json .
 
-scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.com:~/writenode-1.json ./logs-ref-arch
-scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.com:~/writenode-1-s3.json ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/writenode-1.json ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/writenode-1-s3.json ./logs-ref-arch
 
 
 ## Reader US-EAST-1
@@ -52,9 +53,9 @@ scp -i "reference-architecture-ubuntu.pem" -r <DNS>.eu-west-1.compute.amazonaws.
 docker container cp readNode:/logs/readnode-us-east-1.json .
 docker container cp readNode:/logs/readnode-us-east-1-s3.json .
 
-scp -i "reference-architecture-ubuntu-us.pem" -r <DNS>.compute-1.amazonaws.com:~/readnode-us-east-1.json ./logs-ref-arch
-scp -i "reference-architecture-ubuntu-us.pem" -r <DNS>.compute-1.amazonaws.com:~/readnode-us-east-1-s3.json ./logs-ref-arch
+scp -i "reference-architecture-us.pem" -r ubuntu@<DNS>.compute-1.amazonaws.com:~/readnode-us-east-1.json ./logs-ref-arch
+scp -i "reference-architecture-us.pem" -r ubuntu@<DNS>.compute-1.amazonaws.com:~/readnode-us-east-1-s3.json ./logs-ref-arch
 
 **Read Generator**
 docker container cp busyReadGenerator:/logs/readclient-us-east-1.json
-scp -i "reference-architecture-ubuntu-us.pem" -r <DNS>.compute-1.amazonaws.com:~/readclient-us-east-1.json ./logs-ref-arch
+scp -i "reference-architecture-us.pem" -r ubuntu@<DNS>.compute-1.amazonaws.com:~/readclient-us-east-1.json ./logs-ref-arch

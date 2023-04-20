@@ -29,7 +29,7 @@ public class ConstantWriteGenerator {
     private CountDownLatch countDown;
     private final ArrayDeque<Log> logs;
 
-    private static final String USAGE = "Usage: WriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <keys:String>";
+    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <keys:String>";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
             int regionPartitions, long delay, int totalWrites, List<String> keys) {
