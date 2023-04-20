@@ -10,9 +10,9 @@ For a more detailed description of the reference architecture please refer to [R
 
 
 ## Prototype Features
-### Current Features
-- **ECDS**: LocalStack is being used to emulate AWS S3 (without any replication configuration).
-- **Compute Layer**: Provides ROTs and Writes to the Client through gRPC and uses AWS S3 for persistance.
+### Features
+- **ECDS**: Compatible with AWS S3.
+- **Compute Layer**: Provides ROTs and Writes through gRPC and uses AWS S3 for persistance.
 - **Client Layer**: Connects with the Compute Layer through gRPC.
 - **Clock**: Hybrid Logical Clock.
 - **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
@@ -31,13 +31,18 @@ This repository holds a Maven project with the following structure:
     - `utils`: Util functions, constants and classes.
     - `validation`: Comprises classes that can be used to test the prototype, namely:
         - `ClientInterface`: To test the prototype through a command-line interface.
-        - TODO.
+        - `logs`: Classes that represent logs of each relevant operation. Used for validating the prototype.
+        - `BusyReadGenerator`: A single-threaded reader that issues read requests with no delay to all the keys provided in the arguments.
+        - `ConstantWriteGenerator`: A single-threaded writer that issues a configurable number of write requests, alternating between the provided set of keys, with a configurable delay
 - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
+- `logs`: Stores the logs that result from the validation.
+- `scripts`: Holds useful scripts for running each component of the prototype with docker.
 
 ### Dependencies
+To test locally: 
+- [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/) and [AWS Command Line Interface](https://docs.localstack.cloud/user-guide/integrations/aws-cli/).
 - OpenJDK
 - Maven
-- [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/) can be used to test the project locally.
 
 ### Execution Instructions
 #### LocalStack (locally)
@@ -49,26 +54,23 @@ The project can be tested locally using LocalStack. To do so, follow the instruc
 3. Create buckets: `make createBuckets`. This command creates the following buckets:
     - bucket `p1-us-east-1-reference-architecture`;
     - bucket `p2-us-east-1-reference-architecture`;
-    - bucket `p3-us-east-1-reference-architecture`;
     - bucket `clock-reference-architecture`, which is used to persist the clock values.
 4. `make`
 5. Start the Read Compute Nodes:
-    - `make readNode1` (reads from partition 1 and partition 2)
-    - `make readNode2` (reads from partition 3)
+    - `make readNode` (reads from partition 1 and partition 2)
 6. Start the Write Compute Nodes, one on each terminal:
     - `make writeNode1` (writes in partition 1)
     - `make writeNode2` (writes in partition 2)
-    - `make writeNode3` (writes in partition 3)
 
 **Issue read and write requests**:
 - Using the command-line interface:
-    1. Start the desired number of clients: `make client1` / `make client2`
+    1. Start the desired number of clients: `make client`
     2. Issue the desired ROT and write requests:
         - ROT example: `R x y`
         - Write example: `W x 3`
 - Generate load with the load generators:
-    1. Start the Write Generator: `make writeGenerator1` / `make writeGenerator2`
-    2. Start the Read Generator: `make readGenerator1` / `make readGenerator2`
+    1. Start the Write Generator: `make writeTest`
+    2. Start the Read Generator: `make readTest`
 
 ## Candidate Reference Architecture
 
