@@ -8,10 +8,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.Log;
+import com.dissertation.validation.logs.WriteRequestLog;
+import com.dissertation.validation.logs.WriteResponseLog;
 import com.google.protobuf.ByteString;
 
 
@@ -107,17 +110,18 @@ public class ConstantWriteGenerator {
         public void run() {
             int count = counter.getAndIncrement();
             String key = keys.get(count % keys.size());
+            int partitionId = Utils.getKeyPartitionId(key);
+
             if (count < totalWrites) {
                 ByteString value = Utils.byteStringFromString(String.valueOf(payload.getAndIncrement()));
 
                 long t1 = System.currentTimeMillis();
-                client.requestWrite(key, value);
+                WriteResponse writeResponse = client.requestWrite(key, value);
                 long t2 = System.currentTimeMillis();
 
                 if(Utils.VALIDATION_LOGS) {
-                    logs.add(new WriteRequestLog(writeRequest.getKey(), partitionId, t1));
-                    logs.add(new WriteResponseLog(writeRequest.getKey(), partitionId,
-                            writeResponse.getWriteTimestamp()));
+                    logs.add(new WriteRequestLog(key, partitionId, t1));
+                    logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
                 }
                 countDown.countDown();
             }

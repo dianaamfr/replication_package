@@ -85,7 +85,7 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
-            long requestTime = System.currentTimeMillis();
+            long t1 = System.currentTimeMillis();
             ClockState lastTime = new ClockState();
             ClockState writeTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
@@ -110,11 +110,12 @@ public class WriteNode extends ComputeNode {
                 responseBuilder.setWriteTimestamp(writeTime.toString());
                 hlc.writeComplete();
                 hlc.setSafePushTime(writeTime);
+                long t2 = System.currentTimeMillis();
 
                 if(Utils.VALIDATION_LOGS) {
-                    logs.add(new WriteRequestLog(request.getKey(), partition, requestTime));
+                    logs.add(new WriteRequestLog(request.getKey(), partition, t1));
                     logs.add(new WriteResponseLog(request.getKey(), partition,
-                    writeTime.toString()));
+                    writeTime.toString(), t2));
                 }
             }
 

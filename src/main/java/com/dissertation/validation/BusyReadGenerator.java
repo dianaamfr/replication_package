@@ -15,6 +15,8 @@ import com.dissertation.validation.logs.ROTRequestLog;
 import com.dissertation.validation.logs.ROTResponseLog;
 import com.google.protobuf.ByteString;
 
+import io.grpc.netty.shaded.io.netty.handler.codec.rtsp.RtspHeaders.Values;
+
 public class BusyReadGenerator {
     private final Client client;
     private final ByteString endMarker;
@@ -81,9 +83,10 @@ public class BusyReadGenerator {
 
     public void run() {
         ROTResponse rotResponse;
-        boolean newPayload = true;
+        boolean newPayload = false;
         long t1, t2;
-        int writeId;
+        String valueStr;
+        int valueInt;
 
         while(true) {
             t1 = System.currentTimeMillis();
@@ -92,10 +95,19 @@ public class BusyReadGenerator {
 
             if(Utils.VALIDATION_LOGS && !rotResponse.getError()) {
                 for(ByteString value: rotResponse.getValuesMap().values()) {
-                    writeId = Integer.valueOf(Utils.stringFromByteString(value));
-                    if(writeId > this.lastPayload) {
-                        this.lastPayload = writeId;
-                        newPayload = true;
+                    valueStr = Utils.stringFromByteString(value);
+                    if(valueStr.isBlank()) {
+                        continue;
+                    }
+
+                    try {
+                        valueInt = Integer.valueOf(valueStr);
+                        if(valueInt > this.lastPayload) {
+                            this.lastPayload = valueInt;
+                            newPayload = true;
+                        };
+                    } catch (NumberFormatException e) {
+                        continue;
                     }
                 };
 
