@@ -40,6 +40,7 @@ public class Utils {
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
     public static final boolean LOGS = Boolean.parseBoolean(System.getProperty("logs"));
     public static final int MAX_LOGS = 300;
+    public static final int MAX_WRITES = 1000000;
     public static final int PAYLOAD_START = 512;
 
     public static final String READ_NODE_ID = "readNode";

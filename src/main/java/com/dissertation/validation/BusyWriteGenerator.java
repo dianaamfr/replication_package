@@ -1,35 +1,22 @@
 package com.dissertation.validation;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
-import com.dissertation.validation.logs.Log;
 import com.google.protobuf.ByteString;
 
 public class BusyWriteGenerator {
     private final Client client;
     private final List<String> keys;
-    private final ArrayDeque<Log> logs;
 
     private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <keys:String>";
 
     public BusyWriteGenerator(Address readAddress, List<Address> writeAddresses, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.keys = keys;
-        this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
-
-        if(Utils.LOGS) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    client.shutdown();
-                    Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
-                }
-            });
-        }
     }
 
     public static void main(String[] args) {
@@ -71,11 +58,18 @@ public class BusyWriteGenerator {
     public void run() {
         String key;
         ByteString value;
-        long payload = System.currentTimeMillis();
+        long payload;
         long count = 0;
 
-        while (count < Long.MAX_VALUE) {
+        try {
+
+        } catch(Exception e) {
+            this.client.shutdown();
+        }
+
+        while (count < Utils.MAX_WRITES) {
             key = keys.get((int) (count % keys.size()));
+            payload = System.currentTimeMillis();
             value = Utils.byteStringFromString(String.valueOf(payload));
             this.client.requestWrite(key, value);
             count++;
