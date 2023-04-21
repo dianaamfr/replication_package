@@ -31,7 +31,7 @@ def get_file(file):
     return json.loads(open(CURRENT_PATH + '/logs/' + file + '.json', 'r').read())
 
 def get_push_time(df, version):
-    return pusher_df[(df['logType'] == 'LOG_PUSH') & (pusher_df['version'] >= client_response['version'])].sort_values('version').iloc[0]['time']
+    return df[(df['logType'] == 'LOG_PUSH') & (df['version'] >= version)].sort_values('version').iloc[0]['time']
 
 def get_pull_time(df, version):
     return df[(df['logType'] == 'LOG_PULL') & (df['version'] >= version)].sort_values('version').iloc[0]['time']
@@ -47,7 +47,7 @@ def get_read_time(df, version):
 
 
 def combine_logs():
-    dest_file = open(CURRENT_PATH + '/results/visibility-validation.csv' ,'w+', newline='\n', encoding='utf-8')
+    dest_file = open(CURRENT_PATH + '/results/visibility-logs.csv' ,'w+', newline='\n', encoding='utf-8')
     writer = csv.writer(dest_file)
     writer.writerow(get_header())
 
@@ -62,13 +62,11 @@ def combine_logs():
     
     read_client_eu = get_data('readclient-eu-west-1')
     read_client_us = get_data('readclient-us-east-1')
-    read_node_eu = get_data('readnode-eu-west-1')
-    read_node_us = get_data('readnode-us-east-1')
 
     i = 0
     for client_request, client_response in zip(write_client[::2], write_client[1::2]):
         # Get the time when the version was first pushed in the write node
-        push_time = pusher_df[pusher_df['version'] >= client_response['version']].sort_values('version').iloc[0]['time']
+        push_time = get_push_time(pusher_df, client_response['version'])
 
         # Get the time when the version was first pulled in each read node
         pull_time_eu = get_pull_time(puller_eu_df, client_response['version'])
@@ -106,6 +104,58 @@ def combine_logs():
             )
         i+=2
 
+def get_stats():
+    df = pd.read_csv(CURRENT_PATH + '/results/visibility-logs.csv')
+    #df = df.drop(index=0)
+    dest_file = open(CURRENT_PATH + '/results/visibility-validation.csv' ,'w+', newline='\n', encoding='utf-8')
+    writer = csv.writer(dest_file)
+    writer.writerow(['', 
+        'Write to response', 
+        'Write to push',
+        'Write to pull (EU)',
+        'Write to pull (US)',
+        'Write to stable (EU)', 
+        'Write to stable (US)', 
+        'Write to store (EU)', 
+        'Write to store (US)',
+        'Write to read (EU)',
+        'Write to read (US)'
+        ])
+
+    response_time = get_elapsed_time(df, 'client_request', 'client_response')
+    push_time = get_elapsed_time(df, 'client_request', 'write_node_push')
+    pull_time_eu = get_elapsed_time(df, 'client_request', 'read_node_eu_pull')
+    pull_time_us = get_elapsed_time(df, 'client_request', 'read_node_us_pull')
+    store_time_eu = get_elapsed_time(df, 'client_request', 'read_node_eu_store')
+    store_time_us = get_elapsed_time(df, 'client_request', 'read_node_us_store')
+    stable_time_eu = get_elapsed_time(df, 'client_request', 'read_node_eu_stable')
+    stable_time_us = get_elapsed_time(df, 'client_request', 'read_node_us_stable')
+    read_time_eu = get_elapsed_time(df, 'client_request', 'read_client_eu_response')
+    read_time_us = get_elapsed_time(df, 'client_request', 'read_client_us_response')
+
+    data = {'response_time': response_time,
+        'push_time': push_time,
+        'pull_time_eu': pull_time_eu,
+        'pull_time_us': pull_time_us,
+        'store_time_eu': store_time_eu,
+        'store_time_us': store_time_us,
+        'stable_time_eu': stable_time_eu,
+        'stable_time_us': stable_time_us,
+        'read_time_eu': read_time_eu,
+        'read_time_us': read_time_us}
+
+    df_results = pd.DataFrame(data)
+
+    writer.writerow(['99%'] + df_results.quantile(q=0.99).values.tolist())
+    writer.writerow(['95%'] + df_results.quantile(q=0.95).values.tolist())
+    writer.writerow(['50%'] + df_results.quantile(q=0.50).values.tolist())
+    writer.writerow(['mean'] + df_results.mean().values.tolist())
+    writer.writerow(['max'] + df_results.max().values.tolist())
+    writer.writerow(['min'] + df_results.min().values.tolist())
+
+def get_elapsed_time(df, from_row, to_row):
+    return df[to_row] - df[from_row]
+
 if __name__ == '__main__':
     combine_logs()
-
+    get_stats()
