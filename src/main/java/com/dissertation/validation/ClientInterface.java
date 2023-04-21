@@ -92,7 +92,7 @@ public class ClientInterface {
             builder.append(String.format("ROT at %s:", rotResponse.getStableTime()));
             for (Entry<String, ByteString> entry : rotResponse.getValuesMap().entrySet()) {
                 builder.append(
-                        String.format("\n\t%s = %s", entry.getKey(), Utils.stringFromByteString(entry.getValue())));
+                        String.format("\n\t%s = %s", entry.getKey(), entry.getValue().isEmpty() ? null : Utils.stringFromByteString(entry.getValue())));
             }
             System.out.println(builder.toString());
         } else {

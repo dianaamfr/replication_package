@@ -1,7 +1,7 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.ArrayDeque;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -9,24 +9,21 @@ import org.json.JSONArray;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.LogOperationRecord;
-import com.dissertation.utils.record.Record;
-import com.dissertation.utils.record.StableTimeRecord;
-import com.dissertation.utils.record.StoreRecord;
-import com.dissertation.utils.record.Record.NodeType;
+import com.dissertation.validation.logs.S3OperationLog;
+import com.dissertation.validation.logs.Log;
+import com.dissertation.validation.logs.StableTimeLog;
+import com.dissertation.validation.logs.StoreVersionLog;
 
 public class StoragePuller implements Runnable {
     private S3Helper s3Helper;
     private ReaderStorage storage;
-    private final String id;
-    private ConcurrentLinkedQueue<Record> logs;
+    private ArrayDeque<Log> s3Logs;
     private final String region;
 
-    public StoragePuller(ReaderStorage storage, S3Helper s3Helper,  String id, ConcurrentLinkedQueue<Record> logs, String region) {
+    public StoragePuller(ReaderStorage storage, S3Helper s3Helper, ArrayDeque<Log> s3Logs, String region) {
         this.s3Helper = s3Helper;
         this.storage = storage;
-        this.id = id;
-        this.logs = logs;
+        this.s3Logs = s3Logs;
         this.region = region;
     }
 
@@ -34,8 +31,8 @@ public class StoragePuller implements Runnable {
     public void run() {
         this.pull();
         this.storage.setStableTime();
-        if(Utils.WRITE_LOGS) {
-            this.logs.add(new StableTimeRecord(NodeType.READER, this.id, this.storage.getStableTime()));
+        if(Utils.LOGS) {
+            this.s3Logs.add(new StableTimeLog(this.storage.getStableTime()));
         }
     }
 
@@ -46,8 +43,8 @@ public class StoragePuller implements Runnable {
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
                         String.valueOf(entry.getValue()));
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
-                    if(Utils.WRITE_LOGS) {
-                        this.logs.add(new LogOperationRecord(NodeType.READER, this.id, s3Response.getTimestamp(), entry.getKey(), false));
+                    if(Utils.LOGS) {
+                        this.s3Logs.add(new S3OperationLog(s3Response.getTimestamp(), entry.getKey(), false));
                     }
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
                     parseJson(s3Response.getContent(), entry.getKey());
@@ -78,9 +75,8 @@ public class StoragePuller implements Runnable {
                         key,
                         timestamp,
                         Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
-
-                if(Utils.WRITE_LOGS) {
-                    this.logs.add(new StoreRecord(NodeType.READER, this.id, timestamp, key, partition));
+                if(Utils.LOGS) {
+                    this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
                 }
             }
             this.storage.setLastParsedIndex(key, versionChainArray.length());

@@ -1,13 +1,13 @@
-package com.dissertation.utils.record;
+package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-public class WriteRequestRecord extends Record {
+public class WriteRequestLog extends Log {
    private final String key;
    private final int partition;
 
-   public WriteRequestRecord(NodeType nodeType, String nodeId, String key, int partition, long time) {
-      super(nodeType, nodeId, LogType.WRITE_REQUEST, time);
+   public WriteRequestLog(String key, int partition, long time) {
+      super(LogType.WRITE_REQUEST, time);
       this.key = key;
       this.partition = partition;
    }

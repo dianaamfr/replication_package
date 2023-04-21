@@ -46,7 +46,7 @@ public class S3Helper {
         try {
             createObject(bucketName, Utils.S3_LOG_PREFIX, timestamp, RequestBody.fromString(logJson));
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Persist log failed: " + e.toString());
             return false;
         }
         return true;
@@ -56,7 +56,7 @@ public class S3Helper {
         try {
             createObject(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, RequestBody.empty());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Persist clock failed: " + e.toString());
             return false;
         }
         return true;

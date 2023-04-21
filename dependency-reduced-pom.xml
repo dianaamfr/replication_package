@@ -90,11 +90,11 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <finalName>readGenerator</finalName>
+              <finalName>busyReadGenerator</finalName>
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ReadGenerator</mainClass>
+                  <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -106,11 +106,11 @@
               <goal>shade</goal>
             </goals>
             <configuration>
-              <finalName>writeGenerator</finalName>
+              <finalName>constantWriteGenerator</finalName>
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.WriteGenerator</mainClass>
+                  <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>

@@ -1,8 +1,8 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.ArrayDeque;
 import java.util.SortedMap;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 import org.json.JSONArray;
@@ -15,9 +15,9 @@ import com.dissertation.referencearchitecture.exceptions.InvalidTimestampExcepti
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.LogOperationRecord;
-import com.dissertation.utils.record.Record;
-import com.dissertation.utils.record.Record.NodeType;
+import com.dissertation.validation.logs.S3OperationLog;
+import com.dissertation.validation.logs.Log;
+
 import com.google.protobuf.ByteString;
 
 public class StoragePusher implements Runnable {
@@ -25,16 +25,14 @@ public class StoragePusher implements Runnable {
     private Storage storage;
     private S3Helper s3Helper;
     private int partition;
-    private String id;
-    private ConcurrentLinkedQueue<Record> logs;
+    private ArrayDeque<Log> logs;
     private final String region;
 
-    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, String id, ConcurrentLinkedQueue<Record> logs, String region) {
+    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs, String region) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
         this.partition = partition;
-        this.id = id;
         this.logs = logs;
         this.region = region;
     }
@@ -53,8 +51,8 @@ public class StoragePusher implements Runnable {
         if(!safePushTime.isZero()) {
             this.push(safePushTime.toString());
 
-            if(Utils.WRITE_LOGS) {
-                this.logs.add(new LogOperationRecord(NodeType.WRITER, this.id, safePushTime.toString(), this.partition, true));
+            if(Utils.LOGS) {
+                this.logs.add(new S3OperationLog(safePushTime.toString(), this.partition, true));
             }
         }
     }
@@ -91,15 +89,14 @@ public class StoragePusher implements Runnable {
         this.hlc.syncComplete();
     }
 
-    private boolean push(String timestamp) {
+    private void push(String timestamp) {
         try {
             JSONObject json = this.toJson(this.storage.getState(), timestamp);
             // System.out.println(json);
+            this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, json.toString());
             this.s3Helper.persistClock(timestamp);
-            return this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, json.toString());
         } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+            System.err.println(e.toString());
         }
     }
 

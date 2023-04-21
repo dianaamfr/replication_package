@@ -2,12 +2,12 @@ package com.dissertation.referencearchitecture.compute;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.ArrayDeque;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.Record;
+import com.dissertation.validation.logs.Log;
 
 import io.grpc.Server;
 
@@ -16,17 +16,21 @@ public abstract class ComputeNode {
     protected S3Helper s3Helper;
     protected ScheduledThreadPoolExecutor scheduler;
     protected String id;
-    protected ConcurrentLinkedQueue<Record> logs;
+    protected ArrayDeque<Log> logs;
+    protected ArrayDeque<Log> s3Logs;
 
     public ComputeNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String id) throws URISyntaxException {
         this.scheduler = scheduler;
         this.s3Helper = s3Helper;
         this.id = id;
-        this.logs = new ConcurrentLinkedQueue<>();
+        this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
+        this.s3Logs = new ArrayDeque<>(Utils.MAX_LOGS);
 
-        if(Utils.ROT_LOGS || Utils.WRITE_LOGS) {
+        if(Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
+                    scheduler.shutdown();
+                    Utils.logToFile(s3Logs, id + "-s3");
                     Utils.logToFile(logs, id);
                 }
             });

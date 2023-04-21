@@ -18,9 +18,9 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.utils.record.Record.NodeType;
-import com.dissertation.utils.record.WriteRequestRecord;
-import com.dissertation.utils.record.WriteResponseRecord;
+import com.dissertation.validation.logs.WriteRequestLog;
+import com.dissertation.validation.logs.WriteResponseLog;
+
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -46,7 +46,7 @@ public class WriteNode extends ComputeNode {
     @Override
     public void init(Server server) throws IOException, InterruptedException {
         this.scheduler.scheduleWithFixedDelay(
-                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.id, this.logs, this.region),
+                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.s3Logs, this.region),
                 Utils.PUSH_DELAY,
                 Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -85,7 +85,7 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
-            long requestTime = System.nanoTime();
+            long t1 = System.currentTimeMillis();
             ClockState lastTime = new ClockState();
             ClockState writeTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
@@ -110,11 +110,12 @@ public class WriteNode extends ComputeNode {
                 responseBuilder.setWriteTimestamp(writeTime.toString());
                 hlc.writeComplete();
                 hlc.setSafePushTime(writeTime);
+                long t2 = System.currentTimeMillis();
 
-                if(Utils.WRITE_LOGS) {
-                    logs.add(new WriteRequestRecord(NodeType.WRITER, id, request.getKey(), partition, requestTime));
-                    logs.add(new WriteResponseRecord(NodeType.WRITER, id, request.getKey(), partition,
-                    writeTime.toString()));
+                if(Utils.LOGS) {
+                    logs.add(new WriteRequestLog(request.getKey(), partition, t1));
+                    logs.add(new WriteResponseLog(request.getKey(), partition,
+                    writeTime.toString(), t2));
                 }
             }
 

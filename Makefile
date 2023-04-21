@@ -8,7 +8,7 @@ s3Endpoint = http://localhost:4566
 region = us-east-1
 
 partitions = 2
-region1Partitions = 2
+regionPartitions = 2
 
 readPort1 = 8080
 readIp1 = 0.0.0.0
@@ -21,8 +21,8 @@ writePort2 = 8082
 writeIp2 = 0.0.0.0
 partitionId2 = 2
 
-readAddress1 = $(readPort1) $(readIp1)
-writeAddresses1 = $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
+readAddress = $(readPort1) $(readIp1)
+writeAddresses = $(writePort1) $(writeIp1) $(partitionId1) $(writePort2) $(writeIp2) $(partitionId2)
 
 # Setup
 all:
@@ -45,32 +45,29 @@ emptyBuckets:
 	awslocal s3 rm s3://$(clockBucket) --recursive
 	
 # Compute Nodes
-readNode1:
-	java -DwriteLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
+readNode:
+	java -Dlogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
 
 writeNode1:
-	java -DwriteLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
+	java -Dlogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
 
 writeNode2:
-	java -DwriteLogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2)
+	java -Dlogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2)
 
 # CLI
-client1:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar $(readAddress1) $(writeAddresses1)
+client:
+	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
 
 # Validation
-readDelay1 = 100
-totalReads1 = 500
 
-readTest1:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readGenerator.jar $(region1Partitions) $(readAddress1) $(writeAddresses1) $(readDelay1) $(totalReads1)
+totalWrites = 100
+keys = a b
+writeDelay = 200
 
+readTest:
+	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keys)
 
-writeDelay1 = 1
-bytes1 = 8
-writesPerPartition1 = 100
-
-writeTest1:
-	java -DwriteLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeGenerator.jar  $(region1Partitions) $(readAddress1) $(writeAddresses1) $(writeDelay1) $(bytes1) $(writesPerPartition1)
+writeTest:
+	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
 	
