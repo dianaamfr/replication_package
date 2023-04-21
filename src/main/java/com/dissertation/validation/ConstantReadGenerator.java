@@ -2,56 +2,53 @@ package com.dissertation.validation;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.dissertation.referencearchitecture.WriteResponse;
+import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.Log;
-import com.dissertation.validation.logs.WriteRequestLog;
-import com.dissertation.validation.logs.WriteResponseLog;
-import com.google.protobuf.ByteString;
+import com.dissertation.validation.logs.ROTRequestLog;
+import com.dissertation.validation.logs.ROTResponseLog;
 
-
-public class ConstantWriteGenerator {
+public class ConstantReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
-    private Client client;
+    private final Client client;
     private final long delay;
-    private int totalWrites;
-    private final List<String> keys;
-    private AtomicInteger payload;
+    private final int totalReads;
+    private final Set<String> keys;
     private AtomicInteger counter;
-    private CountDownLatch countDown;
     private final ArrayDeque<Log> logs;
+    private CountDownLatch countDown;
+    
+    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keys:String>";
 
-    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <keys:String>";
-
-    public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses, long delay, int totalWrites, List<String> keys) {
-        
-        this.client = new Client(readAddress, writeAddresses);   
+    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses, long delay, int totalReads, Set<String> keys) {
+        this.client = new Client(readAddress, writeAddresses); 
         this.delay = delay;
-        this.totalWrites = totalWrites;
+        this.totalReads = totalReads;
         this.keys = keys;
-        this.payload = new AtomicInteger(Utils.PAYLOAD_START);
-        
+
         this.counter = new AtomicInteger(0);
-        this.countDown = new CountDownLatch(totalWrites);
-        this.logs = new ArrayDeque<>(this.totalWrites * 2);
-        
+        this.countDown = new CountDownLatch(totalReads);
+        this.logs = new ArrayDeque<>(this.totalReads * 2);
+
+        this.scheduler = scheduler; 
+
         if(Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
-                    Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
+                    Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
                 }
             });
         }
-
-        this.scheduler = scheduler;
     }
 
     public static void main(String[] args) {
@@ -59,7 +56,7 @@ public class ConstantWriteGenerator {
         int regionPartitions = 0;
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
-        List<String> keys = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
 
         if (args.length < 9) {
             System.err.println(USAGE);
@@ -80,20 +77,20 @@ public class ConstantWriteGenerator {
             }
 
             long delay = Long.parseLong(args[addressesEndIndex]);
-            int totalWrites = Integer.parseInt(args[addressesEndIndex + 1]);
+            int totalReads = Integer.parseInt(args[addressesEndIndex + 1]);
             for (int i = addressesEndIndex + 2; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
-            ConstantWriteGenerator writer = new ConstantWriteGenerator(scheduler, readAddress, writeAddresses, delay, totalWrites, keys);
-            writer.run();
+            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay, totalReads, keys);
+            reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
         }
     }
 
-    public void run() {
-        this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS); 
+    private void run() {
+        this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
 
         try {
             this.countDown.await();
@@ -104,27 +101,21 @@ public class ConstantWriteGenerator {
         this.client.shutdown();
     }
 
-    private class WriteGeneratorRequest implements Runnable {
-
+    private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            int count = counter.getAndIncrement();
-            String key = keys.get(count % keys.size());
-            int partitionId = Utils.getKeyPartitionId(key);
-
-            if (count < totalWrites) {
-                ByteString value = Utils.byteStringFromString(String.valueOf(payload.getAndIncrement()));
-
+            if (counter.getAndIncrement() < totalReads) {
                 long t1 = System.currentTimeMillis();
-                WriteResponse writeResponse = client.requestWrite(key, value);
+                ROTResponse rotResponse = client.requestROT(keys);
                 long t2 = System.currentTimeMillis();
+                countDown.countDown();
 
                 if(Utils.LOGS) {
-                    logs.add(new WriteRequestLog(key, partitionId, t1));
-                    logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
-                }
-                countDown.countDown();
+                    logs.add(new ROTRequestLog(rotResponse.getId(), t1));
+                    logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
+                }    
             }
         }
     }
+    
 }

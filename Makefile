@@ -46,13 +46,13 @@ emptyBuckets:
 	
 # Compute Nodes
 readNode:
-	java -Dlogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
 
 writeNode1:
-	java -Dlogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1)
 
 writeNode2:
-	java -Dlogs=true -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2)
 
 # CLI
 client:
@@ -69,6 +69,13 @@ readTest1:
 
 writeTest1:
 	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
+
+totalReads = 100
+keys = a b
+readDelay = 200
+
+readTest2:
+	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(totalReads) $(keys)
 
 writeTest2:
 	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)

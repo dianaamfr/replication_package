@@ -269,6 +269,26 @@
                             <goal>shade</goal>
                         </goals>
                     </execution>
+
+                    <!-- CONSTANT READ GENERATOR -->
+                    <execution>
+                        <id>constant-read-generator</id>
+                        <configuration>
+                            <finalName>constantReadGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
                 
                     <!-- BUSY WRITE GENERATOR -->
                     <execution>

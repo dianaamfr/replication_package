@@ -132,6 +132,22 @@
             </configuration>
           </execution>
           <execution>
+            <id>constant-read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>constantReadGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
             <id>busy-write-generator</id>
             <phase>package</phase>
             <goals>
