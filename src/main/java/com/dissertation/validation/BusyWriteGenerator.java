@@ -37,13 +37,13 @@ public class BusyWriteGenerator {
             for (int i = 3; i < addressesEndIndex; i += 3) {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
-            
-            if(args.length < addressesEndIndex + 1) {
+
+            if (args.length < addressesEndIndex + 1) {
                 System.err.println(USAGE);
                 return;
             }
 
-            for (int i = addressesEndIndex; i < args.length; i ++) {
+            for (int i = addressesEndIndex; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
@@ -63,7 +63,7 @@ public class BusyWriteGenerator {
 
         try {
 
-        } catch(Exception e) {
+        } catch (Exception e) {
             this.client.shutdown();
         }
 

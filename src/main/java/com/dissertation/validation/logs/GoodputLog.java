@@ -5,7 +5,7 @@ import org.json.JSONObject;
 import com.dissertation.utils.Utils;
 
 public class GoodputLog extends Log {
-    private long endTime; 
+    private long endTime;
     private long totalBytes;
 
     public GoodputLog(long startTime, long endTime, long totalVersions) {

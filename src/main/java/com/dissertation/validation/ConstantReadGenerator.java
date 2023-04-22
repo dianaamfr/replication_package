@@ -27,29 +27,31 @@ public class ConstantReadGenerator {
     private CountDownLatch countDown;
     private long lastPayload;
     private final ArrayDeque<Log> logs;
-    
+
     private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keys:String>";
 
-    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses, long delay, int totalReads, Set<String> keys) {
-        this.client = new Client(readAddress, writeAddresses); 
+    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
+            List<Address> writeAddresses, long delay, int totalReads, Set<String> keys) {
+        this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
         this.totalReads = totalReads;
         this.keys = keys;
 
         this.counter = 0;
         this.countDown = new CountDownLatch(totalReads);
-        this.lastPayload = Utils.PAYLOAD_START_LONG-1;
+        this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
         this.logs = new ArrayDeque<>(this.totalReads);
 
-        if(Utils.LOGS) {
+        if (Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
-                    Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
+                    Utils.logToFile(logs,
+                            String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
                 }
             });
         }
 
-        this.scheduler = scheduler; 
+        this.scheduler = scheduler;
     }
 
     public static void main(String[] args) {
@@ -72,7 +74,7 @@ public class ConstantReadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            if(args.length < addressesEndIndex + 3) {
+            if (args.length < addressesEndIndex + 3) {
                 System.err.println(USAGE);
                 return;
             }
@@ -83,7 +85,8 @@ public class ConstantReadGenerator {
                 keys.add(args[i]);
             }
 
-            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay, totalReads, keys);
+            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay,
+                    totalReads, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -109,24 +112,25 @@ public class ConstantReadGenerator {
                 long t1 = System.currentTimeMillis();
                 ROTResponse rotResponse = client.requestROT(keys);
                 long t2 = System.currentTimeMillis();
-                
-                for(ByteString value: rotResponse.getValuesMap().values()) {
+
+                for (ByteString value : rotResponse.getValuesMap().values()) {
                     String valueStr = Utils.stringFromByteString(value);
-                    if(valueStr.isBlank()) {
+                    if (valueStr.isBlank()) {
                         continue;
                     }
-                
+
                     try {
                         long valueLong = Long.valueOf(valueStr);
-                        if(valueLong > lastPayload) {
+                        if (valueLong > lastPayload) {
                             lastPayload = valueLong;
-                        };
+                        }
+                        ;
                     } catch (NumberFormatException e) {
                         continue;
                     }
                 }
 
-                if(Utils.LOGS) {
+                if (Utils.LOGS) {
                     logs.add(new GoodputLog(t1, t2, lastPayload - Utils.PAYLOAD_START_LONG));
                 }
 
@@ -135,5 +139,5 @@ public class ConstantReadGenerator {
             }
         }
     }
-    
+
 }

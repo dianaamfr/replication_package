@@ -58,7 +58,7 @@ public class Utils {
         try {
             String value = byteString.toStringUtf8();
             return value;
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return "";
@@ -88,11 +88,11 @@ public class Utils {
         FileWriter fw;
         try {
             fw = new FileWriter("logs/" + file.toLowerCase() + ".json", false);
-            
+
             JSONArray jsonLogs = new JSONArray();
             while (!logs.isEmpty()) {
                 jsonLogs.put(logs.poll().toJson());
-            }   
+            }
             jsonLogs.write(fw);
             fw.close();
 

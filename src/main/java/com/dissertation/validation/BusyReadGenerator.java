@@ -29,12 +29,13 @@ public class BusyReadGenerator {
         this.endMarker = Utils.byteStringFromString(String.valueOf(endMarker));
         this.keys = keys;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
-        this.lastPayload = Utils.PAYLOAD_START_INT-1;
+        this.lastPayload = Utils.PAYLOAD_START_INT - 1;
 
-        if(Utils.LOGS) {
+        if (Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
-                    Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+                    Utils.logToFile(logs,
+                            String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
                 }
             });
         }
@@ -59,14 +60,14 @@ public class BusyReadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            if(args.length < addressesEndIndex + 2) {
+            if (args.length < addressesEndIndex + 2) {
                 System.err.println(USAGE);
                 return;
             }
 
             int expectedWrites = Integer.parseInt(args[addressesEndIndex]);
             int endMarker = Utils.PAYLOAD_START_INT + expectedWrites - 1;
-            for (int i = addressesEndIndex + 1; i < args.length; i ++) {
+            for (int i = addressesEndIndex + 1; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
@@ -78,7 +79,6 @@ public class BusyReadGenerator {
         }
     }
 
-
     public void run() {
         ROTResponse rotResponse;
         boolean newPayload = false;
@@ -86,39 +86,41 @@ public class BusyReadGenerator {
         String valueStr;
         int valueInt;
 
-        while(true) {
+        while (true) {
             t1 = System.currentTimeMillis();
             rotResponse = this.client.requestROT(this.keys);
             t2 = System.currentTimeMillis();
 
-            if(!Utils.LOGS || rotResponse.getError()) {
+            if (!Utils.LOGS || rotResponse.getError()) {
                 continue;
             }
 
-            for(ByteString value: rotResponse.getValuesMap().values()) {
+            for (ByteString value : rotResponse.getValuesMap().values()) {
                 valueStr = Utils.stringFromByteString(value);
-                if(valueStr.isBlank()) {
+                if (valueStr.isBlank()) {
                     continue;
                 }
 
                 try {
                     valueInt = Integer.valueOf(valueStr);
-                    if(valueInt > this.lastPayload) {
+                    if (valueInt > this.lastPayload) {
                         this.lastPayload = valueInt;
                         newPayload = true;
-                    };
+                    }
+                    ;
                 } catch (NumberFormatException e) {
                     continue;
                 }
-            };
+            }
+            ;
 
-            if(newPayload) {
+            if (newPayload) {
                 newPayload = false;
                 this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
                 this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
             }
 
-            if(rotResponse.getValuesMap().containsValue(this.endMarker)) {
+            if (rotResponse.getValuesMap().containsValue(this.endMarker)) {
                 break;
             }
         }
