@@ -8,15 +8,14 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
+import com.dissertation.validation.logs.GoodputLog;
 import com.dissertation.validation.logs.Log;
-import com.dissertation.validation.logs.ROTRequestLog;
-import com.dissertation.validation.logs.ROTResponseLog;
+import com.google.protobuf.ByteString;
 
 public class ConstantReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
@@ -24,9 +23,10 @@ public class ConstantReadGenerator {
     private final long delay;
     private final int totalReads;
     private final Set<String> keys;
-    private AtomicInteger counter;
-    private final ArrayDeque<Log> logs;
+    private int counter;
     private CountDownLatch countDown;
+    private long lastPayload;
+    private final ArrayDeque<Log> logs;
     
     private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keys:String>";
 
@@ -36,19 +36,20 @@ public class ConstantReadGenerator {
         this.totalReads = totalReads;
         this.keys = keys;
 
-        this.counter = new AtomicInteger(0);
+        this.counter = 0;
         this.countDown = new CountDownLatch(totalReads);
-        this.logs = new ArrayDeque<>(this.totalReads * 2);
-
-        this.scheduler = scheduler; 
+        this.lastPayload = Utils.PAYLOAD_START_LONG-1;
+        this.logs = new ArrayDeque<>(this.totalReads);
 
         if(Utils.LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
-                    Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+                    Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
                 }
             });
         }
+
+        this.scheduler = scheduler; 
     }
 
     public static void main(String[] args) {
@@ -104,16 +105,33 @@ public class ConstantReadGenerator {
     private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            if (counter.getAndIncrement() < totalReads) {
+            if (counter < totalReads) {
                 long t1 = System.currentTimeMillis();
                 ROTResponse rotResponse = client.requestROT(keys);
                 long t2 = System.currentTimeMillis();
-                countDown.countDown();
+                
+                for(ByteString value: rotResponse.getValuesMap().values()) {
+                    String valueStr = Utils.stringFromByteString(value);
+                    if(valueStr.isBlank()) {
+                        continue;
+                    }
+                
+                    try {
+                        long valueLong = Long.valueOf(valueStr);
+                        if(valueLong > lastPayload) {
+                            lastPayload = valueLong;
+                        };
+                    } catch (NumberFormatException e) {
+                        continue;
+                    }
+                }
 
                 if(Utils.LOGS) {
-                    logs.add(new ROTRequestLog(rotResponse.getId(), t1));
-                    logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
-                }    
+                    logs.add(new GoodputLog(t1, t2, lastPayload - Utils.PAYLOAD_START_LONG));
+                }
+
+                countDown.countDown();
+                counter++;
             }
         }
     }

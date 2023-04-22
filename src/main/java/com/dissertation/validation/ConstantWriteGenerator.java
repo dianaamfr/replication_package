@@ -37,7 +37,7 @@ public class ConstantWriteGenerator {
         this.delay = delay;
         this.totalWrites = totalWrites;
         this.keys = keys;
-        this.payload = new AtomicInteger(Utils.PAYLOAD_START);
+        this.payload = new AtomicInteger(Utils.PAYLOAD_START_INT);
         
         this.counter = new AtomicInteger(0);
         this.countDown = new CountDownLatch(totalWrites);

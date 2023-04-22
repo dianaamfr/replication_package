@@ -40,8 +40,10 @@ public class Utils {
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
     public static final boolean LOGS = Boolean.parseBoolean(System.getProperty("logs"));
     public static final int MAX_LOGS = 300;
-    public static final int MAX_WRITES = 1000000;
-    public static final int PAYLOAD_START = 512;
+    public static final int PAYLOAD_START_INT = 512;
+    public static final long PAYLOAD_START_LONG = 274877906944L;
+    public static final long PAYLOAD_END_LONG = 549755813887L;
+    public static final int PAYLOAD_SIZE_LONG = Long.SIZE - Long.numberOfLeadingZeros(PAYLOAD_START_LONG);
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";

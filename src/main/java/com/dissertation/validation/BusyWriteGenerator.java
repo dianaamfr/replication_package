@@ -58,7 +58,7 @@ public class BusyWriteGenerator {
     public void run() {
         String key;
         ByteString value;
-        long payload;
+        long payload = Utils.PAYLOAD_START_LONG;
         long count = 0;
 
         try {
@@ -67,12 +67,12 @@ public class BusyWriteGenerator {
             this.client.shutdown();
         }
 
-        while (count < Utils.MAX_WRITES) {
+        while (payload <= Utils.PAYLOAD_END_LONG) {
             key = keys.get((int) (count % keys.size()));
-            payload = System.currentTimeMillis();
             value = Utils.byteStringFromString(String.valueOf(payload));
             this.client.requestWrite(key, value);
             count++;
+            payload++;
         }
     }
 

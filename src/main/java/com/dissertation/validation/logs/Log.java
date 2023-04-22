@@ -14,7 +14,8 @@ public enum LogType {
     STABLE_TIME,
     LOG_PULL,
     LOG_PUSH,
-    STORE_VERSION
+    STORE_VERSION,
+    GOODPUT
 }
 
     protected Log(LogType logType, long time) {

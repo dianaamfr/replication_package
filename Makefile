@@ -71,8 +71,7 @@ writeTest1:
 	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
 totalReads = 100
-keys = a b
-readDelay = 200
+readDelay = 500
 
 readTest2:
 	java -Dlogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(totalReads) $(keys)
