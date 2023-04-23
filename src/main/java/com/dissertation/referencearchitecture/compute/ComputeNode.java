@@ -26,7 +26,7 @@ public abstract class ComputeNode {
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.s3Logs = new ArrayDeque<>(Utils.MAX_LOGS);
 
-        if(Utils.LOGS) {
+        if(Utils.GOODPUT_LOGS || Utils.LATENCY_LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     scheduler.shutdown();

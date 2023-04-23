@@ -39,10 +39,10 @@ public class ConstantReadGenerator {
 
         this.counter = 0;
         this.countDown = new CountDownLatch(totalReads);
-        this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
+        this.lastPayload = 0;
         this.logs = new ArrayDeque<>(this.totalReads);
 
-        if (Utils.LOGS) {
+        if (Utils.LATENCY_LOGS) {
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 public void run() {
                     Utils.logToFile(logs,
@@ -94,6 +94,7 @@ public class ConstantReadGenerator {
     }
 
     private void run() {
+        logs.add(new GoodputLog(this.lastPayload > 0 ? this.lastPayload - Utils.PAYLOAD_START_LONG : 0, System.currentTimeMillis()));
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
 
         try {
@@ -109,9 +110,8 @@ public class ConstantReadGenerator {
         @Override
         public void run() {
             if (counter < totalReads) {
-                long t1 = System.currentTimeMillis();
                 ROTResponse rotResponse = client.requestROT(keys);
-                long t2 = System.currentTimeMillis();
+                long t = System.currentTimeMillis();
 
                 for (ByteString value : rotResponse.getValuesMap().values()) {
                     String valueStr = Utils.stringFromByteString(value);
@@ -130,9 +130,7 @@ public class ConstantReadGenerator {
                     }
                 }
 
-                if (Utils.LOGS) {
-                    logs.add(new GoodputLog(t1, t2, lastPayload - Utils.PAYLOAD_START_LONG));
-                }
+                logs.add(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0, t));
 
                 countDown.countDown();
                 counter++;

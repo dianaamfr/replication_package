@@ -31,14 +31,12 @@ public class BusyReadGenerator {
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.lastPayload = Utils.PAYLOAD_START_INT - 1;
 
-        if (Utils.LOGS) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    Utils.logToFile(logs,
-                            String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
-                }
-            });
-        }
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                Utils.logToFile(logs,
+                        String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+            }
+        });
     }
 
     public static void main(String[] args) {
@@ -91,7 +89,7 @@ public class BusyReadGenerator {
             rotResponse = this.client.requestROT(this.keys);
             t2 = System.currentTimeMillis();
 
-            if (!Utils.LOGS || rotResponse.getError()) {
+            if (rotResponse.getError()) {
                 continue;
             }
 
