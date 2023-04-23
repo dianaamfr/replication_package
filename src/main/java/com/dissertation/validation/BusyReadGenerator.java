@@ -105,18 +105,17 @@ public class BusyReadGenerator {
                         this.lastPayload = valueInt;
                         newPayload = true;
                     }
-                    ;
                 } catch (NumberFormatException e) {
                     continue;
                 }
             }
-            ;
 
             if (newPayload) {
                 newPayload = false;
                 this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
                 this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
             }
+            
 
             if (rotResponse.getValuesMap().containsValue(this.endMarker)) {
                 break;

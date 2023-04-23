@@ -42,14 +42,12 @@ public class ConstantReadGenerator {
         this.lastPayload = 0;
         this.logs = new ArrayDeque<>(this.totalReads);
 
-        if (Utils.LATENCY_LOGS) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    Utils.logToFile(logs,
-                            String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
-                }
-            });
-        }
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                Utils.logToFile(logs,
+                        String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
+            }
+        });
 
         this.scheduler = scheduler;
     }
