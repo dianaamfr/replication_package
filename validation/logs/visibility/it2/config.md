@@ -1,0 +1,5 @@
+- 100 writes at constant rate (200ms delay) 
+- 2 regions, 1 partition
+- pull/push delay of 5s
+- log serialization optimization
+- key a

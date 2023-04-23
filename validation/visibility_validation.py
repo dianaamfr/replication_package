@@ -1,3 +1,4 @@
+import sys
 import csv
 import pandas as pd
 from utils import get_data, get_file, get_diff
@@ -41,22 +42,22 @@ def get_read_time(df, version):
     return df[(df['logType'] == 'ROT_RESPONSE') & (df['stableTime'] >= version)].sort_values('stableTime').iloc[0]['time']
 
 
-def combine_logs():
+def combine_logs(iteration_dir):
     dest_file = open(LOG_RESULT_FILE ,'w+', newline='\n', encoding='utf-8')
     writer = csv.writer(dest_file)
     writer.writerow(get_header())
 
     # Log files
-    write_client = get_file(LOGS_DIR, 'writeclient-eu-west-1')
-    write_node = get_file(LOGS_DIR, 'writenode-1')
+    write_client = get_file(LOGS_DIR + '/' + iteration_dir, 'writeclient-eu-west-1')
+    write_node = get_file(LOGS_DIR + '/' + iteration_dir, 'writenode-1')
     
     # Data frames
-    pusher_df = get_data(LOGS_DIR, 'writenode-1-s3')
-    puller_eu_df = get_data(LOGS_DIR, 'readnode-eu-west-1-s3')
-    puller_us_df = get_data(LOGS_DIR, 'readnode-us-east-1-s3')
+    pusher_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writenode-1-s3')
+    puller_eu_df = get_data(LOGS_DIR + '/' + iteration_dir, 'readnode-eu-west-1-s3')
+    puller_us_df = get_data(LOGS_DIR + '/' + iteration_dir, 'readnode-us-east-1-s3')
     
-    read_client_eu = get_data(LOGS_DIR, 'readclient-eu-west-1')
-    read_client_us = get_data(LOGS_DIR, 'readclient-us-east-1')
+    read_client_eu = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-eu-west-1')
+    read_client_us = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-us-east-1')
 
     i = 0
     for client_request, client_response in zip(write_client[::2], write_client[1::2]):
@@ -149,5 +150,5 @@ def get_stats():
     writer.writerow(['min'] + df_results.min().values.tolist())
 
 if __name__ == '__main__':
-    combine_logs()
+    combine_logs(sys.argv[1])
     get_stats()

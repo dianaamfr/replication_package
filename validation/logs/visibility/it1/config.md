@@ -1,0 +1,4 @@
+- 100 writes at constant rate (200ms delay) 
+- 2 regions, 1 partition
+- pull/push delay of 10s
+- keys a and b

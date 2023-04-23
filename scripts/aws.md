@@ -58,7 +58,7 @@ scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.
 scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/readnode-eu-west-1-s3.json ./logs-ref-arch
 
 **Read Generator**
-docker container cp busyReadGenerator:/logs/readclient-eu-west-1.json
+docker container cp busyReadGenerator:/logs/readclient-eu-west-1.json .
 scp -i "reference-architecture.pem" -r ubuntu@<DNS>.eu-west-1.compute.amazonaws.com:~/readclient-eu-west-1.json ./logs-ref-arch
 
 **Write Generator**
@@ -83,5 +83,5 @@ scp -i "reference-architecture-us.pem" -r ubuntu@<DNS>.compute-1.amazonaws.com:~
 scp -i "reference-architecture-us.pem" -r ubuntu@<DNS>.compute-1.amazonaws.com:~/readnode-us-east-1-s3.json ./logs-ref-arch
 
 **Read Generator**
-docker container cp busyReadGenerator:/logs/readclient-us-east-1.json
+docker container cp busyReadGenerator:/logs/readclient-us-east-1.json .
 scp -i "reference-architecture-us.pem" -r ubuntu@<DNS>.compute-1.amazonaws.com:~/readclient-us-east-1.json ./logs-ref-arch
