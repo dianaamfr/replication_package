@@ -3,22 +3,49 @@
 docker rm -f $(docker ps -a -q)
 docker rmi $(docker images -a -q)
 
+# MEASURE VISIBILITY
+
 ## Reader EU-WEST-1
-**Read Node**: ./readNode.sh v8.0.0 1 8080 1
-**Constant Write Generator**
-./constantWriteGenerator.sh v8.0.0 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 200 100 a b
-**Busy Read Generator**
-<!-- <totalWrites> <keys> -->
-./busyReadGenerator.sh v8.0.0 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 100 a b
+**Read Node**: ./readNode.sh v8.0.0-visibility 1 8080 1
+**Constant Write Generator**: ./constantWriteGenerator.sh v8.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 200 100 a
+**Busy Read Generator**: ./busyReadGenerator.sh v8.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 100 a
 
 # Reader US-EAST-1
-**Read Node**: ./readNode.sh v8.0.0 1 8080 1
-**Busy Read Generator**
-<!-- <totalWrites> <keys> -->
-./busyReadGenerator.sh v8.0.0 1 1 8080 <read-us-ip> 8080 <write-ip> 1 100 a b
+**Read Node**: ./readNode.sh v8.0.0-visibility 1 8080 1
+**Busy Read Generator**: ./busyReadGenerator.sh v8.0.0-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 100 a
 
 ## Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v8.0.0 1 8080 1
+**Write Node**: ./writeNode.sh v8.0.0-visibility 1 8080 1
+
+---
+# MEASURE LATENCY
+
+## Reader EU-WEST-1
+**Read Node**: ./readNode.sh v8.0.0-latency 1 8080 1
+**Constant Write Generator**: ./constantWriteGenerator.sh v8.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 200 500 a
+**Busy Read Generator**: ./busyReadGenerator.sh v8.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 500 a
+
+# Reader US-EAST-1
+**Read Node**: ./readNode.sh v8.0.0-latency 1 8080 1
+**Busy Read Generator**: ./busyReadGenerator.sh v8.0.0-latency 1 1 8080 <read-us-ip> 8080 <write-ip> 1 500 a
+
+## Writer EU-WEST-1
+**Write Node**: ./writeNode.sh v8.0.0-latency 1 8080 1
+
+---
+# MEASURE GOODPUT
+
+## Reader EU-WEST-1
+**Read Node**: ./readNode.sh v8.0.0-latency 1 8080 1
+**Busy Write Generator**: ./busyWriteGenerator.sh v8.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 a
+**Constant Read Generator**: ./constantReadGenerator.sh v8.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 500 100 a
+
+# Reader US-EAST-1
+**Read Node**: ./readNode.sh v8.0.0-latency 1 8080 1
+**Constant Read Generator**: ./constantReadGenerator.sh v8.0.0-latency 1 1 8080 <read-us-ip> 8080 <write-ip> 1 500 100 a
+
+## Writer EU-WEST-1
+**Write Node**: ./writeNode.sh v8.0.0-latency 1 8080 1
 
 ---
 # GET LOGS:
