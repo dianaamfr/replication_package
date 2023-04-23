@@ -12,10 +12,10 @@ COPY --from=build /home/app/entrypoint.sh .
 RUN ["chmod", "+x", "./entrypoint.sh"]
 RUN mkdir logs
 
-ARG latency_logs
+ARG visibility_logs
 ARG goodput_logs
 
-ENV LATENCY_LOGS $latency_logs
+ENV VISIBILITY_LOGS $visibility_logs
 ENV GOODPUT_LOGS $goodput_logs
 
 ENTRYPOINT ["./entrypoint.sh"]

@@ -38,7 +38,7 @@ public class Utils {
 
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
-    public static final boolean LATENCY_LOGS = Boolean.parseBoolean(System.getProperty("latencyLogs"));
+    public static final boolean VISIBILITY_LOGS = Boolean.parseBoolean(System.getProperty("visibilityLogs"));
     public static final boolean GOODPUT_LOGS = Boolean.parseBoolean(System.getProperty("goodputLogs"));
     public static final int MAX_LOGS = 300;
     public static final int PAYLOAD_START_INT = 512;

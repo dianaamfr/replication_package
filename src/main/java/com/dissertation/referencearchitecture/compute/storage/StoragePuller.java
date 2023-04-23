@@ -31,7 +31,7 @@ public class StoragePuller implements Runnable {
     public void run() {
         this.pull();
         this.storage.setStableTime();
-        if(Utils.LATENCY_LOGS) {
+        if(Utils.VISIBILITY_LOGS) {
             this.s3Logs.add(new StableTimeLog(this.storage.getStableTime()));
         }
     }
@@ -43,7 +43,7 @@ public class StoragePuller implements Runnable {
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
                         String.valueOf(entry.getValue()));
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
-                    if(Utils.LATENCY_LOGS) {
+                    if(Utils.VISIBILITY_LOGS) {
                         this.s3Logs.add(new S3OperationLog(s3Response.getTimestamp(), entry.getKey(), false));
                     }
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
@@ -75,7 +75,7 @@ public class StoragePuller implements Runnable {
                         key,
                         timestamp,
                         Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
-                if(Utils.LATENCY_LOGS) {
+                if(Utils.VISIBILITY_LOGS) {
                     this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
                 }
             }

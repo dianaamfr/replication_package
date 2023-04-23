@@ -65,10 +65,10 @@ keys = a b
 writeDelay = 200
 
 readTest1:
-	java -DlatencyLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keys)
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keys)
 
 writeTest1:
-	java -DlatencyLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
 totalReads = 100
 readDelay = 500
