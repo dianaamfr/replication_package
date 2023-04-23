@@ -5,7 +5,6 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
-import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
 public class VersionChain {
@@ -42,7 +41,7 @@ public class VersionChain {
         return this.versions.toString();
     }
 
-    public SortedMap<String, ByteString> getVersionChain(String maxKey) {
-        return this.versions.subMap(Utils.MIN_TIMESTAMP, true, maxKey, true);
+    public SortedMap<String, ByteString> getVersionChain(String minKey, String maxKey) {
+        return this.versions.subMap(minKey, false, maxKey, true);
     }
 }
