@@ -31,8 +31,8 @@ def combine_logs():
 
 def get_stats():
     df = pd.read_csv(LOG_RESULT_FILE)
-    print(df.groupby('region')['bytes_per_second'].describe())
-    #df.to_csv(LOG_STATS_FILE)
+    df_result = df.groupby('region')['bytes_per_second'].describe()
+    df_result.to_csv(LOG_STATS_FILE)
 
 
 if __name__ == '__main__':

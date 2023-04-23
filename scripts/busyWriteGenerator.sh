@@ -1,4 +1,4 @@
-if [ $# -lt 11 ]
+if [ $# -lt 9 ]
 then
   echo "Usage: busyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <key>+"
   exit 1

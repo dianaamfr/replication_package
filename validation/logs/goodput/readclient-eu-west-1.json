@@ -1,0 +1,507 @@
+[
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 0,
+        "time": 1682280345263
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280346059
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280346568
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280347075
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280347588
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280348096
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280348604
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1755,
+        "time": 1682280349111
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280349620
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280350127
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280350637
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280351146
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280351653
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280352160
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280352666
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280353173
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280353680
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 118053,
+        "time": 1682280354192
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280354704
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280355215
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280355725
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280356236
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280356746
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280357252
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280357760
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280358267
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280358774
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280359280
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280359785
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280360291
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280360796
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280361302
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280361808
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280362313
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280362820
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280363325
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280363831
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 421161,
+        "time": 1682280364337
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280364848
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280365353
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280365860
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280366365
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280366871
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280367379
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280367884
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280368390
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280368894
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280369399
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 820053,
+        "time": 1682280369909
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280370414
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280370920
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280371424
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280371930
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280372436
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280372941
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280373446
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280373950
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280374455
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280374960
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1228266,
+        "time": 1682280375470
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280375975
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280376480
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280376986
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280377491
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280377998
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280378503
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280379009
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280379516
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280380022
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280380528
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 1686633,
+        "time": 1682280381049
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280381553
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280382058
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280382565
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280383069
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280383574
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280384078
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280384584
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280385091
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280385596
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2157753,
+        "time": 1682280386109
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280386616
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280387120
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280387626
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280388132
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280388641
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280389147
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280389652
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280390158
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280390662
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280391167
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 2628522,
+        "time": 1682280391676
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280392180
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280392686
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280393192
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280393697
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280394203
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280394709
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280395213
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280395718
+    },
+    {
+        "logType": "GOODPUT",
+        "totalBytes": 3095079,
+        "time": 1682280396222
+    }
+]

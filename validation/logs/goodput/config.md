@@ -1,0 +1,4 @@
+- 100 reads at constant rate (500ms delay) 
+- 2 regions, 1 partition
+- pull/push delay of 5s
+- key a
