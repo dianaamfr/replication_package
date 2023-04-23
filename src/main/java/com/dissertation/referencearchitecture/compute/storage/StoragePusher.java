@@ -1,12 +1,6 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.ArrayDeque;
-import java.util.SortedMap;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentMap;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
@@ -18,17 +12,15 @@ import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.S3OperationLog;
 import com.dissertation.validation.logs.Log;
 
-import com.google.protobuf.ByteString;
-
 public class StoragePusher implements Runnable {
     private HLC hlc;
-    private Storage storage;
+    private WriterStorage storage;
     private S3Helper s3Helper;
     private int partition;
     private ArrayDeque<Log> logs;
     private final String region;
 
-    public StoragePusher(HLC hlc, Storage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs, String region) {
+    public StoragePusher(HLC hlc, WriterStorage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs, String region) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
@@ -91,42 +83,11 @@ public class StoragePusher implements Runnable {
 
     private void push(String timestamp) {
         try {
-            JSONObject json = this.toJson(this.storage.getState(), timestamp);
-            // System.out.println(json);
-            this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, json.toString());
+            this.storage.updateJsonState(timestamp);
+            this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, this.storage.getJsonState().toString());
             this.s3Helper.persistClock(timestamp);
         } catch (Exception e) {
             System.err.println(e.toString());
         }
-    }
-
-    private JSONObject toJson(ConcurrentMap<String, VersionChain> state, String timestamp) {
-        JSONObject stateJson = new JSONObject();
-        JSONArray versionChainsJson = new JSONArray();
-
-        for (Entry<String, VersionChain> versionChain : state.entrySet()) {
-            JSONArray versionsJson = new JSONArray();
-            SortedMap<String, ByteString> keySnapshotVersions = versionChain.getValue().getVersionChain(timestamp);
-            for (Entry<String, ByteString> version : keySnapshotVersions.entrySet()) {
-                versionsJson.put(getVersionJson(version.getKey(), version.getValue()));
-            }
-            versionChainsJson.put(getVersionChainJson(versionChain.getKey(), versionsJson));
-        }
-        stateJson.put(Utils.LOG_STATE, versionChainsJson);
-        return stateJson;
-    }
-
-    private JSONObject getVersionChainJson(String key, JSONArray versions) {
-        JSONObject keyVersionChainJson = new JSONObject();
-        keyVersionChainJson.put(Utils.LOG_KEY, key);
-        keyVersionChainJson.put(Utils.LOG_VERSIONS, versions);
-        return keyVersionChainJson;
-    }
-
-    private JSONObject getVersionJson(String timestamp, ByteString value) {
-        JSONObject keyVersion = new JSONObject();
-        keyVersion.put(Utils.LOG_TIMESTAMP, timestamp);
-        keyVersion.put(Utils.LOG_VALUE, Utils.stringFromByteString(value));
-        return keyVersion;
     }
 }
