@@ -1,11 +1,12 @@
-
-
-import json
 import csv
-import os
 import pandas as pd
+from utils import get_data, get_file, get_diff
+import os
 
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+PATH = os.path.dirname(os.path.abspath(__file__))
+LOGS_DIR = PATH + '/logs/visibility'
+LOG_RESULT_FILE = PATH + '/results/visibility/logs.csv'
+LOG_STATS_FILE = PATH + '/results/visibility/validation.csv'
 
 def get_header():
     return [
@@ -24,12 +25,6 @@ def get_header():
         'read_client_eu_response', 
         'read_client_us_response']
 
-def get_data(file):
-    return pd.read_json(CURRENT_PATH + '/logs/' + file + '.json')
-
-def get_file(file):
-    return json.loads(open(CURRENT_PATH + '/logs/' + file + '.json', 'r').read())
-
 def get_push_time(df, version):
     return df[(df['logType'] == 'LOG_PUSH') & (df['version'] >= version)].sort_values('version').iloc[0]['time']
 
@@ -47,21 +42,21 @@ def get_read_time(df, version):
 
 
 def combine_logs():
-    dest_file = open(CURRENT_PATH + '/results/visibility-logs.csv' ,'w+', newline='\n', encoding='utf-8')
+    dest_file = open(LOG_RESULT_FILE ,'w+', newline='\n', encoding='utf-8')
     writer = csv.writer(dest_file)
     writer.writerow(get_header())
 
     # Log files
-    write_client = get_file('writeclient-eu-west-1')
-    write_node = get_file('writenode-1')
+    write_client = get_file(LOGS_DIR, 'writeclient-eu-west-1')
+    write_node = get_file(LOGS_DIR, 'writenode-1')
     
     # Data frames
-    pusher_df = get_data('writenode-1-s3')
-    puller_eu_df = get_data('readnode-eu-west-1-s3')
-    puller_us_df = get_data('readnode-us-east-1-s3')
+    pusher_df = get_data(LOGS_DIR, 'writenode-1-s3')
+    puller_eu_df = get_data(LOGS_DIR, 'readnode-eu-west-1-s3')
+    puller_us_df = get_data(LOGS_DIR, 'readnode-us-east-1-s3')
     
-    read_client_eu = get_data('readclient-eu-west-1')
-    read_client_us = get_data('readclient-us-east-1')
+    read_client_eu = get_data(LOGS_DIR, 'readclient-eu-west-1')
+    read_client_us = get_data(LOGS_DIR, 'readclient-us-east-1')
 
     i = 0
     for client_request, client_response in zip(write_client[::2], write_client[1::2]):
@@ -105,9 +100,9 @@ def combine_logs():
         i+=2
 
 def get_stats():
-    df = pd.read_csv(CURRENT_PATH + '/results/visibility-logs.csv')
+    df = pd.read_csv(LOG_RESULT_FILE)
     #df = df.drop(index=0)
-    dest_file = open(CURRENT_PATH + '/results/visibility-validation.csv' ,'w+', newline='\n', encoding='utf-8')
+    dest_file = open(LOG_STATS_FILE ,'w+', newline='\n', encoding='utf-8')
     writer = csv.writer(dest_file)
     writer.writerow(['', 
         'Write to response', 
@@ -122,16 +117,16 @@ def get_stats():
         'Write to read (US)'
         ])
 
-    response_time = get_elapsed_time(df, 'client_request', 'client_response')
-    push_time = get_elapsed_time(df, 'client_request', 'write_node_push')
-    pull_time_eu = get_elapsed_time(df, 'client_request', 'read_node_eu_pull')
-    pull_time_us = get_elapsed_time(df, 'client_request', 'read_node_us_pull')
-    store_time_eu = get_elapsed_time(df, 'client_request', 'read_node_eu_store')
-    store_time_us = get_elapsed_time(df, 'client_request', 'read_node_us_store')
-    stable_time_eu = get_elapsed_time(df, 'client_request', 'read_node_eu_stable')
-    stable_time_us = get_elapsed_time(df, 'client_request', 'read_node_us_stable')
-    read_time_eu = get_elapsed_time(df, 'client_request', 'read_client_eu_response')
-    read_time_us = get_elapsed_time(df, 'client_request', 'read_client_us_response')
+    response_time = get_diff(df, 'client_request', 'client_response')
+    push_time = get_diff(df, 'client_request', 'write_node_push')
+    pull_time_eu = get_diff(df, 'client_request', 'read_node_eu_pull')
+    pull_time_us = get_diff(df, 'client_request', 'read_node_us_pull')
+    store_time_eu = get_diff(df, 'client_request', 'read_node_eu_store')
+    store_time_us = get_diff(df, 'client_request', 'read_node_us_store')
+    stable_time_eu = get_diff(df, 'client_request', 'read_node_eu_stable')
+    stable_time_us = get_diff(df, 'client_request', 'read_node_us_stable')
+    read_time_eu = get_diff(df, 'client_request', 'read_client_eu_response')
+    read_time_us = get_diff(df, 'client_request', 'read_client_us_response')
 
     data = {'response_time': response_time,
         'push_time': push_time,
@@ -152,9 +147,6 @@ def get_stats():
     writer.writerow(['mean'] + df_results.mean().values.tolist())
     writer.writerow(['max'] + df_results.max().values.tolist())
     writer.writerow(['min'] + df_results.min().values.tolist())
-
-def get_elapsed_time(df, from_row, to_row):
-    return df[to_row] - df[from_row]
 
 if __name__ == '__main__':
     combine_logs()

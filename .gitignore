@@ -26,3 +26,4 @@ bin/
 META-INF/
 target
 logs/*.json
+validation/__pycache__
