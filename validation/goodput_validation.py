@@ -7,30 +7,32 @@ LOGS_DIR = PATH + '/logs/goodput'
 LOG_RESULT_FILE = PATH + '/results/goodput/logs.csv'
 LOG_STATS_FILE = PATH + '/results/goodput/validation.csv'
 
-def get_header():
-    return [
-        'elapsed_time',
-        'versions',
-        'bytes'
-        ]
+def get_region_stats(df, region):
+    df_result = pd.DataFrame()
+    start_time = df.iloc[0]['time']
+    df_result['total_bytes'] = df['totalBytes']
+    df_result['elapsed_time'] = df['time'] - start_time
+    df_result['bytes_per_second'] = (df_result['total_bytes'] * 1000) / df_result['elapsed_time']
+    df_result['region'] = region
+    return df_result
 
 def combine_logs():
     dest_file = open(LOG_RESULT_FILE ,'w+', newline='\n', encoding='utf-8')
   
-    # Data frame
-    df = get_data(LOGS_DIR, 'writeclient-us-east-1')
+    df_us = get_data(LOGS_DIR, 'readclient-us-east-1')
+    df_eu = get_data(LOGS_DIR, 'readclient-eu-west-1')
 
-    start_time = df.iloc[0]['time']
-    df = df.rename(columns={'totalBytes': 'total_bytes'})
-    df['elapsed_time'] = df['time'] - start_time
-    df['bytes_per_second'] = (df['total_bytes'] * 1000) / df['elapsed_time']
-    df[['elapsed_time', 'total_bytes', 'bytes_per_second']].to_csv(dest_file, index=False)
-    
+    df_result_us = get_region_stats(df_us, 'us-east-1')
+    df_result_eu = get_region_stats(df_eu, 'eu-west-1')
+
+    df_concat = pd.concat([df_result_eu, df_result_us], axis=0).reset_index(drop=True)
+    df_concat.to_csv(dest_file, index=False)
+
 
 def get_stats():
     df = pd.read_csv(LOG_RESULT_FILE)
-    print(df.describe())
-    df.to_csv(LOG_STATS_FILE)
+    print(df.groupby('region')['bytes_per_second'].describe())
+    #df.to_csv(LOG_STATS_FILE)
 
 
 if __name__ == '__main__':
