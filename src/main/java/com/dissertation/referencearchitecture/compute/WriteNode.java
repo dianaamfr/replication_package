@@ -13,8 +13,8 @@ import com.dissertation.referencearchitecture.compute.clock.ClockState;
 import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
-import com.dissertation.referencearchitecture.compute.storage.Storage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
+import com.dissertation.referencearchitecture.compute.storage.WriterStorage;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
@@ -28,13 +28,13 @@ import io.grpc.stub.StreamObserver;
 import software.amazon.awssdk.regions.Region;
 
 public class WriteNode extends ComputeNode {
-    private Storage storage;
+    private WriterStorage storage;
     private HLC hlc;
     private int partition;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
     private final String region;
 
-    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, Storage storage,
+    public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, WriterStorage storage,
             HLC hlc, Region region) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper, String.format("%s-%d", Utils.WRITE_NODE_ID, partition));
         this.partition = partition;
@@ -64,7 +64,7 @@ public class WriteNode extends ComputeNode {
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
             Region region = Utils.getCurrentRegion();
             S3Helper s3Helper = new S3Helper(region);
-            Storage storage = new Storage();
+            WriterStorage storage = new WriterStorage();
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
             WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc, region);
