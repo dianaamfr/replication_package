@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.client.Client;
@@ -23,8 +22,8 @@ public class ConstantWriteGenerator {
     private final long delay;
     private int totalWrites;
     private final List<String> keys;
-    private AtomicInteger payload;
-    private AtomicInteger counter;
+    private long payload;
+    private int counter;
     private CountDownLatch countDown;
     private final ArrayDeque<Log> logs;
 
@@ -37,9 +36,9 @@ public class ConstantWriteGenerator {
         this.delay = delay;
         this.totalWrites = totalWrites;
         this.keys = keys;
-        this.payload = new AtomicInteger(Utils.PAYLOAD_START_INT);
+        this.payload = Utils.PAYLOAD_START_LONG;
 
-        this.counter = new AtomicInteger(0);
+        this.counter = 0;
         this.countDown = new CountDownLatch(totalWrites);
         this.logs = new ArrayDeque<>(this.totalWrites * 2);
 
@@ -108,12 +107,11 @@ public class ConstantWriteGenerator {
 
         @Override
         public void run() {
-            int count = counter.getAndIncrement();
-            String key = keys.get(count % keys.size());
+            String key = keys.get(counter % keys.size());
             int partitionId = Utils.getKeyPartitionId(key);
 
-            if (count < totalWrites) {
-                ByteString value = Utils.byteStringFromString(String.valueOf(payload.getAndIncrement()));
+            if (counter < totalWrites) {
+                ByteString value = Utils.byteStringFromString(String.valueOf(payload));
 
                 long t1 = System.currentTimeMillis();
                 WriteResponse writeResponse = client.requestWrite(key, value);
@@ -121,6 +119,9 @@ public class ConstantWriteGenerator {
 
                 logs.add(new WriteRequestLog(key, partitionId, t1));
                 logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
+
+                counter++;
+                payload++;
                 countDown.countDown();
             }
         }

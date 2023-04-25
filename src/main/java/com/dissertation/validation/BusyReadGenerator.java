@@ -82,7 +82,7 @@ public class BusyReadGenerator {
         boolean newPayload = false;
         long t1, t2;
         String valueStr;
-        int valueInt;
+        long valueLong;
 
         while (true) {
             t1 = System.currentTimeMillis();
@@ -100,9 +100,9 @@ public class BusyReadGenerator {
                 }
 
                 try {
-                    valueInt = Integer.valueOf(valueStr);
-                    if (valueInt > this.lastPayload) {
-                        this.lastPayload = valueInt;
+                    valueLong = Long.valueOf(valueStr);
+                    if (valueLong > this.lastPayload) {
+                        this.lastPayload = valueLong;
                         newPayload = true;
                     }
                 } catch (NumberFormatException e) {

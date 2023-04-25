@@ -70,7 +70,7 @@ readTest1:
 writeTest1:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
-totalReads = 101
+totalReads = 100
 readDelay = 500
 
 readTest2:

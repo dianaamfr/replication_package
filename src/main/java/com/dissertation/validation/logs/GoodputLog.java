@@ -2,18 +2,16 @@ package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-import com.dissertation.utils.Utils;
-
 public class GoodputLog extends Log {
-    private long totalBytes;
+    private long totalVersions;
 
-    public GoodputLog(long totalVersions, long time) {
-        super(LogType.GOODPUT, time);
-        this.totalBytes = totalVersions * Utils.PAYLOAD_SIZE_LONG;
+    public GoodputLog(long totalVersions, long elapsedTime) {
+        super(LogType.GOODPUT, elapsedTime);
+        this.totalVersions = totalVersions;
     }
 
     public JSONObject toJson() {
         return super.toJson()
-                .put("totalBytes", this.totalBytes);
+                .put("totalVersions", this.totalVersions);
     }
 }

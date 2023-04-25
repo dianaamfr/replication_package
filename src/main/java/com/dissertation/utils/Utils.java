@@ -18,8 +18,8 @@ public class Utils {
     public static final String TIMESTAMP_SEPARATOR = "-";
     public static final String TIMESTAMP_FORMAT = "%020d%s%020d";
     public static final String MIN_TIMESTAMP = String.format(TIMESTAMP_FORMAT, 0, TIMESTAMP_SEPARATOR, 0);
-    public static final int PULL_DELAY = 5000;
-    public static final int PUSH_DELAY = 5000;
+    public static final int PULL_DELAY = 10000;
+    public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
 
     public static final Region DEFAULT_REGION = Region.US_EAST_1;
@@ -28,7 +28,6 @@ public class Utils {
     private static final String BUCKET_SUFFIX = System.getProperty("bucketSuffix");
     public static final String S3_CLOCK_BUCKET = "clock" + BUCKET_SUFFIX;
     public static final String S3_PARTITION_FORMAT = "p%d-%s" + BUCKET_SUFFIX;
-    public static final int S3_MAX_KEYS = 5;
 
     public static final String LOG_STATE = "state";
     public static final String LOG_VERSIONS = "versions";
@@ -43,7 +42,6 @@ public class Utils {
     public static final int MAX_LOGS = 300;
     public static final long PAYLOAD_START_LONG = 274877906944L;
     public static final long PAYLOAD_END_LONG = 549755813887L;
-    public static final int PAYLOAD_SIZE_LONG = Long.SIZE - Long.numberOfLeadingZeros(PAYLOAD_START_LONG);
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";

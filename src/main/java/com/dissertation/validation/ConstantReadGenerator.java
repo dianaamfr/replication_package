@@ -1,6 +1,5 @@
 package com.dissertation.validation;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -14,7 +13,6 @@ import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.GoodputLog;
-import com.dissertation.validation.logs.Log;
 import com.google.protobuf.ByteString;
 
 public class ConstantReadGenerator {
@@ -26,7 +24,8 @@ public class ConstantReadGenerator {
     private int counter;
     private CountDownLatch countDown;
     private long lastPayload;
-    private final ArrayDeque<Log> logs;
+    private long startTime;
+    private long endTime;
 
     private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keys:String>";
 
@@ -40,14 +39,6 @@ public class ConstantReadGenerator {
         this.counter = 0;
         this.countDown = new CountDownLatch(totalReads);
         this.lastPayload = 0;
-        this.logs = new ArrayDeque<>(this.totalReads);
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
-                Utils.logToFile(logs,
-                        String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
-            }
-        });
 
         this.scheduler = scheduler;
     }
@@ -92,7 +83,6 @@ public class ConstantReadGenerator {
     }
 
     private void run() {
-        logs.add(new GoodputLog(this.lastPayload > 0 ? this.lastPayload - Utils.PAYLOAD_START_LONG : 0, System.currentTimeMillis()));
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
 
         try {
@@ -108,8 +98,12 @@ public class ConstantReadGenerator {
         @Override
         public void run() {
             if (counter < totalReads) {
+                if(counter == 0) {
+                    startTime = System.currentTimeMillis();
+                }
+
                 ROTResponse rotResponse = client.requestROT(keys);
-                long t = System.currentTimeMillis();
+                endTime = System.currentTimeMillis();
 
                 for (ByteString value : rotResponse.getValuesMap().values()) {
                     String valueStr = Utils.stringFromByteString(value);
@@ -127,7 +121,9 @@ public class ConstantReadGenerator {
                     }
                 }
 
-                logs.add(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0, t));
+                if((counter + 1) % totalReads == 0) {
+                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0, endTime - startTime));
+                }
 
                 countDown.countDown();
                 counter++;
