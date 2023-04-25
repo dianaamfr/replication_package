@@ -20,16 +20,16 @@ public class BusyReadGenerator {
     private final ByteString endMarker;
     private final Set<String> keys;
     private final ArrayDeque<Log> logs;
-    private int lastPayload;
+    private long lastPayload;
 
     private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keys:String>";
 
-    public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, int endMarker, Set<String> keys) {
+    public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, Set<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.endMarker = Utils.byteStringFromString(String.valueOf(endMarker));
         this.keys = keys;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
-        this.lastPayload = Utils.PAYLOAD_START_INT - 1;
+        this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -63,8 +63,8 @@ public class BusyReadGenerator {
                 return;
             }
 
-            int expectedWrites = Integer.parseInt(args[addressesEndIndex]);
-            int endMarker = Utils.PAYLOAD_START_INT + expectedWrites - 1;
+            long expectedWrites = Long.parseLong(args[addressesEndIndex]);
+            long endMarker = Utils.PAYLOAD_START_LONG + expectedWrites - 1;
             for (int i = addressesEndIndex + 1; i < args.length; i++) {
                 keys.add(args[i]);
             }

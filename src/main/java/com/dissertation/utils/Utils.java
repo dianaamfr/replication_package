@@ -18,8 +18,8 @@ public class Utils {
     public static final String TIMESTAMP_SEPARATOR = "-";
     public static final String TIMESTAMP_FORMAT = "%020d%s%020d";
     public static final String MIN_TIMESTAMP = String.format(TIMESTAMP_FORMAT, 0, TIMESTAMP_SEPARATOR, 0);
-    public static final int PULL_DELAY = 10000;
-    public static final int PUSH_DELAY = 10000;
+    public static final int PULL_DELAY = 5000;
+    public static final int PUSH_DELAY = 5000;
     public static final int CLOCK_DELAY = 20000;
 
     public static final Region DEFAULT_REGION = Region.US_EAST_1;
@@ -41,7 +41,6 @@ public class Utils {
     public static final boolean VISIBILITY_LOGS = Boolean.parseBoolean(System.getProperty("visibilityLogs"));
     public static final boolean GOODPUT_LOGS = Boolean.parseBoolean(System.getProperty("goodputLogs"));
     public static final int MAX_LOGS = 300;
-    public static final int PAYLOAD_START_INT = 512;
     public static final long PAYLOAD_START_LONG = 274877906944L;
     public static final long PAYLOAD_END_LONG = 549755813887L;
     public static final int PAYLOAD_SIZE_LONG = Long.SIZE - Long.numberOfLeadingZeros(PAYLOAD_START_LONG);
@@ -57,7 +56,7 @@ public class Utils {
 
     public static String stringFromByteString(ByteString byteString) {
         try {
-            String value = byteString.toStringUtf8();
+            String value = byteString.toStringUtf8();   
             return value;
         } catch (Exception e) {
             e.printStackTrace();

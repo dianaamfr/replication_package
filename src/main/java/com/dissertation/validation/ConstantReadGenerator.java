@@ -122,7 +122,6 @@ public class ConstantReadGenerator {
                         if (valueLong > lastPayload) {
                             lastPayload = valueLong;
                         }
-                        ;
                     } catch (NumberFormatException e) {
                         continue;
                     }

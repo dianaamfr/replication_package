@@ -60,7 +60,7 @@ client:
 
 # Validation
 
-totalWrites = 100
+totalWrites = 101
 keys = a b
 writeDelay = 200
 
@@ -70,7 +70,7 @@ readTest1:
 writeTest1:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
-totalReads = 100
+totalReads = 101
 readDelay = 500
 
 readTest2:
