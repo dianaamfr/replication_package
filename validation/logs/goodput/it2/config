@@ -2,3 +2,4 @@
 - 2 regions, 1 partition
 - pull/push delay of 5s
 - key a
+- 12 bytes objects (8 bytes long converted to String)

@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 from utils import get_data
 import os
@@ -7,11 +8,11 @@ LOGS_DIR = PATH + '/logs/latency'
 LOG_RESULT_FILE = PATH + '/results/latency/logs.csv'
 LOG_STATS_FILE = PATH + '/results/latency/validation.csv'
 
-def combine_logs():
+def combine_logs(iteration_dir):
     dest_file = open(LOG_RESULT_FILE ,'w+', newline='\n', encoding='utf-8')
 
-    df_us = get_data(LOGS_DIR, 'readclient-us-east-1')
-    df_eu = get_data(LOGS_DIR, 'readclient-eu-west-1')
+    df_us = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-us-east-1')
+    df_eu = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-eu-west-1')
     
     df_result_us = df_us.groupby('id').apply(lambda group: 
         group.loc[group['logType'] == 'ROT_RESPONSE', 'time'].values[0] - 
@@ -40,5 +41,5 @@ def get_stats():
     df_results.to_csv(LOG_STATS_FILE)
 
 if __name__ == '__main__':
-    combine_logs()
+    combine_logs(sys.argv[1])
     get_stats()
