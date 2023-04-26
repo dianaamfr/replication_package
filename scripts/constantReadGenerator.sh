@@ -1,10 +1,10 @@
-if [ $# -lt 11 ]
+if [ $# -lt 10 ]
 then
-  echo "Usage: constantWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <delay> <totalWrites> <key>+"
+  echo "Usage: constantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <totalReads> <key>+"
   exit 1
 fi
 
-NODE=constantWriteGenerator
+NODE=constantReadGenerator
 BUCKET_SUFFIX=-reference-architecture
 IMAGE="dianaamfreitas/dissertation:${1}"
 N_PARTITIONS=$2

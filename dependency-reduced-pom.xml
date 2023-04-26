@@ -84,7 +84,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>read-generator</id>
+            <id>busy-read-generator</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -100,7 +100,7 @@
             </configuration>
           </execution>
           <execution>
-            <id>write-generator</id>
+            <id>constant-write-generator</id>
             <phase>package</phase>
             <goals>
               <goal>shade</goal>
@@ -127,6 +127,38 @@
                 <transformer />
                 <transformer>
                   <mainClass>com.dissertation.validation.ClientInterface</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>constant-read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>constantReadGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>busy-write-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>busyWriteGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.BusyWriteGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>

@@ -108,7 +108,6 @@ public class S3Helper {
     private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key) {
         ListObjectsV2Request listObjects = ListObjectsV2Request
                 .builder()
-                .maxKeys(Utils.S3_MAX_KEYS)
                 .prefix(prefix)
                 .startAfter(prefix + key)
                 .bucket(bucketName)

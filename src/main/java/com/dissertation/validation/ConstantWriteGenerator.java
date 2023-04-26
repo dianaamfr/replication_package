@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.client.Client;
@@ -17,43 +16,40 @@ import com.dissertation.validation.logs.WriteRequestLog;
 import com.dissertation.validation.logs.WriteResponseLog;
 import com.google.protobuf.ByteString;
 
-
 public class ConstantWriteGenerator {
-    protected ScheduledThreadPoolExecutor scheduler;
+    private ScheduledThreadPoolExecutor scheduler;
     private Client client;
     private final long delay;
     private int totalWrites;
     private final List<String> keys;
-    private AtomicInteger payload;
-    private AtomicInteger counter;
+    private long payload;
+    private int counter;
     private CountDownLatch countDown;
     private final ArrayDeque<Log> logs;
 
     private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <keys:String>";
 
-    public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress, List<Address> writeAddresses,
-            int regionPartitions, long delay, int totalWrites, List<String> keys) {
-        
-        this.client = new Client(readAddress, writeAddresses);   
+    public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
+            List<Address> writeAddresses, long delay, int totalWrites, List<String> keys) {
+
+        this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
         this.totalWrites = totalWrites;
         this.keys = keys;
-        this.payload = new AtomicInteger(Utils.PAYLOAD_START);
-        
-        this.scheduler = scheduler;
-        this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS); 
+        this.payload = Utils.PAYLOAD_START_LONG;
 
-        this.counter = new AtomicInteger(0);
+        this.counter = 0;
         this.countDown = new CountDownLatch(totalWrites);
         this.logs = new ArrayDeque<>(this.totalWrites * 2);
-        
-        if(Utils.LOGS) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                public void run() {
-                    Utils.logToFile(logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
-                }
-            });
-        }
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                Utils.logToFile(logs,
+                        String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
+            }
+        });
+
+        this.scheduler = scheduler;
     }
 
     public static void main(String[] args) {
@@ -76,7 +72,7 @@ public class ConstantWriteGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            if(args.length < addressesEndIndex + 3) {
+            if (args.length < addressesEndIndex + 3) {
                 System.err.println(USAGE);
                 return;
             }
@@ -87,8 +83,8 @@ public class ConstantWriteGenerator {
                 keys.add(args[i]);
             }
 
-            ConstantWriteGenerator writer = new ConstantWriteGenerator(scheduler, readAddress, writeAddresses, regionPartitions,
-                    delay, totalWrites, keys);
+            ConstantWriteGenerator writer = new ConstantWriteGenerator(scheduler, readAddress, writeAddresses, delay,
+                    totalWrites, keys);
             writer.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -96,6 +92,8 @@ public class ConstantWriteGenerator {
     }
 
     public void run() {
+        this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
+
         try {
             this.countDown.await();
         } catch (Exception e) {
@@ -109,21 +107,21 @@ public class ConstantWriteGenerator {
 
         @Override
         public void run() {
-            int count = counter.getAndIncrement();
-            String key = keys.get(count % keys.size());
+            String key = keys.get(counter % keys.size());
             int partitionId = Utils.getKeyPartitionId(key);
 
-            if (count < totalWrites) {
-                ByteString value = Utils.byteStringFromString(String.valueOf(payload.getAndIncrement()));
+            if (counter < totalWrites) {
+                ByteString value = Utils.byteStringFromString(String.valueOf(payload));
 
                 long t1 = System.currentTimeMillis();
                 WriteResponse writeResponse = client.requestWrite(key, value);
                 long t2 = System.currentTimeMillis();
 
-                if(Utils.LOGS) {
-                    logs.add(new WriteRequestLog(key, partitionId, t1));
-                    logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
-                }
+                logs.add(new WriteRequestLog(key, partitionId, t1));
+                logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
+
+                counter++;
+                payload++;
                 countDown.countDown();
             }
         }
