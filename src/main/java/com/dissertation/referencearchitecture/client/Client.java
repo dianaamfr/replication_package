@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.dissertation.referencearchitecture.AtomicWriteRequest;
+import com.dissertation.referencearchitecture.AtomicWriteResponse;
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -115,6 +117,69 @@ public class Client {
         }
     }
 
+    public AtomicWriteResponse requestCompareVersionAndWrite(String key, ByteString value, String expectedVersion, ByteString expectedValue) {
+        try {
+            int partitionId = Utils.getKeyPartitionId(key);
+            if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+                throw new KeyNotFoundException();
+            }
+
+            WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
+            com.dissertation.referencearchitecture.AtomicWriteRequest.Builder writeRequestBuilder = AtomicWriteRequest.newBuilder()
+                    .setKey(key)
+                    .setValue(value)
+                    .setLastWriteTimestamp(this.lastWriteTimestamp)
+                    .setExpectedVersion(expectedVersion);
+            
+            if(expectedValue != null) {
+                writeRequestBuilder.setExpectedValue(expectedValue);
+            }
+
+            AtomicWriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
+            if (!writeResponse.getError()) {
+                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
+                this.cache.put(key, version);
+            }
+            return writeResponse;
+        } catch (KeyNotFoundException e) {
+            return AtomicWriteResponse.newBuilder()
+                    .setStatus(e.toString())
+                    .setError(true)
+                    .build();
+        }
+    }
+
+    public AtomicWriteResponse requestCompareValueAndWrite(String key, ByteString value, ByteString expectedValue) {
+        try {
+            int partitionId = Utils.getKeyPartitionId(key);
+            if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+                throw new KeyNotFoundException();
+            }
+
+            WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
+            com.dissertation.referencearchitecture.AtomicWriteRequest.Builder writeRequestBuilder = AtomicWriteRequest.newBuilder()
+                    .setKey(key)
+                    .setValue(value)
+                    .setLastWriteTimestamp(this.lastWriteTimestamp)
+                    .setExpectedValue(expectedValue);
+            
+
+            AtomicWriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
+            if (!writeResponse.getError()) {
+                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
+                this.cache.put(key, version);
+            }
+            return writeResponse;
+        } catch (KeyNotFoundException e) {
+            return AtomicWriteResponse.newBuilder()
+                    .setStatus(e.toString())
+                    .setError(true)
+                    .build();
+        }
+    }
+
     private void pruneCache(String stableTime) {
         List<String> toPrune = new ArrayList<>();
         for (Entry<String, KeyVersion> entry : this.cache.entrySet()) {
@@ -127,7 +192,7 @@ public class Client {
 
     public void shutdown() {
         for (ManagedChannel channel : this.channels) {
-            channel.shutdown();
+            channel.shutdown(); // TODO: shutdownNow()?
         }
     }
 

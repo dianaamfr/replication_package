@@ -8,6 +8,8 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
+import com.dissertation.referencearchitecture.AtomicWriteRequest;
+import com.dissertation.referencearchitecture.AtomicWriteResponse;
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -53,8 +55,10 @@ public class ClientInterface {
 
         do {
             System.out.println("Enter an operation:");
-            System.out.println("  ROT: R <key:String>+");
-            System.out.println("  Write: W <key:String> <value:Int>");
+            System.out.println("  ROT: R <key>+");
+            System.out.println("  Write: W <key> <value>");
+            System.out.println("  Compare-Version-and-Write: CWA <key> <value> <expectedVersion> <expectedValue>?");
+            System.out.println("  Compare-Value-and-Write: CWB <key> <value> <expectedValue>");
             input = scanner.nextLine();
             String[] commands = input.split(" ");
 
@@ -70,6 +74,12 @@ public class ClientInterface {
                     break;
                 case "W":
                     this.sendWriteRequest(params);
+                    break;
+                case "CWA":
+                    this.sendCompareVersionAndWriteRequest(params);
+                    break;
+                case "CWB":
+                    this.sendCompareValueAndWriteRequest(params);
                     break;
                 default:
                     System.err.println("Unsupported command");
@@ -118,6 +128,41 @@ public class ClientInterface {
         }
     }
 
+    private void sendCompareVersionAndWriteRequest(String[] commands) {
+        if (commands.length < 3 || commands.length > 4) {
+            System.err.println("Unsupported command");
+            return;
+        }
+
+        String key = commands[0];
+        ByteString value = Utils.byteStringFromString(commands[1]);
+        AtomicWriteResponse writeResponse = this.client.requestCompareVersionAndWrite(key, value, commands[2], commands.length == 4 ? Utils.byteStringFromString(commands[3]) : null);
+
+        if (!writeResponse.getError()) {
+            System.out.println(this.addWriteOutput(new StringBuilder(), key, commands[1], writeResponse.getWriteTimestamp()).toString());
+        } else {
+            System.err.println(this.addAtomicWriteErrorOutput(new StringBuilder(), key, writeResponse).toString());
+        }
+    }
+
+    private void sendCompareValueAndWriteRequest(String[] commands) {
+        if (commands.length != 3) {
+            System.err.println("Unsupported command");
+            return;
+        }
+
+        String key = commands[0];
+        ByteString value = Utils.byteStringFromString(commands[1]);
+        ByteString expectedValue = Utils.byteStringFromString(commands[2]);
+        AtomicWriteResponse writeResponse = this.client.requestCompareValueAndWrite(key, value, expectedValue);
+
+        if (!writeResponse.getError()) {
+            System.out.println(this.addWriteOutput(new StringBuilder(), key, commands[1], writeResponse.getWriteTimestamp()).toString());
+        } else {
+            System.err.println(this.addAtomicWriteErrorOutput(new StringBuilder(), key, writeResponse).toString());
+        }
+    }
+
     private StringBuilder addROTOutput(StringBuilder builder, Entry<String, KeyVersion> entry) {
         builder.append(String.format("\n  key = %s", entry.getKey()));
         builder.append(String.format("\n  value = %s", entry.getValue().getValue().isEmpty() ? null : Utils.stringFromByteString(entry.getValue().getValue())));
@@ -131,6 +176,19 @@ public class ClientInterface {
         builder.append(String.format("\n  key = %s", key));
         builder.append(String.format("\n  value = %s", value));
         builder.append(String.format("\n  version = %s", timestamp));
+        builder.append("\n");
+        return builder;
+    }
+
+    public StringBuilder addAtomicWriteErrorOutput(StringBuilder builder, String key, AtomicWriteResponse writeResponse) {
+
+        builder.append(String.format(writeResponse.getStatus()));
+
+        if(writeResponse.hasCurrentVersion()) {
+            builder.append(String.format("\n  currentVersion = %s", writeResponse.getCurrentVersion().getTimestamp()));
+            builder.append(String.format("\n  currentValue = %s", writeResponse.getCurrentVersion().getValue().isEmpty() ? null : Utils.stringFromByteString(writeResponse.getCurrentVersion().getValue())));
+        } 
+
         builder.append("\n");
         return builder;
     }
