@@ -17,8 +17,8 @@ public class WriteResponseLog extends Log {
    @Override
    public JSONObject toJson() {
       return super.toJson()
-               .put("key", this.key)
-               .put("partition", this.partition)
-               .put("version", this.version);
+            .put("key", this.key)
+            .put("partition", this.partition)
+            .put("version", this.version);
    }
 }

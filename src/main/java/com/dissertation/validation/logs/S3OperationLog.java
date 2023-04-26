@@ -11,11 +11,11 @@ public class S3OperationLog extends Log {
         this.version = version;
         this.partition = partition;
     }
-    
+
     @Override
-     public JSONObject toJson() {
+    public JSONObject toJson() {
         return super.toJson()
-                 .put("version", this.version)
-                 .put("partition", this.partition);
-     }
+                .put("version", this.version)
+                .put("partition", this.partition);
+    }
 }

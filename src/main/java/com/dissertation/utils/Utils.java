@@ -54,7 +54,7 @@ public class Utils {
 
     public static String stringFromByteString(ByteString byteString) {
         try {
-            String value = byteString.toStringUtf8();   
+            String value = byteString.toStringUtf8();
             return value;
         } catch (Exception e) {
             e.printStackTrace();

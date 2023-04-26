@@ -98,7 +98,7 @@ public class ConstantReadGenerator {
         @Override
         public void run() {
             if (counter < totalReads) {
-                if(counter == 0) {
+                if (counter == 0) {
                     startTime = System.currentTimeMillis();
                 }
 
@@ -121,8 +121,9 @@ public class ConstantReadGenerator {
                     }
                 }
 
-                if((counter + 1) % totalReads == 0) {
-                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0, endTime - startTime).toJson().toString());
+                if ((counter + 1) % totalReads == 0) {
+                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
+                            endTime - startTime).toJson().toString());
                 }
 
                 countDown.countDown();

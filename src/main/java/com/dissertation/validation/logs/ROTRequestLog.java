@@ -16,8 +16,8 @@ public class ROTRequestLog extends Log {
     }
 
     @Override
-   public JSONObject toJson() {
-      return super.toJson()
-            .put("id", this.id);
-   }
+    public JSONObject toJson() {
+        return super.toJson()
+                .put("id", this.id);
+    }
 }
