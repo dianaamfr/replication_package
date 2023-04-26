@@ -33,7 +33,9 @@ This repository holds a Maven project with the following structure:
         - `ClientInterface`: To test the prototype through a command-line interface.
         - `logs`: Classes that represent logs of each relevant operation. Used for validating the prototype.
         - `BusyReadGenerator`: A single-threaded reader that issues read requests with no delay to all the keys provided in the arguments.
-        - `ConstantWriteGenerator`: A single-threaded writer that issues a configurable number of write requests, alternating between the provided set of keys, with a configurable delay
+        - `ConstantWriteGenerator`: A single-threaded writer that issues a configurable number of write requests at a fixed rate, alternating between the provided set of keys.
+        - `ConstantReadGenerator`: A single-threaded reader that issues read requests with a fixed delay to all the keys provided in the arguments.
+        - `BusyWriteGenerator`: A single-threaded writer that issues write requests with no delay, alternating between the provided set of keys.
 - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
 - `logs`: Stores the logs that result from the validation.
 - `scripts`: Holds useful scripts for running each component of the prototype with docker.
@@ -63,14 +65,11 @@ The project can be tested locally using LocalStack. To do so, follow the instruc
     - `make writeNode2` (writes in partition 2)
 
 **Issue read and write requests**:
-- Using the command-line interface:
-    1. Start the desired number of clients: `make client`
-    2. Issue the desired ROT and write requests:
-        - ROT example: `R x y`
-        - Write example: `W x 3`
-- Generate load with the load generators:
-    1. Start the Write Generator: `make writeTest`
-    2. Start the Read Generator: `make readTest`
+Using the command-line interface:
+1. Start the desired number of clients: `make client`
+2. Issue the desired ROT and write requests:
+    - ROT example: `R x y`
+    - Write example: `W x 3`
 
 ## Candidate Reference Architecture
 
