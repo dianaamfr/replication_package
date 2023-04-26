@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
@@ -13,11 +14,10 @@ import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.Log;
 import com.dissertation.validation.logs.ROTRequestLog;
 import com.dissertation.validation.logs.ROTResponseLog;
-import com.google.protobuf.ByteString;
 
 public class BusyReadGenerator {
     private final Client client;
-    private final ByteString endMarker;
+    private final long endMarker;
     private final Set<String> keys;
     private final ArrayDeque<Log> logs;
     private long lastPayload;
@@ -26,7 +26,7 @@ public class BusyReadGenerator {
 
     public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, Set<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
-        this.endMarker = Utils.byteStringFromString(String.valueOf(endMarker));
+        this.endMarker = endMarker;
         this.keys = keys;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
@@ -80,6 +80,7 @@ public class BusyReadGenerator {
     public void run() {
         ROTResponse rotResponse;
         boolean newPayload = false;
+        boolean exit = false;
         long t1, t2;
         String valueStr;
         long valueLong;
@@ -93,8 +94,8 @@ public class BusyReadGenerator {
                 continue;
             }
 
-            for (ByteString value : rotResponse.getValuesMap().values()) {
-                valueStr = Utils.stringFromByteString(value);
+            for (KeyVersion keyVersion: rotResponse.getVersionsMap().values()) {
+                valueStr = Utils.stringFromByteString(keyVersion.getValue());
                 if (valueStr.isBlank()) {
                     continue;
                 }
@@ -104,6 +105,9 @@ public class BusyReadGenerator {
                     if (valueLong > this.lastPayload) {
                         this.lastPayload = valueLong;
                         newPayload = true;
+                    }
+                    if(valueLong == this.endMarker) {
+                        exit = true;
                     }
                 } catch (NumberFormatException e) {
                     continue;
@@ -116,11 +120,10 @@ public class BusyReadGenerator {
                 this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
             }
 
-            if (rotResponse.getValuesMap().containsValue(this.endMarker)) {
+            if(exit) {
+                this.client.shutdown();
                 break;
             }
         }
-
-        this.client.shutdown();
     }
 }

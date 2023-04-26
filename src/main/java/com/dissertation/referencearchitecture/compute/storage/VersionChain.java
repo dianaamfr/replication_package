@@ -1,10 +1,11 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 
-import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
+import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
 public class VersionChain {
@@ -24,16 +25,20 @@ public class VersionChain {
         }
     }
 
-    public Entry<String, ByteString> get(String maxTimestamp) throws KeyVersionNotFoundException {
-        try {
-            Entry<String, ByteString> entry = this.versions.floorEntry(maxTimestamp);
-            if (entry == null) {
-                throw new KeyVersionNotFoundException();
-            }
-            return entry;
-        } catch (Exception e) {
-            throw new KeyVersionNotFoundException();
+    public Entry<String, ByteString> get(String maxTimestamp) {
+        Entry<String, ByteString> entry = this.versions.floorEntry(maxTimestamp);
+        if (entry == null) {
+            entry = Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
         }
+        return entry;
+    }
+
+    public Entry<String, ByteString> getLastVersion() {
+        Entry<String, ByteString> lastVersion = this.versions.lastEntry();
+        if(lastVersion == null) {
+            lastVersion = Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
+        }
+        return lastVersion;
     }
 
     @Override

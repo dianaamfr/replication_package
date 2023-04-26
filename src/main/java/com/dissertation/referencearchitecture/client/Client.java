@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.ROTServiceGrpc;
@@ -26,7 +27,7 @@ public class Client {
     private Map<Integer, WriteServiceGrpc.WriteServiceBlockingStub> writeStubs;
     private ROTServiceGrpc.ROTServiceBlockingStub readStub;
     private List<ManagedChannel> channels;
-    private Map<String, Version> cache;
+    private Map<String, KeyVersion> cache;
     private String lastWriteTimestamp;
 
     public Client(Address readAddress, List<Address> writeAddresses) {
@@ -53,7 +54,7 @@ public class Client {
         Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
-        Map<String, ByteString> values = new HashMap<>();
+        Map<String, KeyVersion> versions = new HashMap<>();
 
         try {
             for (String key : keys) {
@@ -69,12 +70,11 @@ public class Client {
                 pruneCache(rotResponse.getStableTime());
 
                 // Search cache
-                for (Entry<String, ByteString> entry : rotResponse.getValuesMap().entrySet()) {
-                    Version cacheVersion = this.cache.getOrDefault(entry.getKey(), null);
-                    ByteString version = cacheVersion != null ? cacheVersion.getValue() : entry.getValue();
-                    values.put(entry.getKey(), version);
+                for (Entry<String, KeyVersion> entry : rotResponse.getVersionsMap().entrySet()) {
+                    KeyVersion cacheVersion = this.cache.getOrDefault(entry.getKey(), null);
+                    versions.put(entry.getKey(), cacheVersion != null ? cacheVersion : entry.getValue());
                 }
-                builder.putAllValues(values).setStableTime(rotResponse.getStableTime()).setId(rotResponse.getId());
+                builder.putAllVersions(versions).setStableTime(rotResponse.getStableTime()).setId(rotResponse.getId());
 
                 return builder.build();
             }
@@ -103,7 +103,8 @@ public class Client {
             WriteResponse writeResponse = writeStub.write(writeRequest);
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                this.cache.put(key, new Version(key, value, this.lastWriteTimestamp));
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
+                this.cache.put(key, version);
             }
             return writeResponse;
         } catch (KeyNotFoundException e) {
@@ -116,7 +117,7 @@ public class Client {
 
     private void pruneCache(String stableTime) {
         List<String> toPrune = new ArrayList<>();
-        for (Entry<String, Version> entry : this.cache.entrySet()) {
+        for (Entry<String, KeyVersion> entry : this.cache.entrySet()) {
             if (entry.getValue().getTimestamp().compareTo(stableTime) <= 0) {
                 toPrune.add(entry.getKey());
             }

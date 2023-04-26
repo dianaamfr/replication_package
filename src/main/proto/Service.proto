@@ -2,6 +2,11 @@ syntax="proto3";
 option java_multiple_files = true;
 package com.dissertation.referencearchitecture;
 
+message KeyVersion {
+    string timestamp = 1;
+    bytes value = 2;
+}
+
 message WriteRequest {
     string key = 1;
     bytes value = 2;
@@ -19,7 +24,7 @@ message ROTRequest {
 }
 
 message ROTResponse {
-    map<string, bytes> values = 1;
+    map<string, KeyVersion> versions = 1;
     string stableTime = 2;
     int64 id = 3;
     bool error = 4;
