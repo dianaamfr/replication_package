@@ -43,7 +43,7 @@ public class ReadNode extends ComputeNode {
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper,this.s3Logs, this.region),
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.s3Logs, this.region),
                 Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);

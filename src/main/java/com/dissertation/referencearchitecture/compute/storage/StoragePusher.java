@@ -20,7 +20,8 @@ public class StoragePusher implements Runnable {
     private ArrayDeque<Log> logs;
     private final String region;
 
-    public StoragePusher(HLC hlc, WriterStorage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs, String region) {
+    public StoragePusher(HLC hlc, WriterStorage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs,
+            String region) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
@@ -37,13 +38,13 @@ public class StoragePusher implements Runnable {
             this.sync(currentTime);
             return;
         }
-         
+
         // Push if new writes have been made
         ClockState safePushTime = this.hlc.getAndResetSafePushTime();
-        if(!safePushTime.isZero()) {
+        if (!safePushTime.isZero()) {
             this.push(safePushTime.toString());
 
-            if(Utils.VISIBILITY_LOGS) {
+            if (Utils.VISIBILITY_LOGS) {
                 this.logs.add(new S3OperationLog(safePushTime.toString(), this.partition, true));
             }
         }
@@ -84,7 +85,8 @@ public class StoragePusher implements Runnable {
     private void push(String timestamp) {
         try {
             this.storage.updateJsonState(timestamp);
-            this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp, this.storage.getJsonState().toString());
+            this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp,
+                    this.storage.getJsonState().toString());
             this.s3Helper.persistClock(timestamp);
         } catch (Exception e) {
             System.err.println(e.toString());

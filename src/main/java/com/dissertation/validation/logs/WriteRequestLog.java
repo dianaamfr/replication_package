@@ -11,11 +11,11 @@ public class WriteRequestLog extends Log {
       this.key = key;
       this.partition = partition;
    }
-   
+
    @Override
    public JSONObject toJson() {
       return super.toJson()
-               .put("key", this.key)
-               .put("partition", this.partition);
+            .put("key", this.key)
+            .put("partition", this.partition);
    }
 }

@@ -6,17 +6,17 @@ public abstract class Log {
     protected final long time;
     protected final LogType logType;
 
-public enum LogType {
-    WRITE_REQUEST,
-    ROT_REQUEST,
-    WRITE_RESPONSE,
-    ROT_RESPONSE,
-    STABLE_TIME,
-    LOG_PULL,
-    LOG_PUSH,
-    STORE_VERSION,
-    GOODPUT
-}
+    public enum LogType {
+        WRITE_REQUEST,
+        ROT_REQUEST,
+        WRITE_RESPONSE,
+        ROT_RESPONSE,
+        STABLE_TIME,
+        LOG_PULL,
+        LOG_PUSH,
+        STORE_VERSION,
+        GOODPUT
+    }
 
     protected Log(LogType logType, long time) {
         this.logType = logType;

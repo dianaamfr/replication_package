@@ -75,7 +75,7 @@ public class Client {
                     values.put(entry.getKey(), version);
                 }
                 builder.putAllValues(values).setStableTime(rotResponse.getStableTime()).setId(rotResponse.getId());
-                
+
                 return builder.build();
             }
             return rotResponse;

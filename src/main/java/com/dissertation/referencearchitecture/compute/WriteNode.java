@@ -21,7 +21,6 @@ import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.WriteRequestLog;
 import com.dissertation.validation.logs.WriteResponseLog;
 
-
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
@@ -115,7 +114,7 @@ public class WriteNode extends ComputeNode {
                 if (Utils.VISIBILITY_LOGS) {
                     logs.add(new WriteRequestLog(request.getKey(), partition, t1));
                     logs.add(new WriteResponseLog(request.getKey(), partition,
-                    writeTime.toString(), t2));
+                            writeTime.toString(), t2));
                 }
             }
 

@@ -32,7 +32,8 @@ public class WriterStorage extends Storage {
     public void updateJsonState(String timestamp) {
         for (Entry<String, VersionChain> versionChain : this.getState().entrySet()) {
             String lastPushedTimestamp = this.getLastPushedVersion(versionChain.getKey());
-            SortedMap<String, ByteString> keySnapshotVersions = versionChain.getValue().getVersionChain(lastPushedTimestamp, timestamp);
+            SortedMap<String, ByteString> keySnapshotVersions = versionChain.getValue()
+                    .getVersionChain(lastPushedTimestamp, timestamp);
             for (Entry<String, ByteString> version : keySnapshotVersions.entrySet()) {
                 this.appendToJsonState(versionChain.getKey(), version.getKey(), version.getValue());
             }
@@ -50,7 +51,7 @@ public class WriterStorage extends Storage {
     }
 
     private void appendToJsonState(String key, String timestamp, ByteString value) {
-        if(!this.jsonVersionChains.containsKey(key)) {
+        if (!this.jsonVersionChains.containsKey(key)) {
             this.jsonVersionChains.put(key, this.getVersionChainJson(key));
         }
         this.jsonVersionChains.get(key).getJSONArray(Utils.LOG_VERSIONS).put(getVersionJson(timestamp, value));

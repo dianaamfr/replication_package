@@ -115,7 +115,6 @@ public class BusyReadGenerator {
                 this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
                 this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
             }
-            
 
             if (rotResponse.getValuesMap().containsValue(this.endMarker)) {
                 break;
