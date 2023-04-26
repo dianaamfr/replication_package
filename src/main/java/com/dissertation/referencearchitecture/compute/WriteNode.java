@@ -2,9 +2,13 @@ package com.dissertation.referencearchitecture.compute;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Map.Entry;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.dissertation.referencearchitecture.AtomicWriteRequest;
+import com.dissertation.referencearchitecture.AtomicWriteResponse;
+import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.WriteResponse.Builder;
@@ -20,6 +24,7 @@ import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.WriteRequestLog;
 import com.dissertation.validation.logs.WriteResponseLog;
+import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
@@ -90,25 +95,19 @@ public class WriteNode extends ComputeNode {
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
 
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
-                responseBuilder
-                        .setStatus(String.format("Key %s not found", request.getKey()))
+                responseBuilder.setStatus(String.format("Key %s not found", request.getKey()))
                         .setError(true);
             } else {
                 try {
                     lastTime = ClockState.fromString(request.getLastWriteTimestamp(), State.WRITE);
                 } catch (InvalidTimestampException e) {
-                    responseBuilder
-                            .setStatus(e.toString())
-                            .setError(true);
+                    responseBuilder.setStatus(e.toString()).setError(true);
                 }
             }
 
             if (!responseBuilder.getError()) {
-                writeTime = hlc.writeEvent(lastTime);
-                storage.put(request.getKey(), writeTime.toString(), request.getValue());
-                responseBuilder.setWriteTimestamp(writeTime.toString());
-                hlc.writeComplete();
-                hlc.setSafePushTime(writeTime);
+                String writeTimestamp = performWrite(lastTime, request);
+                responseBuilder.setWriteTimestamp(writeTimestamp);
                 long t2 = System.currentTimeMillis();
 
                 if (Utils.VISIBILITY_LOGS) {
@@ -121,5 +120,80 @@ public class WriteNode extends ComputeNode {
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
+    
+        @Override
+        public void atomicWrite(AtomicWriteRequest request, StreamObserver<AtomicWriteResponse> responseObserver) {
+            ClockState lastTime = new ClockState();
+            com.dissertation.referencearchitecture.AtomicWriteResponse.Builder responseBuilder = AtomicWriteResponse.newBuilder().setError(false);
+
+            if (Utils.getKeyPartitionId(request.getKey()) != partition) {
+                responseBuilder.setStatus(String.format("Key %s not found", request.getKey()))
+                        .setError(true);
+            } else if (!request.hasExpectedValue() && !request.hasExpectedVersion()) {
+                responseBuilder.setStatus("No expected value or version provided. Please provide at least one of them or use the write method.")
+                        .setError(true);
+            } else {
+                try {
+                    lastTime = ClockState.fromString(request.getLastWriteTimestamp(), State.WRITE);
+                } catch (InvalidTimestampException e) {
+                    responseBuilder.setStatus(e.toString()).setError(true);
+                }
+            }
+
+            if (!responseBuilder.getError()) {
+                Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
+
+                if(isExpectedVersion(lastVersion, request)) {
+                    String writeTimestamp = performAtomicWrite(lastTime, request);
+                        responseBuilder.setWriteTimestamp(writeTimestamp);
+                } else {
+                    KeyVersion currentVersion = KeyVersion.newBuilder().setTimestamp(lastVersion.getKey()).setValue(lastVersion.getValue()).build();
+                    responseBuilder
+                        .setStatus(String.format("Write failed. Current version/value of key %s do not match the expected", request.getKey()))
+                        .setError(true)
+                        .setCurrentVersion(currentVersion);
+                }
+            }
+
+            responseObserver.onNext(responseBuilder.build());
+            responseObserver.onCompleted();
+        }
+    }
+
+    private String performWrite(ClockState lastTime, WriteRequest request) {
+        ClockState writeTime = this.hlc.writeEvent(lastTime);
+        String writeTimestamp = writeTime.toString();
+        this.storage.put(request.getKey(), writeTime.toString(), request.getValue());
+        this.hlc.writeComplete();
+        this.hlc.setSafePushTime(writeTime);
+        return writeTimestamp;
+    }
+
+    private String performAtomicWrite(ClockState lastTime, AtomicWriteRequest request) {
+        ClockState writeTime = this.hlc.writeEvent(lastTime);
+        String writeTimestamp = writeTime.toString();
+        this.storage.put(request.getKey(), writeTimestamp, request.getValue());
+        this.hlc.writeComplete();
+        this.hlc.setSafePushTime(writeTime);
+        return writeTimestamp;
+    }
+
+    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, AtomicWriteRequest request) {
+        if(request.hasExpectedVersion() && request.hasExpectedValue()) {
+            return isExpectedVersion(lastVersion, request.getExpectedVersion(), request.getExpectedValue());
+        } 
+        return request.hasExpectedVersion() ? this.isExpectedVersion(lastVersion, request.getExpectedVersion()) : this.isExpectedValue(lastVersion, request.getExpectedValue());
+    }
+
+    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, String expectedVersion, ByteString expectedValue) {
+        return lastVersion.getKey().equals(expectedVersion) && lastVersion.getValue().equals(expectedValue);
+    }
+
+    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, String expectedVersion) {
+        return lastVersion.getKey().equals(expectedVersion);
+    }
+
+    private boolean isExpectedValue(Entry<String, ByteString> lastVersion, ByteString expectedValue) {
+        return lastVersion.getValue().equals(expectedValue);
     }
 }
