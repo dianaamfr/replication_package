@@ -149,7 +149,7 @@ public class WriteNode extends ComputeNode {
                 } else {
                     KeyVersion currentVersion = KeyVersion.newBuilder().setTimestamp(lastVersion.getKey()).setValue(lastVersion.getValue()).build();
                     responseBuilder
-                        .setStatus(String.format("Write failed. Current version/value of key %s do not match the expected", request.getKey()))
+                        .setStatus("Write failed. Current version doesn't match.")
                         .setError(true)
                         .setCurrentVersion(currentVersion);
                 }

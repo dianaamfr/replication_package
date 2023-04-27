@@ -8,7 +8,6 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.referencearchitecture.AtomicWriteRequest;
 import com.dissertation.referencearchitecture.AtomicWriteResponse;
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -57,8 +56,10 @@ public class ClientInterface {
             System.out.println("Enter an operation:");
             System.out.println("  ROT: R <key>+");
             System.out.println("  Write: W <key> <value>");
-            System.out.println("  Compare-Version-and-Write: CWA <key> <value> <expectedVersion> <expectedValue>?");
-            System.out.println("  Compare-Value-and-Write: CWB <key> <value> <expectedValue>");
+            System.out.println("  CAS Write:");
+            System.out.println("    WA <key> <value> <expectedVersion>");
+            System.out.println("    WB <key> <value> <expectedVersion> <expectedValue>");
+            System.out.println("    WC <key> <value> <expectedValue>?");
             input = scanner.nextLine();
             String[] commands = input.split(" ");
 
@@ -75,10 +76,11 @@ public class ClientInterface {
                 case "W":
                     this.sendWriteRequest(params);
                     break;
-                case "CWA":
+                case "WA":
+                case "WB":
                     this.sendCompareVersionAndWriteRequest(params);
                     break;
-                case "CWB":
+                case "WC":
                     this.sendCompareValueAndWriteRequest(params);
                     break;
                 default:
@@ -146,14 +148,14 @@ public class ClientInterface {
     }
 
     private void sendCompareValueAndWriteRequest(String[] commands) {
-        if (commands.length != 3) {
+        if (commands.length < 2 || commands.length > 3) {
             System.err.println("Unsupported command");
             return;
         }
 
         String key = commands[0];
         ByteString value = Utils.byteStringFromString(commands[1]);
-        ByteString expectedValue = Utils.byteStringFromString(commands[2]);
+        ByteString expectedValue = commands.length == 3 ? Utils.byteStringFromString(commands[2]) : ByteString.EMPTY;
         AtomicWriteResponse writeResponse = this.client.requestCompareValueAndWrite(key, value, expectedValue);
 
         if (!writeResponse.getError()) {
@@ -185,8 +187,9 @@ public class ClientInterface {
         builder.append(String.format(writeResponse.getStatus()));
 
         if(writeResponse.hasCurrentVersion()) {
-            builder.append(String.format("\n  currentVersion = %s", writeResponse.getCurrentVersion().getTimestamp()));
-            builder.append(String.format("\n  currentValue = %s", writeResponse.getCurrentVersion().getValue().isEmpty() ? null : Utils.stringFromByteString(writeResponse.getCurrentVersion().getValue())));
+            builder.append(String.format("\n Current version of %s:", key));
+            builder.append(String.format("\n  version = %s", writeResponse.getCurrentVersion().getTimestamp()));
+            builder.append(String.format("\n  value = %s", writeResponse.getCurrentVersion().getValue().isEmpty() ? null : Utils.stringFromByteString(writeResponse.getCurrentVersion().getValue())));
         } 
 
         builder.append("\n");
