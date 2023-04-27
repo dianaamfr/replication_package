@@ -84,14 +84,14 @@ public class ConstantReadGenerator {
 
     private void run() {
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
-
         try {
             this.countDown.await();
-        } catch (Exception e) {
+            this.scheduler.shutdown();
+            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            this.client.shutdown();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        this.scheduler.shutdown();
-        this.client.shutdown();
     }
 
     private class ReadGeneratorRequest implements Runnable {

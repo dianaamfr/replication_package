@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import com.dissertation.referencearchitecture.AtomicWriteRequest;
 import com.dissertation.referencearchitecture.AtomicWriteResponse;
@@ -53,7 +54,7 @@ public class Client {
     }
 
     public ROTResponse requestROT(Set<String> keys) {
-        Builder builder = ROTResponse.newBuilder();
+        Builder builder = ROTResponse.newBuilder().setError(false);
         ROTRequest rotRequest;
         ROTResponse rotResponse;
         Map<String, KeyVersion> versions = new HashMap<>();
@@ -192,7 +193,12 @@ public class Client {
 
     public void shutdown() {
         for (ManagedChannel channel : this.channels) {
-            channel.shutdown(); // TODO: shutdownNow()?
+            try {
+                channel.shutdown();
+                channel.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 

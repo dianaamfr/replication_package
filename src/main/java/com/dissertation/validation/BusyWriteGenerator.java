@@ -17,6 +17,12 @@ public class BusyWriteGenerator {
     public BusyWriteGenerator(Address readAddress, List<Address> writeAddresses, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.keys = keys;
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                client.shutdown();
+            }
+        });
     }
 
     public static void main(String[] args) {
@@ -60,12 +66,6 @@ public class BusyWriteGenerator {
         ByteString value;
         long payload = Utils.PAYLOAD_START_LONG;
         long count = 0;
-
-        try {
-
-        } catch (Exception e) {
-            this.client.shutdown();
-        }
 
         while (payload < Utils.PAYLOAD_END_LONG) {
             key = keys.get((int) (count % keys.size()));
