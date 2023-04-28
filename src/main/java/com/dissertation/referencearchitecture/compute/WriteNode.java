@@ -163,7 +163,7 @@ public class WriteNode extends ComputeNode {
     private String performWrite(ClockState lastTime, WriteRequest request) {
         ClockState writeTime = this.hlc.writeEvent(lastTime);
         String writeTimestamp = writeTime.toString();
-        this.storage.put(request.getKey(), writeTime.toString(), request.getValue());
+        this.storage.put(request.getKey(), writeTimestamp, request.getValue());
         this.hlc.writeComplete();
         this.hlc.setSafePushTime(writeTime);
         return writeTimestamp;
