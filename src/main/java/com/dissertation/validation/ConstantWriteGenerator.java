@@ -96,11 +96,12 @@ public class ConstantWriteGenerator {
 
         try {
             this.countDown.await();
-        } catch (Exception e) {
+            this.scheduler.shutdown();
+            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            this.client.shutdown();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        this.scheduler.shutdown();
-        this.client.shutdown();
     }
 
     private class WriteGeneratorRequest implements Runnable {

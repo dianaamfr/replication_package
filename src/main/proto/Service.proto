@@ -2,6 +2,11 @@ syntax="proto3";
 option java_multiple_files = true;
 package com.dissertation.referencearchitecture;
 
+message KeyVersion {
+    string timestamp = 1;
+    bytes value = 2;
+}
+
 message WriteRequest {
     string key = 1;
     bytes value = 2;
@@ -14,12 +19,27 @@ message WriteResponse {
     string status = 3;
 }
 
+message AtomicWriteRequest {
+    string key = 1;
+    bytes value = 2;
+    string lastWriteTimestamp = 3;
+    optional string expectedVersion = 4;
+    optional bytes expectedValue = 5;
+}
+
+message AtomicWriteResponse {
+    string writeTimestamp = 1;
+    bool error = 2;
+    string status = 3;
+    optional KeyVersion currentVersion = 4;
+}
+
 message ROTRequest {
     repeated string keys = 1;
 }
 
 message ROTResponse {
-    map<string, bytes> values = 1;
+    map<string, KeyVersion> versions = 1;
     string stableTime = 2;
     int64 id = 3;
     bool error = 4;
@@ -28,6 +48,7 @@ message ROTResponse {
 
 service WriteService {
     rpc write (WriteRequest) returns (WriteResponse);
+    rpc atomicWrite (AtomicWriteRequest) returns (AtomicWriteResponse);
 }
 
 service ROTService {

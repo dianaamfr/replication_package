@@ -1,11 +1,11 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
+import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
 public class Storage {
@@ -32,10 +32,9 @@ public class Storage {
         });
     }
 
-    public Entry<String, ByteString> get(String key, String maxTimestamp)
-            throws KeyNotFoundException, KeyVersionNotFoundException {
+    public Entry<String, ByteString> get(String key, String maxTimestamp) {
         if (!this.keyVersions.containsKey(key)) {
-            throw new KeyNotFoundException();
+            return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
         }
         return this.keyVersions.get(key).get(maxTimestamp);
     }

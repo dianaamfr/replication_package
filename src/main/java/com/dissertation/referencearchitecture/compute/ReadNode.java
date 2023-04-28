@@ -6,17 +6,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.ROTServiceGrpc.ROTServiceImplBase;
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
-import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
-import com.dissertation.referencearchitecture.exceptions.KeyVersionNotFoundException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
 
@@ -87,14 +87,13 @@ public class ReadNode extends ComputeNode {
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
             String stableTime = storage.getStableTime();
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
-            Map<String, ByteString> values = new HashMap<>(request.getKeysCount());
+            Map<String, KeyVersion> values = new HashMap<>(request.getKeysCount());
 
-            for (String key : request.getKeysList()) {
+            for (String key: request.getKeysList()) {
                 try {
-                    ByteString value = storage.get(key, stableTime).getValue();
-                    values.put(key, value);
-                } catch (KeyNotFoundException | KeyVersionNotFoundException e) {
-                    values.put(key, ByteString.EMPTY);
+                    Entry<String, ByteString> versionEntry = storage.get(key, stableTime);
+                    KeyVersion version = KeyVersion.newBuilder().setTimestamp(versionEntry.getKey()).setValue(versionEntry.getValue()).build();
+                    values.put(key, version);
                 } catch (Exception e) {
                     responseBuilder.setStatus(e.toString());
                     responseBuilder.setError(true);
@@ -102,9 +101,7 @@ public class ReadNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                responseBuilder
-                        .setStableTime(stableTime)
-                        .putAllValues(values);
+                responseBuilder.setStableTime(stableTime).putAllVersions(values);
             }
 
             responseObserver.onNext(responseBuilder.build());

@@ -1,5 +1,6 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,5 +71,13 @@ public class WriterStorage extends Storage {
         keyVersion.put(Utils.LOG_TIMESTAMP, timestamp);
         keyVersion.put(Utils.LOG_VALUE, Utils.stringFromByteString(value));
         return keyVersion;
+    }
+
+    public Entry<String, ByteString> getLastVersion(String key) {
+        if (!this.keyVersions.containsKey(key)) {
+            return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
+        }
+
+        return this.keyVersions.get(key).getLastVersion();
     }
 }

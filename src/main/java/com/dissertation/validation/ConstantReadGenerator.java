@@ -8,12 +8,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.GoodputLog;
-import com.google.protobuf.ByteString;
 
 public class ConstantReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
@@ -84,14 +84,14 @@ public class ConstantReadGenerator {
 
     private void run() {
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
-
         try {
             this.countDown.await();
-        } catch (Exception e) {
+            this.scheduler.shutdown();
+            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            this.client.shutdown();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        this.scheduler.shutdown();
-        this.client.shutdown();
     }
 
     private class ReadGeneratorRequest implements Runnable {
@@ -105,8 +105,8 @@ public class ConstantReadGenerator {
                 ROTResponse rotResponse = client.requestROT(keys);
                 endTime = System.currentTimeMillis();
 
-                for (ByteString value : rotResponse.getValuesMap().values()) {
-                    String valueStr = Utils.stringFromByteString(value);
+                for (KeyVersion version : rotResponse.getVersionsMap().values()) {
+                    String valueStr = Utils.stringFromByteString(version.getValue());
                     if (valueStr.isBlank()) {
                         continue;
                     }
