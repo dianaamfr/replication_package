@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTRequest;
@@ -29,7 +30,7 @@ import software.amazon.awssdk.regions.Region;
 
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
-    private long rotId;
+    private AtomicLong rotCounter;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
     private final String region;
 
@@ -37,7 +38,7 @@ public class ReadNode extends ComputeNode {
             throws URISyntaxException {
         super(scheduler, s3Helper, String.format("%s-%s", Utils.READ_NODE_ID, region.toString()));
         this.storage = storage;
-        this.rotId = 1;
+        this.rotCounter = new AtomicLong(0);
         this.region = region.toString();
     }
 
@@ -85,13 +86,16 @@ public class ReadNode extends ComputeNode {
     public class ROTServiceImpl extends ROTServiceImplBase {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
-            String stableTime = storage.getStableTime();
+            // Define snapshot
+            long rotId = rotCounter.incrementAndGet();
+            String rotSnapshot = storage.getStableTime();
+
+            // Get values within the snapshot
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, KeyVersion> values = new HashMap<>(request.getKeysCount());
-
             for (String key: request.getKeysList()) {
                 try {
-                    Entry<String, ByteString> versionEntry = storage.get(key, stableTime);
+                    Entry<String, ByteString> versionEntry = storage.get(key, rotSnapshot);
                     KeyVersion version = KeyVersion.newBuilder().setTimestamp(versionEntry.getKey()).setValue(versionEntry.getValue()).build();
                     values.put(key, version);
                 } catch (Exception e) {
@@ -101,13 +105,11 @@ public class ReadNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                responseBuilder.setStableTime(stableTime).putAllVersions(values);
+                responseBuilder.setStableTime(rotSnapshot).putAllVersions(values);
             }
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
-
-            rotId++;
         }
     }
 }
