@@ -8,8 +8,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
-import com.dissertation.referencearchitecture.AtomicWriteRequest;
-import com.dissertation.referencearchitecture.AtomicWriteResponse;
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -118,7 +116,7 @@ public class Client {
         }
     }
 
-    public AtomicWriteResponse requestCompareVersionAndWrite(String key, ByteString value, String expectedVersion, ByteString expectedValue) {
+    public WriteResponse requestCompareVersionAndWrite(String key, ByteString value, String expectedVersion, ByteString expectedValue) {
         try {
             int partitionId = Utils.getKeyPartitionId(key);
             if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
@@ -126,7 +124,7 @@ public class Client {
             }
 
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            com.dissertation.referencearchitecture.AtomicWriteRequest.Builder writeRequestBuilder = AtomicWriteRequest.newBuilder()
+            com.dissertation.referencearchitecture.WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
                     .setKey(key)
                     .setValue(value)
                     .setLastWriteTimestamp(this.lastWriteTimestamp)
@@ -136,7 +134,7 @@ public class Client {
                 writeRequestBuilder.setExpectedValue(expectedValue);
             }
 
-            AtomicWriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
+            WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
@@ -144,14 +142,14 @@ public class Client {
             }
             return writeResponse;
         } catch (KeyNotFoundException e) {
-            return AtomicWriteResponse.newBuilder()
+            return WriteResponse.newBuilder()
                     .setStatus(e.toString())
                     .setError(true)
                     .build();
         }
     }
 
-    public AtomicWriteResponse requestCompareValueAndWrite(String key, ByteString value, ByteString expectedValue) {
+    public WriteResponse requestCompareValueAndWrite(String key, ByteString value, ByteString expectedValue) {
         try {
             int partitionId = Utils.getKeyPartitionId(key);
             if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
@@ -159,14 +157,14 @@ public class Client {
             }
 
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            com.dissertation.referencearchitecture.AtomicWriteRequest.Builder writeRequestBuilder = AtomicWriteRequest.newBuilder()
+            com.dissertation.referencearchitecture.WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
                     .setKey(key)
                     .setValue(value)
                     .setLastWriteTimestamp(this.lastWriteTimestamp)
                     .setExpectedValue(expectedValue);
             
 
-            AtomicWriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
+            WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
                 KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
@@ -174,7 +172,7 @@ public class Client {
             }
             return writeResponse;
         } catch (KeyNotFoundException e) {
-            return AtomicWriteResponse.newBuilder()
+            return WriteResponse.newBuilder()
                     .setStatus(e.toString())
                     .setError(true)
                     .build();

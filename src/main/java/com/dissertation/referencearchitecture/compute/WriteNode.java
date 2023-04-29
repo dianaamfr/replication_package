@@ -8,8 +8,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.dissertation.referencearchitecture.AtomicWriteRequest;
-import com.dissertation.referencearchitecture.AtomicWriteResponse;
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -93,7 +91,6 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
-            System.out.println("Arrived write");
             long t1 = System.currentTimeMillis();
             ClockState lastTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
@@ -128,10 +125,9 @@ public class WriteNode extends ComputeNode {
         }
     
         @Override
-        public void atomicWrite(AtomicWriteRequest request, StreamObserver<AtomicWriteResponse> responseObserver) {
-            System.out.println("Arrived write");
+        public void atomicWrite(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
             ClockState lastTime = new ClockState();
-            com.dissertation.referencearchitecture.AtomicWriteResponse.Builder responseBuilder = AtomicWriteResponse.newBuilder().setError(false);
+            Builder responseBuilder = WriteResponse.newBuilder().setError(false);
 
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
                 responseBuilder.setStatus(String.format("Key %s not found", request.getKey()))
@@ -151,7 +147,7 @@ public class WriteNode extends ComputeNode {
                 writeLock.lock();
                 Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
                 if(isExpectedVersion(lastVersion, request)) {
-                    String writeTimestamp = performAtomicWrite(lastTime, request);
+                    String writeTimestamp = performWrite(lastTime, request);
                     writeLock.unlock();
                     responseBuilder.setWriteTimestamp(writeTimestamp);
                 } else {
@@ -178,16 +174,7 @@ public class WriteNode extends ComputeNode {
         return writeTimestamp;
     }
 
-    private String performAtomicWrite(ClockState lastTime, AtomicWriteRequest request) {
-        ClockState writeTime = this.hlc.writeEvent(lastTime);
-        String writeTimestamp = writeTime.toString();
-        this.storage.put(request.getKey(), writeTimestamp, request.getValue());
-        this.hlc.writeComplete();
-        this.hlc.setSafePushTime(writeTime);
-        return writeTimestamp;
-    }
-
-    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, AtomicWriteRequest request) {
+    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, WriteRequest request) {
         if(request.hasExpectedVersion() && request.hasExpectedValue()) {
             return isExpectedVersion(lastVersion, request.getExpectedVersion(), request.getExpectedValue());
         } 
