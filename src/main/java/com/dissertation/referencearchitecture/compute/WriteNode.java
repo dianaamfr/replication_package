@@ -37,6 +37,7 @@ public class WriteNode extends ComputeNode {
     private int partition;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
     private final String region;
+    private Lock writeLock = new ReentrantLock();
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, WriterStorage storage,
             HLC hlc, Region region) throws URISyntaxException, IOException, InterruptedException {
@@ -45,6 +46,7 @@ public class WriteNode extends ComputeNode {
         this.storage = storage;
         this.hlc = hlc;
         this.region = region.toString();
+        this.writeLock = new ReentrantLock();
     }
 
     @Override
@@ -160,11 +162,13 @@ public class WriteNode extends ComputeNode {
     }
 
     private String performWrite(ClockState lastTime, WriteRequest request) {
+        writeLock.lock();
         ClockState writeTime = this.hlc.writeEvent(lastTime);
         String writeTimestamp = writeTime.toString();
         this.storage.put(request.getKey(), writeTimestamp, request.getValue());
         this.hlc.writeComplete();
         this.hlc.setSafePushTime(writeTime);
+        writeLock.unlock();
         return writeTimestamp;
     }
 
