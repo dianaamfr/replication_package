@@ -91,7 +91,6 @@ public class WriteNode extends ComputeNode {
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
             long t1 = System.currentTimeMillis();
             ClockState lastTime = new ClockState();
-            ClockState writeTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
 
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
@@ -113,7 +112,7 @@ public class WriteNode extends ComputeNode {
                 if (Utils.VISIBILITY_LOGS) {
                     logs.add(new WriteRequestLog(request.getKey(), partition, t1));
                     logs.add(new WriteResponseLog(request.getKey(), partition,
-                            writeTime.toString(), t2));
+                            writeTimestamp, t2));
                 }
             }
 
