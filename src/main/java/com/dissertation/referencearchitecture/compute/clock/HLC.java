@@ -2,114 +2,98 @@ package com.dissertation.referencearchitecture.compute.clock;
 
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BinaryOperator;
-import java.util.function.UnaryOperator;
 
-import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
+import com.dissertation.utils.Utils;
 
 public class HLC {
+    private AtomicReference<HLCState> state;
     private final TimeProvider timeProvider;
-    private final BinaryOperator<ClockState> updateClockOperator;
-    private final BinaryOperator<ClockState> syncClockOperator;
-    private final UnaryOperator<ClockState> requestSyncOperator;
-    private final UnaryOperator<ClockState> writeCompleteOperator;
-    private final UnaryOperator<ClockState> syncCompleteOperator;
-    private AtomicReference<ClockState> currentTime;
-    private AtomicReference<ClockState> safePushTime;
+
+    private final BinaryOperator<HLCState> writeStartOperator;
+    private final BinaryOperator<HLCState> writeEndOperator;
+    private final BinaryOperator<HLCState> pushEndOperator;
+    private final BinaryOperator<HLCState> syncClockOperator;
 
     public HLC(TimeProvider timeProvider) {
+        this.state = new AtomicReference<>(new HLCState());
         this.timeProvider = timeProvider;
-        this.updateClockOperator = this::updateClock;
-        this.syncClockOperator = this::syncClock;
-        this.requestSyncOperator = this::setSyncEvent;
-        this.writeCompleteOperator = this::setWriteComplete;
-        this.syncCompleteOperator = this::setSyncComplete;
-        this.currentTime = new AtomicReference<>(new ClockState());
-        this.safePushTime = new AtomicReference<>(new ClockState());
+
+        this.writeStartOperator = this::startWriteOperation;
+        this.writeEndOperator = this::endWriteOperation;
+        this.pushEndOperator = this::pushEndOperation;
+        this.syncClockOperator = this::syncClockOperation;
     }
 
-    public ClockState writeEvent(ClockState recvEvent) {
-        return this.currentTime.accumulateAndGet(recvEvent, this.updateClockOperator);
+    public HLCState startWrite(HLCState recvEvent) {
+        return this.state.accumulateAndGet(recvEvent, this.writeStartOperator);
     }
 
-    public ClockState writeComplete() {
-        return this.currentTime.updateAndGet(this.writeCompleteOperator);
+    public HLCState endWrite(HLCState recvEvent) {
+        return this.state.accumulateAndGet(recvEvent, this.writeEndOperator);
     }
 
-    public ClockState trySyncAndGetClock() {
-        return this.currentTime.updateAndGet(this.requestSyncOperator);
+    public HLCState syncClock(HLCState recvEvent) {
+        return this.state.accumulateAndGet(recvEvent, this.syncClockOperator);
     }
 
-    public ClockState syncEvent(ClockState recvEvent) {
-        return this.currentTime.accumulateAndGet(recvEvent, this.syncClockOperator);
+    public HLCState endPush(HLCState recvEvent) {
+        return this.state.accumulateAndGet(recvEvent, this.pushEndOperator);
     }
 
-    public ClockState syncComplete() {
-        return this.currentTime.updateAndGet(this.syncCompleteOperator);
+    public HLCState getState() {
+        return this.state.get();
     }
 
-    public void setSafePushTime(ClockState safeTime) {
-        this.safePushTime.set(safeTime);
-    }
+    private HLCState startWriteOperation(HLCState prevState, HLCState recvState) {
+        long logicalTime = Math.max(prevState.getLogicalTime(),
+            Math.max(timeProvider.getTime(), recvState.getLogicalTime()));
+        long logicalCount = 0;
+        String lastWrite = prevState.getLastWrite() == null ? Utils.MIN_TIMESTAMP : prevState.getLastWrite();
 
-    public ClockState getAndResetSafePushTime() {
-        return this.safePushTime.getAndSet(new ClockState());
-    }
-
-    private ClockState updateClock(ClockState prevTime, ClockState recvTime) {
-        ClockState newTime = new ClockState();
-        long inc = recvTime.isWrite() ? 1 : 0;
-
-        newTime.setLogicalTime(
-                Math.max(prevTime.getLogicalTime(),
-                        Math.max(timeProvider.getTime(), recvTime.getLogicalTime())));
-
-        boolean isLocalTimeEqual = newTime.equals(prevTime);
-        boolean isRecvTimeEqual = newTime.equals(recvTime);
-
+        boolean isLocalTimeEqual = logicalTime == prevState.getLogicalTime();
+        boolean isRecvTimeEqual = logicalTime == recvState.getLogicalTime();
+        
         if (isLocalTimeEqual && isRecvTimeEqual) {
-            newTime.setLogicalCount(Math.max(prevTime.getLogicalCount(), recvTime.getLogicalCount())
-                    + inc);
+            logicalCount = Math.max(prevState.getLogicalCount(), recvState.getLogicalCount()) + 1;
         } else if (isLocalTimeEqual) {
-            newTime.setLogicalCount(prevTime.getLogicalCount() + inc);
+            logicalCount = prevState.getLogicalCount() + 1;
         } else if (isRecvTimeEqual) {
-            newTime.setLogicalCount(recvTime.getLogicalCount() + inc);
+            logicalCount = recvState.getLogicalCount() + 1;
         }
 
-        newTime.setState(recvTime.isWrite() ? State.WRITE : State.SYNC);
-
-        return newTime;
-    };
-
-    private ClockState setWriteComplete(ClockState prevTime) {
-        return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.ACTIVE);
+        return new HLCState(logicalTime, logicalCount, lastWrite);
     }
 
-    private ClockState setSyncEvent(ClockState prevTime) {
-        if (prevTime.isWrite()) {
-            return prevTime;
-        }
-        if (prevTime.isActive()) {
-            return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
-        }
-        return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.SYNC);
+    private HLCState endWriteOperation(HLCState prevState, HLCState recvState) {
+        // Update the last write ready to push
+        return new HLCState(prevState.getLogicalTime(), prevState.getLogicalCount(), recvState.getLastWrite());
     }
 
-    private ClockState syncClock(ClockState prevTime, ClockState recvTime) {
-        if (prevTime.isWrite()) {
-            return prevTime;
+    private HLCState pushEndOperation(HLCState prevState, HLCState recvState) {
+        if(prevState.getLastWrite().equals(recvState.getLastWrite())) {
+            return new HLCState(prevState.getLogicalTime(), prevState.getLogicalCount(), null);
         }
-
-        if (prevTime.isActive()) {
-            return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
-        }
-
-        return updateClock(prevTime, recvTime);
+        return prevState;
     }
 
-    private ClockState setSyncComplete(ClockState prevTime) {
-        if (prevTime.isWrite()) {
-            return prevTime;
+    private HLCState syncClockOperation(HLCState prevState, HLCState recvState) {
+        if (!prevState.noWritesOccurred()) {
+            return prevState;
         }
-        return new ClockState(prevTime.getLogicalTime(), prevTime.getLogicalCount(), State.INACTIVE);
+
+        long logicalTime = Math.max(prevState.getLogicalTime(), recvState.getLogicalTime());
+        long logicalCount = 0;
+        boolean isLocalTimeEqual = logicalTime == prevState.getLogicalTime();
+        boolean isRecvTimeEqual = logicalTime == recvState.getLogicalTime();
+        
+        if (isLocalTimeEqual && isRecvTimeEqual) {
+            logicalCount = Math.max(prevState.getLogicalCount(), recvState.getLogicalCount());
+        } else if (isLocalTimeEqual) {
+            logicalCount = prevState.getLogicalCount();
+        } else if (isRecvTimeEqual) {
+            logicalCount = recvState.getLogicalCount();
+        }
+
+        return new HLCState(logicalTime, logicalCount, prevState.getLastWrite());
     }
 }

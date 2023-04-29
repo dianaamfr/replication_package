@@ -2,9 +2,8 @@ package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.ArrayDeque;
 
-import com.dissertation.referencearchitecture.compute.clock.ClockState;
+import com.dissertation.referencearchitecture.compute.clock.HLCState;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
-import com.dissertation.referencearchitecture.compute.clock.ClockState.State;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
@@ -32,25 +31,26 @@ public class StoragePusher implements Runnable {
 
     @Override
     public void run() {
-        ClockState currentTime = this.hlc.trySyncAndGetClock();
+        HLCState currentTime = this.hlc.getState();
         // Sync in the absence of writes
-        if (currentTime.isSync()) {
+        if (currentTime.noWritesOccurred()) {
             this.sync(currentTime);
             return;
-        }
-
+        } 
+        
         // Push if new writes have been made
-        ClockState safePushTime = this.hlc.getAndResetSafePushTime();
-        if (!safePushTime.isZero()) {
-            this.push(safePushTime.toString());
+        if(currentTime.areNewWritesAvailable()) {
+            String pushTimestamp = currentTime.getLastWrite();
+            this.push(pushTimestamp);
+            this.hlc.endPush(HLCState.fromLastWriteTimestamp(pushTimestamp));
 
             if (Utils.VISIBILITY_LOGS) {
-                this.logs.add(new S3OperationLog(safePushTime.toString(), this.partition, true));
+                this.logs.add(new S3OperationLog(pushTimestamp, this.partition, true));
             }
         }
     }
 
-    private void sync(ClockState currentTime) {
+    private void sync(HLCState currentTime) {
         S3ReadResponse response = this.s3Helper.getClocksAfter(currentTime.toString());
         if (!response.hasTimestamp()) {
             return;
@@ -59,27 +59,25 @@ public class StoragePusher implements Runnable {
         // response.getTimestamp());
 
         // Get the most recent timestamp
-        ClockState recvTime;
+        HLCState recvTime;
         try {
-            recvTime = ClockState.fromString(response.getTimestamp(), State.SYNC);
+            recvTime = HLCState.fromRecvTimestamp(response.getTimestamp());
         } catch (InvalidTimestampException e) {
             System.err.println(String.format("Invalid recent timestamp"));
             return;
         }
 
         // Try to sync clock
-        ClockState newTime = this.hlc.syncEvent(recvTime);
+        HLCState newTime = this.hlc.syncClock(recvTime);
 
         // If a write occurred, abort sync
-        if (!newTime.isSync()) {
+        if (!newTime.noWritesOccurred()) {
             return;
         }
 
         // Push log with new timestamp
         String newTimestamp = newTime.toString();
-
         this.push(newTimestamp);
-        this.hlc.syncComplete();
     }
 
     private void push(String timestamp) {
