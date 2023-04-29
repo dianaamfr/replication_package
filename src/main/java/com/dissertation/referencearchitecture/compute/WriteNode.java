@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.dissertation.referencearchitecture.AtomicWriteRequest;
 import com.dissertation.referencearchitecture.AtomicWriteResponse;
@@ -37,7 +39,7 @@ public class WriteNode extends ComputeNode {
     private int partition;
     private static final String USAGE = "Usage: WriteNode <partition> <port>";
     private final String region;
-    private Lock writeLock = new ReentrantLock();
+    private Lock writeLock;
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, WriterStorage storage,
             HLC hlc, Region region) throws URISyntaxException, IOException, InterruptedException {
@@ -91,6 +93,7 @@ public class WriteNode extends ComputeNode {
     public class WriteServiceImpl extends WriteServiceImplBase {
         @Override
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
+            System.out.println("Arrived write");
             long t1 = System.currentTimeMillis();
             ClockState lastTime = new ClockState();
             Builder responseBuilder = WriteResponse.newBuilder().setError(false);
@@ -107,7 +110,9 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
+                writeLock.lock();
                 String writeTimestamp = performWrite(lastTime, request);
+                writeLock.unlock();
                 responseBuilder.setWriteTimestamp(writeTimestamp);
                 long t2 = System.currentTimeMillis();
 
@@ -124,6 +129,7 @@ public class WriteNode extends ComputeNode {
     
         @Override
         public void atomicWrite(AtomicWriteRequest request, StreamObserver<AtomicWriteResponse> responseObserver) {
+            System.out.println("Arrived write");
             ClockState lastTime = new ClockState();
             com.dissertation.referencearchitecture.AtomicWriteResponse.Builder responseBuilder = AtomicWriteResponse.newBuilder().setError(false);
 
@@ -142,12 +148,14 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
+                writeLock.lock();
                 Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
-
                 if(isExpectedVersion(lastVersion, request)) {
                     String writeTimestamp = performAtomicWrite(lastTime, request);
-                        responseBuilder.setWriteTimestamp(writeTimestamp);
+                    writeLock.unlock();
+                    responseBuilder.setWriteTimestamp(writeTimestamp);
                 } else {
+                    writeLock.unlock();
                     KeyVersion currentVersion = KeyVersion.newBuilder().setTimestamp(lastVersion.getKey()).setValue(lastVersion.getValue()).build();
                     responseBuilder
                         .setStatus("Write failed. Current version doesn't match.")
@@ -162,13 +170,11 @@ public class WriteNode extends ComputeNode {
     }
 
     private String performWrite(ClockState lastTime, WriteRequest request) {
-        writeLock.lock();
         ClockState writeTime = this.hlc.writeEvent(lastTime);
         String writeTimestamp = writeTime.toString();
         this.storage.put(request.getKey(), writeTimestamp, request.getValue());
         this.hlc.writeComplete();
         this.hlc.setSafePushTime(writeTime);
-        writeLock.unlock();
         return writeTimestamp;
     }
 
