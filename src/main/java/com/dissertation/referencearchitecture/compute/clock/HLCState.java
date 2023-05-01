@@ -52,7 +52,7 @@ public class HLCState {
         if (parts.length != 2) {
             throw new InvalidTimestampException();
         }
-        return new HLCState(Long.valueOf(parts[0]), Long.valueOf(parts[1]));
+        return new HLCState(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }
 
     public static HLCState fromLastWriteTimestamp(String lastStoredTime) {

@@ -73,8 +73,8 @@ public class WriteNode extends ComputeNode {
         }
 
         try {
-            int partition = Integer.valueOf(args[0]);
-            int port = Integer.valueOf(args[1]);
+            int partition = Integer.parseInt(args[0]);
+            int port = Integer.parseInt(args[1]);
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
             Region region = Utils.getCurrentRegion();
             S3Helper s3Helper = new S3Helper(region);

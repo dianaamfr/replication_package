@@ -31,7 +31,6 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import software.amazon.awssdk.regions.Region;
 
-// TODO: Prune storage based on the stable time
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
     private AtomicLong rotCounter;
@@ -64,9 +63,9 @@ public class ReadNode extends ComputeNode {
 
         try {
             Set<Integer> partitionIds = new HashSet<>();
-            int port = Integer.valueOf(args[0]);
+            int port = Integer.parseInt(args[0]);
             for (int i = 1; i < args.length; i++) {
-                partitionIds.add(Integer.valueOf(args[i]));
+                partitionIds.add(Integer.parseInt(args[i]));
             }
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
             Region region = Utils.getCurrentRegion();

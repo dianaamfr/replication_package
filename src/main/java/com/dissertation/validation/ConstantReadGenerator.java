@@ -112,7 +112,7 @@ public class ConstantReadGenerator {
                     }
 
                     try {
-                        long valueLong = Long.valueOf(valueStr);
+                        long valueLong = Long.parseLong(valueStr);
                         if (valueLong > lastPayload) {
                             lastPayload = valueLong;
                         }
