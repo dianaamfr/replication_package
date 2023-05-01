@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
+// TODO: Verify thread safety of puts/removes
 public class WriterStorage extends Storage {
     private ConcurrentMap<String, JSONObject> jsonVersionChains;
     private ConcurrentMap<String, String> lastPushedVersions;

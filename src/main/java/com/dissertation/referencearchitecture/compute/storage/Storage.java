@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentMap;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
+// TODO: Verify thread safety of puts/removes
 public class Storage {
     protected ConcurrentMap<String, VersionChain> keyVersions;
 
