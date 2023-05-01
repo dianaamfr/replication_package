@@ -9,13 +9,11 @@ import com.google.protobuf.ByteString;
 
 public class ReaderStorage extends Storage {
     private ConcurrentMap<Integer, String> partitionsMaxTimestamp;
-    private ConcurrentMap<String, Integer> keyLastParsedIndex;
     private String stableTime;
 
     public ReaderStorage() {
         super();
         this.partitionsMaxTimestamp = new ConcurrentHashMap<>();
-        this.keyLastParsedIndex = new ConcurrentHashMap<>();
         this.stableTime = Utils.MIN_TIMESTAMP;
     }
 
@@ -57,13 +55,5 @@ public class ReaderStorage extends Storage {
             }
             return v;
         });
-    }
-
-    public void setLastParsedIndex(String key, Integer index) {
-        this.keyLastParsedIndex.put(key, index);
-    }
-
-    public Integer getLastParsedIndex(String key) {
-        return this.keyLastParsedIndex.getOrDefault(key, 0);
     }
 }

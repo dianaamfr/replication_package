@@ -99,10 +99,6 @@ public class StoragePusher implements Runnable {
             this.storage.updateJsonState(timestamp);
             this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp,
                     this.storage.getJsonState().toString());
-
-            // TODO: Maybe delete from storage upon push confirmation
-            // TODO: If the first TODO is implemented, then the state of the Storage doesn't have to be prunned when checkpointing
-            // TODO: Check if lastPushedVersion is necessary
             this.s3Helper.persistClock(timestamp);
         } catch (Exception e) {
             System.err.println(e.toString());
@@ -110,7 +106,6 @@ public class StoragePusher implements Runnable {
     }
 
     private void computeCheckpoint() {
-        // TODO: Remove prints
         // Get minimum stable time
         String minStableTime = Utils.MIN_TIMESTAMP;
         for(StableTimeServiceGrpc.StableTimeServiceBlockingStub stub : this.stableTimeStubs) {
@@ -123,9 +118,6 @@ public class StoragePusher implements Runnable {
         }
         
         // Perform checkpoint
-        System.out.println("Checkpointing at " + minStableTime);
-        System.out.println(this.storage.getJsonState().toString());
         this.storage.pruneState(minStableTime);
-        System.out.println(this.storage.getJsonState().toString());
     }
 }

@@ -2,6 +2,7 @@ package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.ArrayDeque;
 import java.util.Map.Entry;
+import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -46,8 +47,8 @@ public class StoragePuller implements Runnable {
                     if (Utils.VISIBILITY_LOGS) {
                         this.s3Logs.add(new S3OperationLog(s3Response.getTimestamp(), entry.getKey(), false));
                     }
+                    parseJson(s3Response.getContent(), entry.getKey(), entry.getValue());
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
-                    parseJson(s3Response.getContent(), entry.getKey());
                     // System.out.println(s3Response.getContent());
                 } else if (s3Response.isError()) {
                     System.err.println(s3Response.getStatus());
@@ -59,8 +60,7 @@ public class StoragePuller implements Runnable {
         }
     }
 
-    // TODO: Update this to work with checkpoints - can't store the index
-    private void parseJson(String json, int partition) {
+    private void parseJson(String json, int partition, String previousMaxTimestamp) {
         JSONObject response = new JSONObject(json);
         JSONArray versionChainsJson = response.getJSONArray(Utils.LOG_STATE);
 
@@ -68,19 +68,20 @@ public class StoragePuller implements Runnable {
             JSONObject versionChainJson = versionChainsJson.getJSONObject(i);
             JSONArray versionChainArray = versionChainJson.getJSONArray(Utils.LOG_VERSIONS);
             String key = versionChainJson.getString(Utils.LOG_KEY);
-            int lastIdx = this.storage.getLastParsedIndex(key);
-            for (int j = lastIdx; j < versionChainArray.length(); j++) {
-                JSONObject versionJson = versionChainArray.getJSONObject(j);
-                String timestamp = versionJson.getString(Utils.LOG_TIMESTAMP);
-                this.storage.put(
-                        key,
-                        timestamp,
-                        Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
-                if (Utils.VISIBILITY_LOGS) {
-                    this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
-                }
-            }
-            this.storage.setLastParsedIndex(key, versionChainArray.length());
+
+            StreamSupport.stream(versionChainArray.spliterator(), false)
+                .map(versionJson -> (JSONObject) versionJson)
+                .filter(versionJson -> versionJson.getString(Utils.LOG_TIMESTAMP).compareTo(previousMaxTimestamp) > 0)
+                .forEach(versionJson -> {
+                    String timestamp = versionJson.getString(Utils.LOG_TIMESTAMP);
+                    this.storage.put(
+                            key,
+                            timestamp,
+                            Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
+                    if (Utils.VISIBILITY_LOGS) {
+                        this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
+                    }
+                });
         }
     }
 

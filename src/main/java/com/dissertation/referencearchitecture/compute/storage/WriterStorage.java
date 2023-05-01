@@ -12,7 +12,6 @@ import org.json.JSONObject;
 import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
-// TODO: Verify thread safety of puts/removes
 public class WriterStorage extends Storage {
     private ConcurrentMap<String, JSONObject> jsonVersionChains;
     private ConcurrentMap<String, String> lastPushedVersions;
@@ -21,14 +20,6 @@ public class WriterStorage extends Storage {
         super();
         this.jsonVersionChains = new ConcurrentHashMap<>();
         this.lastPushedVersions = new ConcurrentHashMap<>();
-    }
-
-    public void setLastPushedVersion(String key, String version) {
-        this.lastPushedVersions.put(key, version);
-    }
-
-    public String getLastPushedVersion(String key) {
-        return this.lastPushedVersions.getOrDefault(key, Utils.MIN_TIMESTAMP);
     }
 
     public void updateJsonState(String timestamp) {
@@ -40,6 +31,14 @@ public class WriterStorage extends Storage {
                 this.appendToJsonState(versionChain.getKey(), version.getKey(), version.getValue());
             }
         }
+    }
+
+    public Entry<String, ByteString> getLastVersion(String key) {
+        if (!this.keyVersions.containsKey(key)) {
+            return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
+        }
+
+        return this.keyVersions.get(key).getLastVersion();
     }
 
     @Override
@@ -93,11 +92,8 @@ public class WriterStorage extends Storage {
         return keyVersion;
     }
 
-    public Entry<String, ByteString> getLastVersion(String key) {
-        if (!this.keyVersions.containsKey(key)) {
-            return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
-        }
-
-        return this.keyVersions.get(key).getLastVersion();
+    private String getLastPushedVersion(String key) {
+        return this.lastPushedVersions.getOrDefault(key, Utils.MIN_TIMESTAMP);
     }
+
 }
