@@ -2,13 +2,17 @@ package com.dissertation.referencearchitecture.compute;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.dissertation.referencearchitecture.KeyVersion;
+import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.WriteResponse.Builder;
@@ -20,6 +24,7 @@ import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.compute.storage.WriterStorage;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
+import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.WriteRequestLog;
 import com.dissertation.validation.logs.WriteResponseLog;
@@ -34,24 +39,28 @@ public class WriteNode extends ComputeNode {
     private WriterStorage storage;
     private HLC hlc;
     private int partition;
-    private static final String USAGE = "Usage: WriteNode <partition> <port>";
+    private static final String USAGE = "Usage: WriteNode <partition> <port> (<readPort> <readIp>)+";
     private final String region;
     private Lock writeLock;
+    private List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
+    private AtomicInteger stableTimeCounter;
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, WriterStorage storage,
-            HLC hlc, Region region) throws URISyntaxException, IOException, InterruptedException {
+            HLC hlc, Region region, List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs) throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper, String.format("%s-%d", Utils.WRITE_NODE_ID, partition));
         this.partition = partition;
         this.storage = storage;
         this.hlc = hlc;
         this.region = region.toString();
         this.writeLock = new ReentrantLock();
+        this.stableTimeStubs = stableTimeStubs;
+        this.stableTimeCounter = new AtomicInteger(Utils.CHECKPOINT_FREQUENCY);
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
         this.scheduler.scheduleWithFixedDelay(
-                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.s3Logs, this.region),
+                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.s3Logs, this.region, this.stableTimeStubs, stableTimeCounter),
                 Utils.PUSH_DELAY,
                 Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -66,13 +75,20 @@ public class WriteNode extends ComputeNode {
         try {
             int partition = Integer.valueOf(args[0]);
             int port = Integer.valueOf(args[1]);
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
             Region region = Utils.getCurrentRegion();
             S3Helper s3Helper = new S3Helper(region);
             WriterStorage storage = new WriterStorage();
             HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
 
-            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc, region);
+            // Connect with readNodes
+            List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs = new ArrayList<>();
+            for(int i=2; i<args.length; i+=2) {
+                Address readAddress = new Address(Integer.parseInt(args[i]), args[i+1]);
+                stableTimeStubs.add(StableTimeServiceGrpc.newBlockingStub(readAddress.getChannel()));
+            }
+
+            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc, region, stableTimeStubs);
             WriteServiceImpl writeService = writeNode.new WriteServiceImpl();
             Server server = ServerBuilder.forPort(port).addService(writeService).build();
             writeNode.init(server);

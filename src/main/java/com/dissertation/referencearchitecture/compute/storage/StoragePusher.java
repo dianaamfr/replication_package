@@ -1,8 +1,13 @@
 package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.ArrayDeque;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.dissertation.referencearchitecture.compute.clock.HLCState;
+import com.dissertation.referencearchitecture.StableTimeRequest;
+import com.dissertation.referencearchitecture.StableTimeResponse;
+import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
@@ -18,19 +23,28 @@ public class StoragePusher implements Runnable {
     private int partition;
     private ArrayDeque<Log> logs;
     private final String region;
+    private List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
+    private AtomicInteger counter;
 
     public StoragePusher(HLC hlc, WriterStorage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs,
-            String region) {
+            String region, List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs, AtomicInteger counter) {
         this.hlc = hlc;
         this.storage = storage;
         this.s3Helper = s3Helper;
         this.partition = partition;
         this.logs = logs;
         this.region = region;
+        this.stableTimeStubs = stableTimeStubs;
+        this.counter = counter;
     }
 
     @Override
     public void run() {
+        if(this.counter.decrementAndGet() == 0) {
+            this.counter.set(12);
+            this.computeCheckpoint();
+        }
+
         HLCState currentTime = this.hlc.getState();
         // Sync in the absence of writes
         if (currentTime.noWritesOccurred()) {
@@ -85,9 +99,33 @@ public class StoragePusher implements Runnable {
             this.storage.updateJsonState(timestamp);
             this.s3Helper.persistLog(Utils.getPartitionBucket(this.partition, this.region), timestamp,
                     this.storage.getJsonState().toString());
+
+            // TODO: Maybe delete from storage upon push confirmation
+            // TODO: If the first TODO is implemented, then the state of the Storage doesn't have to be prunned when checkpointing
+            // TODO: Check if lastPushedVersion is necessary
             this.s3Helper.persistClock(timestamp);
         } catch (Exception e) {
             System.err.println(e.toString());
         }
+    }
+
+    private void computeCheckpoint() {
+        // TODO: Remove prints
+        // Get minimum stable time
+        String minStableTime = Utils.MIN_TIMESTAMP;
+        for(StableTimeServiceGrpc.StableTimeServiceBlockingStub stub : this.stableTimeStubs) {
+            StableTimeResponse response = stub.stableTime(StableTimeRequest.newBuilder().build());
+            if(minStableTime.equals(Utils.MIN_TIMESTAMP)) {
+                minStableTime = response.getStableTime();
+            } else {
+                minStableTime = minStableTime.compareTo(response.getStableTime()) > 0 ? response.getStableTime() : minStableTime;
+            }
+        }
+        
+        // Perform checkpoint
+        System.out.println("Checkpointing at " + minStableTime);
+        System.out.println(this.storage.getJsonState().toString());
+        this.storage.pruneState(minStableTime);
+        System.out.println(this.storage.getJsonState().toString());
     }
 }

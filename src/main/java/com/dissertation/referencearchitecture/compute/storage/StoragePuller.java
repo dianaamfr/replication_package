@@ -59,6 +59,7 @@ public class StoragePuller implements Runnable {
         }
     }
 
+    // TODO: Update this to work with checkpoints - can't store the index
     private void parseJson(String json, int partition) {
         JSONObject response = new JSONObject(json);
         JSONArray versionChainsJson = response.getJSONArray(Utils.LOG_STATE);

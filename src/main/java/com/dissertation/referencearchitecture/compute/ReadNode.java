@@ -16,6 +16,9 @@ import com.dissertation.referencearchitecture.ROTRequest;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.ROTResponse.Builder;
 import com.dissertation.referencearchitecture.ROTServiceGrpc.ROTServiceImplBase;
+import com.dissertation.referencearchitecture.StableTimeServiceGrpc.StableTimeServiceImplBase;
+import com.dissertation.referencearchitecture.StableTimeRequest;
+import com.dissertation.referencearchitecture.StableTimeResponse;
 import com.dissertation.referencearchitecture.compute.storage.ReaderStorage;
 import com.dissertation.referencearchitecture.compute.storage.StoragePuller;
 import com.dissertation.referencearchitecture.s3.S3Helper;
@@ -28,6 +31,7 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import software.amazon.awssdk.regions.Region;
 
+// TODO: Prune storage based on the stable time
 public class ReadNode extends ComputeNode {
     private ReaderStorage storage;
     private AtomicLong rotCounter;
@@ -48,6 +52,8 @@ public class ReadNode extends ComputeNode {
                 Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
+
+
     }
 
     public static void main(String[] args) {
@@ -70,7 +76,8 @@ public class ReadNode extends ComputeNode {
 
             ReadNode readNode = new ReadNode(scheduler, s3Helper, storage, region);
             ROTServiceImpl readService = readNode.new ROTServiceImpl();
-            Server server = ServerBuilder.forPort(port).addService(readService).build();
+            StableTimeServiceImpl stableTimeService = readNode.new StableTimeServiceImpl();
+            Server server = ServerBuilder.forPort(port).addService(readService).addService(stableTimeService).build();
             readNode.init(server);
         } catch (URISyntaxException e) {
             System.err.println("Could not connect with AWS S3");
@@ -112,4 +119,13 @@ public class ReadNode extends ComputeNode {
             responseObserver.onCompleted();
         }
     }
+
+    public class StableTimeServiceImpl extends StableTimeServiceImplBase {
+        @Override
+        public void stableTime(StableTimeRequest request, StreamObserver<StableTimeResponse> responseObserver) {
+            responseObserver.onNext(StableTimeResponse.newBuilder().setStableTime(storage.getStableTime()).build());
+            responseObserver.onCompleted();
+        }
+    }
+    
 }

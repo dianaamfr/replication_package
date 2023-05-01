@@ -34,6 +34,12 @@ message ROTResponse {
     string status = 5;
 }
 
+message StableTimeRequest {}
+
+message StableTimeResponse {
+    string stableTime = 1;
+}
+
 service WriteService {
     rpc write (WriteRequest) returns (WriteResponse);
     rpc atomicWrite (WriteRequest) returns (WriteResponse);
@@ -41,4 +47,8 @@ service WriteService {
 
 service ROTService {
     rpc rot (ROTRequest) returns (ROTResponse);
+}
+
+service StableTimeService {
+    rpc stableTime (StableTimeRequest) returns (StableTimeResponse);
 }
