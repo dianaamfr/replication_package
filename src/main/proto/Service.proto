@@ -11,23 +11,11 @@ message WriteRequest {
     string key = 1;
     bytes value = 2;
     string lastWriteTimestamp = 3;
-}
-
-message WriteResponse {
-    string writeTimestamp = 1;
-    bool error = 2;
-    string status = 3;
-}
-
-message AtomicWriteRequest {
-    string key = 1;
-    bytes value = 2;
-    string lastWriteTimestamp = 3;
     optional string expectedVersion = 4;
     optional bytes expectedValue = 5;
 }
 
-message AtomicWriteResponse {
+message WriteResponse {
     string writeTimestamp = 1;
     bool error = 2;
     string status = 3;
@@ -48,7 +36,7 @@ message ROTResponse {
 
 service WriteService {
     rpc write (WriteRequest) returns (WriteResponse);
-    rpc atomicWrite (AtomicWriteRequest) returns (AtomicWriteResponse);
+    rpc atomicWrite (WriteRequest) returns (WriteResponse);
 }
 
 service ROTService {

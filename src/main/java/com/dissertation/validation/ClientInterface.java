@@ -8,7 +8,6 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 
 import com.dissertation.referencearchitecture.client.Client;
-import com.dissertation.referencearchitecture.AtomicWriteResponse;
 import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -138,7 +137,7 @@ public class ClientInterface {
 
         String key = commands[0];
         ByteString value = Utils.byteStringFromString(commands[1]);
-        AtomicWriteResponse writeResponse = this.client.requestCompareVersionAndWrite(key, value, commands[2], commands.length == 4 ? Utils.byteStringFromString(commands[3]) : null);
+        WriteResponse writeResponse = this.client.requestCompareVersionAndWrite(key, value, commands[2], commands.length == 4 ? Utils.byteStringFromString(commands[3]) : null);
 
         if (!writeResponse.getError()) {
             System.out.println(this.addWriteOutput(new StringBuilder(), key, commands[1], writeResponse.getWriteTimestamp()).toString());
@@ -156,7 +155,7 @@ public class ClientInterface {
         String key = commands[0];
         ByteString value = Utils.byteStringFromString(commands[1]);
         ByteString expectedValue = commands.length == 3 ? Utils.byteStringFromString(commands[2]) : ByteString.EMPTY;
-        AtomicWriteResponse writeResponse = this.client.requestCompareValueAndWrite(key, value, expectedValue);
+        WriteResponse writeResponse = this.client.requestCompareValueAndWrite(key, value, expectedValue);
 
         if (!writeResponse.getError()) {
             System.out.println(this.addWriteOutput(new StringBuilder(), key, commands[1], writeResponse.getWriteTimestamp()).toString());
@@ -182,7 +181,7 @@ public class ClientInterface {
         return builder;
     }
 
-    public StringBuilder addAtomicWriteErrorOutput(StringBuilder builder, String key, AtomicWriteResponse writeResponse) {
+    public StringBuilder addAtomicWriteErrorOutput(StringBuilder builder, String key, WriteResponse writeResponse) {
 
         builder.append(String.format(writeResponse.getStatus()));
 
