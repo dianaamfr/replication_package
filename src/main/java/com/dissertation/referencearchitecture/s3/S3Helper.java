@@ -3,7 +3,6 @@ package com.dissertation.referencearchitecture.s3;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.dissertation.utils.Utils;
