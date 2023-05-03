@@ -36,22 +36,23 @@ import io.grpc.stub.StreamObserver;
 import software.amazon.awssdk.regions.Region;
 
 public class WriteNode extends ComputeNode {
-    private WriterStorage storage;
-    private HLC hlc;
-    private int partition;
-    private static final String USAGE = "Usage: WriteNode <partition> <port> (<readPort> <readIp>)+";
+    private final int partition;
+    private final WriterStorage storage;
+    private final HLC hlc;
     private final String region;
-    private Lock writeLock;
-    private List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
+    private final Lock writeLock;
+    private final List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
     private AtomicInteger stableTimeCounter;
+    private static final String USAGE = "Usage: WriteNode <partition> <port> (<readPort> <readIp>)+";
 
     public WriteNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, int partition, WriterStorage storage,
-            HLC hlc, Region region, List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs) throws URISyntaxException, IOException, InterruptedException {
+            HLC hlc, Region region, List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs)
+            throws URISyntaxException, IOException, InterruptedException {
         super(scheduler, s3Helper, String.format("%s-%d", Utils.WRITE_NODE_ID, partition));
         this.partition = partition;
+        this.region = region.toString();
         this.storage = storage;
         this.hlc = hlc;
-        this.region = region.toString();
         this.writeLock = new ReentrantLock();
         this.stableTimeStubs = stableTimeStubs;
         this.stableTimeCounter = new AtomicInteger(Utils.CHECKPOINT_FREQUENCY);
@@ -60,14 +61,15 @@ public class WriteNode extends ComputeNode {
     @Override
     public void init(Server server) throws IOException, InterruptedException {
         this.scheduler.scheduleWithFixedDelay(
-                new StoragePusher(this.hlc, this.storage, this.s3Helper, this.partition, this.s3Logs, this.region, this.stableTimeStubs, stableTimeCounter),
+                new StoragePusher(this.s3Helper, this.storage, this.hlc, this.partition, this.region,
+                        this.stableTimeStubs, stableTimeCounter, this.s3Logs),
                 Utils.PUSH_DELAY,
                 Utils.PUSH_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
+        if (args.length < 4) {
             System.err.println(USAGE);
             return;
         }
@@ -75,22 +77,25 @@ public class WriteNode extends ComputeNode {
         try {
             int partition = Integer.parseInt(args[0]);
             int port = Integer.parseInt(args[1]);
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
-            Region region = Utils.getCurrentRegion();
-            S3Helper s3Helper = new S3Helper(region);
-            WriterStorage storage = new WriterStorage();
-            HLC hlc = new HLC(new TimeProvider(scheduler, Utils.CLOCK_DELAY));
+            final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
+            final Region region = Utils.getCurrentRegion();
+            final S3Helper s3Helper = new S3Helper(region);
+            final WriterStorage storage = new WriterStorage();
+            final TimeProvider timeProvider = new TimeProvider(scheduler, Utils.CLOCK_DELAY);
+            final HLC hlc = new HLC(timeProvider);
 
             // Connect with readNodes
-            List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs = new ArrayList<>();
-            for(int i=2; i<args.length; i+=2) {
-                Address readAddress = new Address(Integer.parseInt(args[i]), args[i+1]);
+            final List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs = new ArrayList<>();
+            for (int i = 2; i < args.length; i += 2) {
+                final Address readAddress = new Address(Integer.parseInt(args[i]), args[i + 1]);
                 stableTimeStubs.add(StableTimeServiceGrpc.newBlockingStub(readAddress.getChannel()));
             }
 
-            WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc, region, stableTimeStubs);
-            WriteServiceImpl writeService = writeNode.new WriteServiceImpl();
-            Server server = ServerBuilder.forPort(port).addService(writeService).build();
+            final WriteNode writeNode = new WriteNode(scheduler, s3Helper, partition, storage, hlc, region,
+                    stableTimeStubs);
+
+            final WriteServiceImpl writeService = writeNode.new WriteServiceImpl();
+            final Server server = ServerBuilder.forPort(port).addService(writeService).build();
             writeNode.init(server);
         } catch (URISyntaxException e) {
             System.err.println("Could not connect with AWS S3");
@@ -130,15 +135,14 @@ public class WriteNode extends ComputeNode {
 
                 if (Utils.VISIBILITY_LOGS) {
                     logs.add(new WriteRequestLog(request.getKey(), partition, t1));
-                    logs.add(new WriteResponseLog(request.getKey(), partition,
-                            writeTimestamp, t2));
+                    logs.add(new WriteResponseLog(request.getKey(), partition, writeTimestamp, t2));
                 }
             }
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
-    
+
         @Override
         public void atomicWrite(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
             HLCState lastTime = new HLCState();
@@ -161,17 +165,18 @@ public class WriteNode extends ComputeNode {
             if (!responseBuilder.getError()) {
                 writeLock.lock();
                 Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
-                if(isExpectedVersion(lastVersion, request)) {
+                if (isExpectedVersion(lastVersion, request)) {
                     String writeTimestamp = performWrite(lastTime, request);
                     writeLock.unlock();
                     responseBuilder.setWriteTimestamp(writeTimestamp);
                 } else {
                     writeLock.unlock();
-                    KeyVersion currentVersion = KeyVersion.newBuilder().setTimestamp(lastVersion.getKey()).setValue(lastVersion.getValue()).build();
+                    KeyVersion currentVersion = KeyVersion.newBuilder().setTimestamp(lastVersion.getKey())
+                            .setValue(lastVersion.getValue()).build();
                     responseBuilder
-                        .setStatus("Write failed. Current version doesn't match.")
-                        .setError(true)
-                        .setCurrentVersion(currentVersion);
+                            .setStatus("Write failed. Current version doesn't match.")
+                            .setError(true)
+                            .setCurrentVersion(currentVersion);
                 }
             }
 
@@ -189,13 +194,15 @@ public class WriteNode extends ComputeNode {
     }
 
     private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, WriteRequest request) {
-        if(request.hasExpectedVersion() && request.hasExpectedValue()) {
+        if (request.hasExpectedVersion() && request.hasExpectedValue()) {
             return isExpectedVersion(lastVersion, request.getExpectedVersion(), request.getExpectedValue());
-        } 
-        return request.hasExpectedVersion() ? this.isExpectedVersion(lastVersion, request.getExpectedVersion()) : this.isExpectedValue(lastVersion, request.getExpectedValue());
+        }
+        return request.hasExpectedVersion() ? this.isExpectedVersion(lastVersion, request.getExpectedVersion())
+                : this.isExpectedValue(lastVersion, request.getExpectedValue());
     }
 
-    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, String expectedVersion, ByteString expectedValue) {
+    private boolean isExpectedVersion(Entry<String, ByteString> lastVersion, String expectedVersion,
+            ByteString expectedValue) {
         return lastVersion.getKey().equals(expectedVersion) && lastVersion.getValue().equals(expectedValue);
     }
 

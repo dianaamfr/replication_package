@@ -4,10 +4,9 @@ import com.dissertation.referencearchitecture.exceptions.InvalidTimestampExcepti
 import com.dissertation.utils.Utils;
 
 public class HLCState {
-
-    private long logicalTime;
-    private long logicalCount;
-    private String lastWrite;
+    private final long logicalTime;
+    private final long logicalCount;
+    private final String lastWrite;
 
     public HLCState() {
         this.logicalTime = 0;
@@ -35,16 +34,16 @@ public class HLCState {
         return this.logicalCount;
     }
 
+    public String getLastWrite() {
+        return this.lastWrite;
+    }
+
     public boolean areNewWritesAvailable() {
-        return !this.lastWrite.equals(Utils.MIN_TIMESTAMP); 
+        return !this.lastWrite.equals(Utils.MIN_TIMESTAMP);
     }
 
     public boolean noWritesOccurred() {
         return this.lastWrite.isBlank();
-    }
-
-    public String getLastWrite() {
-        return this.lastWrite;
     }
 
     public static HLCState fromRecvTimestamp(String timestamp) throws InvalidTimestampException {
@@ -56,7 +55,7 @@ public class HLCState {
     }
 
     public static HLCState fromLastWriteTimestamp(String lastStoredTime) {
-        return new HLCState(0,0, lastStoredTime);
+        return new HLCState(0, 0, lastStoredTime);
     }
 
     @Override

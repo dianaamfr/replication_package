@@ -46,13 +46,13 @@ public class HLC {
 
     private HLCState startWriteOperation(HLCState prevState, HLCState recvState) {
         long logicalTime = Math.max(prevState.getLogicalTime(),
-            Math.max(timeProvider.getTime(), recvState.getLogicalTime()));
+                Math.max(timeProvider.getTime(), recvState.getLogicalTime()));
         long logicalCount = 0;
         String lastWrite = prevState.noWritesOccurred() ? Utils.MIN_TIMESTAMP : prevState.getLastWrite();
 
         boolean isLocalTimeEqual = logicalTime == prevState.getLogicalTime();
         boolean isRecvTimeEqual = logicalTime == recvState.getLogicalTime();
-        
+
         if (isLocalTimeEqual && isRecvTimeEqual) {
             logicalCount = Math.max(prevState.getLogicalCount(), recvState.getLogicalCount()) + 1;
         } else if (isLocalTimeEqual) {
@@ -70,7 +70,7 @@ public class HLC {
     }
 
     private HLCState pushEndOperation(HLCState prevState, HLCState recvState) {
-        if(prevState.getLastWrite().equals(recvState.getLastWrite())) {
+        if (prevState.getLastWrite().equals(recvState.getLastWrite())) {
             return new HLCState(prevState.getLogicalTime(), prevState.getLogicalCount(), "");
         }
         return prevState;
@@ -85,7 +85,7 @@ public class HLC {
         long logicalCount = 0;
         boolean isLocalTimeEqual = logicalTime == prevState.getLogicalTime();
         boolean isRecvTimeEqual = logicalTime == recvState.getLogicalTime();
-        
+
         if (isLocalTimeEqual && isRecvTimeEqual) {
             logicalCount = Math.max(prevState.getLogicalCount(), recvState.getLogicalCount());
         } else if (isLocalTimeEqual) {
