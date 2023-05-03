@@ -4,18 +4,18 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 
 public class Address {
-    private int port;
-    private String ip;
-    private int partitionId;
-
-    public Address(int port, String ip) {
-        this.port = port;
-        this.ip = ip;
-    }
+    private final int port;
+    private final String ip;
+    private final int partitionId;
 
     public Address(int port, String ip, int partitionId) {
-        this(port, ip);
+        this.port = port;
+        this.ip = ip;
         this.partitionId = partitionId;
+    }
+
+    public Address(int port, String ip) {
+        this(port, ip, -1);
     }
 
     public int getPort() {
