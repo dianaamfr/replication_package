@@ -25,11 +25,11 @@ import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 
 public class Client {
-    private Map<Integer, WriteServiceGrpc.WriteServiceBlockingStub> writeStubs;
-    private ROTServiceGrpc.ROTServiceBlockingStub readStub;
-    private List<ManagedChannel> channels;
     private Map<String, KeyVersion> cache;
     private String lastWriteTimestamp;
+    private List<ManagedChannel> channels;
+    private ROTServiceGrpc.ROTServiceBlockingStub readStub;
+    private Map<Integer, WriteServiceGrpc.WriteServiceBlockingStub> writeStubs;
 
     public Client(Address readAddress, List<Address> writeAddresses) {
         this.cache = new HashMap<>();
@@ -59,7 +59,7 @@ public class Client {
 
         try {
             for (String key : keys) {
-                if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+                if (!this.isKeyInPartition(key)) {
                     throw new KeyNotFoundException();
                 }
             }
@@ -90,7 +90,7 @@ public class Client {
     public WriteResponse requestWrite(String key, ByteString value) {
         try {
             int partitionId = Utils.getKeyPartitionId(key);
-            if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+            if (!this.isKeyInPartition(key)) {
                 throw new KeyNotFoundException();
             }
 
@@ -104,7 +104,8 @@ public class Client {
             WriteResponse writeResponse = writeStub.write(writeRequest);
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                        .build();
                 this.cache.put(key, version);
             }
             return writeResponse;
@@ -116,28 +117,30 @@ public class Client {
         }
     }
 
-    public WriteResponse requestCompareVersionAndWrite(String key, ByteString value, String expectedVersion, ByteString expectedValue) {
+    public WriteResponse requestCompareVersionAndWrite(String key, ByteString value, String expectedVersion,
+            ByteString expectedValue) {
         try {
             int partitionId = Utils.getKeyPartitionId(key);
-            if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+            if (!this.isKeyInPartition(key)) {
                 throw new KeyNotFoundException();
             }
 
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            com.dissertation.referencearchitecture.WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
+            WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
                     .setKey(key)
                     .setValue(value)
                     .setLastWriteTimestamp(this.lastWriteTimestamp)
                     .setExpectedVersion(expectedVersion);
-            
-            if(expectedValue != null) {
+
+            if (expectedValue != null) {
                 writeRequestBuilder.setExpectedValue(expectedValue);
             }
 
             WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                        .build();
                 this.cache.put(key, version);
             }
             return writeResponse;
@@ -152,22 +155,22 @@ public class Client {
     public WriteResponse requestCompareValueAndWrite(String key, ByteString value, ByteString expectedValue) {
         try {
             int partitionId = Utils.getKeyPartitionId(key);
-            if (!this.writeStubs.containsKey(Utils.getKeyPartitionId(key))) {
+            if (!this.isKeyInPartition(key)) {
                 throw new KeyNotFoundException();
             }
 
             WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            com.dissertation.referencearchitecture.WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
+            WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
                     .setKey(key)
                     .setValue(value)
                     .setLastWriteTimestamp(this.lastWriteTimestamp)
                     .setExpectedValue(expectedValue);
-            
 
             WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
             if (!writeResponse.getError()) {
                 this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value).build();
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                        .build();
                 this.cache.put(key, version);
             }
             return writeResponse;
@@ -198,6 +201,10 @@ public class Client {
                 e.printStackTrace();
             }
         }
+    }
+
+    private boolean isKeyInPartition(String key) {
+        return this.writeStubs.containsKey(Utils.getKeyPartitionId(key));
     }
 
 }
