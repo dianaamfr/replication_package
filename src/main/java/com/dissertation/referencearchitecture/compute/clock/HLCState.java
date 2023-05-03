@@ -12,7 +12,7 @@ public class HLCState {
     public HLCState() {
         this.logicalTime = 0;
         this.logicalCount = 0;
-        this.lastWrite = null;
+        this.lastWrite = "";
     }
 
     public HLCState(long logicalTime, long logicalCount) {
@@ -40,7 +40,7 @@ public class HLCState {
     }
 
     public boolean noWritesOccurred() {
-        return this.lastWrite == null;
+        return this.lastWrite.isBlank();
     }
 
     public String getLastWrite() {

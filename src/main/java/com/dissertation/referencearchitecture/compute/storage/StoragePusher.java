@@ -69,8 +69,6 @@ public class StoragePusher implements Runnable {
         if (!response.hasTimestamp()) {
             return;
         }
-        // System.out.println("SYNC: current=" + currentTimestamp + " recv=" +
-        // response.getTimestamp());
 
         // Get the most recent timestamp
         HLCState recvTime;

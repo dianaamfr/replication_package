@@ -43,17 +43,16 @@ public class StoragePuller implements Runnable {
             try {
                 String partitionBucket = Utils.getPartitionBucket(entry.getKey(), this.region);
                 S3ReadResponse s3Response = this.s3Helper.getLogAfter(partitionBucket,
-                        String.valueOf(entry.getValue()));
+                        entry.getValue());
                 if (s3Response.hasContent() && s3Response.hasTimestamp()) {
                     if (Utils.VISIBILITY_LOGS) {
                         this.s3Logs.add(new S3OperationLog(s3Response.getTimestamp(), entry.getKey(), false));
                     }
                     parseJson(s3Response.getContent(), entry.getKey(), entry.getValue());
                     this.storage.setPartitionMaxTimestamp(entry.getKey(), s3Response.getTimestamp());
-                    // System.out.println(s3Response.getContent());
                 } else if (s3Response.isError()) {
                     System.err.println(s3Response.getStatus());
-                }
+                } 
             } catch (Exception e) {
                 e.printStackTrace();
                 System.err.println(String.format("Error when pulling from partition %d", entry.getKey()));

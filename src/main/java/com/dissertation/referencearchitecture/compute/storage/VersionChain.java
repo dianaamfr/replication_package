@@ -20,7 +20,8 @@ public class VersionChain {
     }
 
     public String getPruneEndKey(String stableTime) {
-        return this.versions.floorKey(stableTime);
+        String v = this.versions.floorKey(stableTime);
+        return v == null ? Utils.MIN_TIMESTAMP : v;
     }
 
     public void prune(String pruneEndKey) {
