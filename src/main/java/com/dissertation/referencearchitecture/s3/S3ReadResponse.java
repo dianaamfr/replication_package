@@ -1,24 +1,23 @@
 package com.dissertation.referencearchitecture.s3;
 
-public class S3ReadResponse extends Response {
-    private String timestamp;
-    private String content;
+public class S3ReadResponse {
+    private final String timestamp;
+    private final String content;
+    protected String status;
 
-    public S3ReadResponse() {
+    public S3ReadResponse(String timestamp, String content) {
         super();
-        this.timestamp = "";
-        this.content = "";
+        this.timestamp = timestamp;
+        this.content = content;
+        this.status = "";
     }
 
     public S3ReadResponse(String timestamp) {
-        this();
-        this.timestamp = timestamp;
-        this.content = "";
+        this(timestamp, "");
     }
 
-    public S3ReadResponse(String timestamp, String content) {
-        this(timestamp);
-        this.content = content;
+    public S3ReadResponse() {
+        this("", "");
     }
 
     public boolean hasContent() {
@@ -35,5 +34,13 @@ public class S3ReadResponse extends Response {
 
     public String getTimestamp() {
         return this.timestamp;
+    }
+
+    public String getStatus() {
+        return this.status;
+    }
+
+    public boolean isError() {
+        return false;
     }
 }
