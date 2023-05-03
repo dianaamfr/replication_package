@@ -63,7 +63,7 @@ public class S3Helper {
     }
 
     public S3ReadResponse getLogAfter(String bucketName, String timestamp) {
-        List<S3Object> objects = new ArrayList<>();
+        List<S3Object> objects;
 
         try {
             objects = getObjectsAfter(bucketName, Utils.S3_LOG_PREFIX, timestamp);
@@ -85,7 +85,7 @@ public class S3Helper {
     }
 
     public S3ReadResponse getClocksAfter(String timestamp) {
-        List<S3Object> objects = new ArrayList<>();
+        List<S3Object> objects;
 
         try {
             objects = getObjectsAfter(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp);

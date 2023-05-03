@@ -25,13 +25,6 @@ public class Storage {
         });
     }
 
-    public void delete(String key, String timestamp) {
-        this.keyVersions.computeIfPresent(key, (k, v) -> {
-            v.delete(timestamp);
-            return v;
-        });
-    }
-
     public Entry<String, ByteString> get(String key, String maxTimestamp) {
         if (!this.keyVersions.containsKey(key)) {
             return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
@@ -41,6 +34,16 @@ public class Storage {
 
     public ConcurrentMap<String, VersionChain> getState() {
         return this.keyVersions;
+    }
+
+    public void pruneState(String stableTime) {
+        for (String key: this.keyVersions.keySet()) {
+            this.keyVersions.compute(key, (k, v) -> {
+                final String pruneEndKey = v.getPruneEndKey(stableTime);
+                v.prune(pruneEndKey);
+                return v;
+            });
+        }
     }
 
     @Override

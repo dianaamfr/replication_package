@@ -48,7 +48,7 @@ public class HLC {
         long logicalTime = Math.max(prevState.getLogicalTime(),
             Math.max(timeProvider.getTime(), recvState.getLogicalTime()));
         long logicalCount = 0;
-        String lastWrite = prevState.getLastWrite() == null ? Utils.MIN_TIMESTAMP : prevState.getLastWrite();
+        String lastWrite = prevState.noWritesOccurred() ? Utils.MIN_TIMESTAMP : prevState.getLastWrite();
 
         boolean isLocalTimeEqual = logicalTime == prevState.getLogicalTime();
         boolean isRecvTimeEqual = logicalTime == recvState.getLogicalTime();
@@ -71,7 +71,7 @@ public class HLC {
 
     private HLCState pushEndOperation(HLCState prevState, HLCState recvState) {
         if(prevState.getLastWrite().equals(recvState.getLastWrite())) {
-            return new HLCState(prevState.getLogicalTime(), prevState.getLogicalCount(), null);
+            return new HLCState(prevState.getLogicalTime(), prevState.getLogicalCount(), "");
         }
         return prevState;
     }

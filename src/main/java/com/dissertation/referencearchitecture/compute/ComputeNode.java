@@ -15,14 +15,12 @@ public abstract class ComputeNode {
     protected Server server;
     protected S3Helper s3Helper;
     protected ScheduledThreadPoolExecutor scheduler;
-    protected String id;
     protected ArrayDeque<Log> logs;
     protected ArrayDeque<Log> s3Logs;
 
     public ComputeNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, String id) throws URISyntaxException {
         this.scheduler = scheduler;
         this.s3Helper = s3Helper;
-        this.id = id;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.s3Logs = new ArrayDeque<>(Utils.MAX_LOGS);
 

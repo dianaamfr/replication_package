@@ -19,10 +19,13 @@ public class VersionChain {
         this.versions.put(timestamp, value);
     }
 
-    public void delete(String timestamp) {
-        if (this.versions.containsKey(timestamp)) {
-            this.versions.remove(timestamp);
-        }
+    public String getPruneEndKey(String stableTime) {
+        String v = this.versions.floorKey(stableTime);
+        return v == null ? Utils.MIN_TIMESTAMP : v;
+    }
+
+    public void prune(String pruneEndKey) {
+        this.versions.headMap(pruneEndKey, false).clear();
     }
 
     public Entry<String, ByteString> get(String maxTimestamp) {

@@ -12,7 +12,7 @@ public class HLCState {
     public HLCState() {
         this.logicalTime = 0;
         this.logicalCount = 0;
-        this.lastWrite = null;
+        this.lastWrite = "";
     }
 
     public HLCState(long logicalTime, long logicalCount) {
@@ -40,7 +40,7 @@ public class HLCState {
     }
 
     public boolean noWritesOccurred() {
-        return this.lastWrite == null;
+        return this.lastWrite.isBlank();
     }
 
     public String getLastWrite() {
@@ -52,7 +52,7 @@ public class HLCState {
         if (parts.length != 2) {
             throw new InvalidTimestampException();
         }
-        return new HLCState(Long.valueOf(parts[0]), Long.valueOf(parts[1]));
+        return new HLCState(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }
 
     public static HLCState fromLastWriteTimestamp(String lastStoredTime) {

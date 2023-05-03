@@ -101,7 +101,7 @@ public class BusyReadGenerator {
                 }
 
                 try {
-                    valueLong = Long.valueOf(valueStr);
+                    valueLong = Long.parseLong(valueStr);
                     if (valueLong > this.lastPayload) {
                         this.lastPayload = valueLong;
                         newPayload = true;

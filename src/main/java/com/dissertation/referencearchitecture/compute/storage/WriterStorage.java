@@ -22,14 +22,6 @@ public class WriterStorage extends Storage {
         this.lastPushedVersions = new ConcurrentHashMap<>();
     }
 
-    public void setLastPushedVersion(String key, String version) {
-        this.lastPushedVersions.put(key, version);
-    }
-
-    public String getLastPushedVersion(String key) {
-        return this.lastPushedVersions.getOrDefault(key, Utils.MIN_TIMESTAMP);
-    }
-
     public void updateJsonState(String timestamp) {
         for (Entry<String, VersionChain> versionChain : this.getState().entrySet()) {
             String lastPushedTimestamp = this.getLastPushedVersion(versionChain.getKey());
@@ -37,6 +29,33 @@ public class WriterStorage extends Storage {
                     .getVersionChain(lastPushedTimestamp, timestamp);
             for (Entry<String, ByteString> version : keySnapshotVersions.entrySet()) {
                 this.appendToJsonState(versionChain.getKey(), version.getKey(), version.getValue());
+            }
+        }
+    }
+
+    public Entry<String, ByteString> getLastVersion(String key) {
+        if (!this.keyVersions.containsKey(key)) {
+            return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
+        }
+
+        return this.keyVersions.get(key).getLastVersion();
+    }
+
+    @Override
+    public void pruneState(String stableTime) {
+        for (Entry<String, VersionChain> entry: this.keyVersions.entrySet()) {
+            final String pruneEndKey = this.keyVersions.get(entry.getKey()).getPruneEndKey(stableTime);
+            this.keyVersions.compute(entry.getKey(), (k, v) -> {
+                v.prune(pruneEndKey);
+                return v;
+            });
+
+            JSONArray jsonVersions = this.jsonVersionChains.get(entry.getKey()).getJSONArray(Utils.LOG_VERSIONS);
+            for(int i = 0; i < jsonVersions.length(); i++) {
+                if(jsonVersions.getJSONObject(i).getString(Utils.LOG_TIMESTAMP).equals(pruneEndKey)) {
+                    return;
+                }
+                jsonVersions.remove(i);
             }
         }
     }
@@ -73,11 +92,8 @@ public class WriterStorage extends Storage {
         return keyVersion;
     }
 
-    public Entry<String, ByteString> getLastVersion(String key) {
-        if (!this.keyVersions.containsKey(key)) {
-            return Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
-        }
-
-        return this.keyVersions.get(key).getLastVersion();
+    private String getLastPushedVersion(String key) {
+        return this.lastPushedVersions.getOrDefault(key, Utils.MIN_TIMESTAMP);
     }
+
 }
