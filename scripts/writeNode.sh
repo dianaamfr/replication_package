@@ -1,6 +1,6 @@
-if [ $# -lt 4 ] || [ $# -gt 4 ]
+if [ $# -lt 6 ]
 then
-  echo "Usage: writeNode.sh <imageTag> <totalPartitions> <port> <partitionId>"
+  echo "Usage: writeNode.sh <imageTag> <totalPartitions> <port> <partitionId> (<readPort> <readIp>)+"
   exit 1
 fi
 
@@ -10,5 +10,6 @@ IMAGE="dianaamfreitas/dissertation:${1}"
 N_PARTITIONS=$2
 PORT=$3
 PARTITION_ID=$4
+REST="${@:5}"
 
-docker run --name $NODE -p $PORT:$PORT --env NODE=$NODE --env PARTITIONS=$N_PARTITIONS --env BUCKET_SUFFIX=$BUCKET_SUFFIX $IMAGE $PARTITION_ID $PORT
+docker run --name $NODE -p $PORT:$PORT --env NODE=$NODE --env PARTITIONS=$N_PARTITIONS --env BUCKET_SUFFIX=$BUCKET_SUFFIX $IMAGE $PARTITION_ID $PORT $REST

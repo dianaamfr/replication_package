@@ -41,7 +41,7 @@ public class StoragePusher implements Runnable {
     @Override
     public void run() {
         if(this.counter.decrementAndGet() == 0) {
-            this.counter.set(12);
+            this.counter.set(Utils.CHECKPOINT_FREQUENCY);
             this.computeCheckpoint();
         }
 
@@ -105,17 +105,19 @@ public class StoragePusher implements Runnable {
 
     private void computeCheckpoint() {
         // Get minimum stable time
-        String minStableTime = Utils.MIN_TIMESTAMP;
+        String minStableTime = "";
         for(StableTimeServiceGrpc.StableTimeServiceBlockingStub stub : this.stableTimeStubs) {
             StableTimeResponse response = stub.stableTime(StableTimeRequest.newBuilder().build());
-            if(minStableTime.equals(Utils.MIN_TIMESTAMP)) {
+            if(minStableTime.isBlank()) {
                 minStableTime = response.getStableTime();
-            } else {
-                minStableTime = minStableTime.compareTo(response.getStableTime()) > 0 ? response.getStableTime() : minStableTime;
+            } else if(minStableTime.compareTo(response.getStableTime()) > 0) {
+                minStableTime = response.getStableTime();
             }
         }
         
         // Perform checkpoint
-        this.storage.pruneState(minStableTime);
+        if(!minStableTime.isBlank() && minStableTime.compareTo(Utils.MIN_TIMESTAMP) > 0) {
+            this.storage.pruneState(minStableTime);
+        }
     }
 }

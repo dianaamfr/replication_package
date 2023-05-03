@@ -21,7 +21,7 @@ public class Utils {
     public static final int PULL_DELAY = 10000;
     public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
-    public static final int CHECKPOINT_FREQUENCY = 12;
+    public static final int CHECKPOINT_FREQUENCY = 3;
 
     public static final Region DEFAULT_REGION = Region.US_EAST_1;
     public static final String S3_LOG_PREFIX = "Logs/";
