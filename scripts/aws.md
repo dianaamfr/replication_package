@@ -15,7 +15,7 @@ docker rmi $(docker images -a -q)
 **Busy Read Generator**: ./busyReadGenerator.sh v9.0.0-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 100 a
 
 ## Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v9.0.0-visibility 1 8080 1
+**Write Node**: ./writeNode.sh v9.0.0-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 ---
 # MEASURE LATENCY
@@ -30,7 +30,7 @@ docker rmi $(docker images -a -q)
 **Busy Read Generator**: ./busyReadGenerator.sh v9.0.0-latency 1 1 8080 <read-us-ip> 8080 <write-ip> 1 500 a
 
 ## Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v9.0.0-latency 1 8080 1
+**Write Node**: ./writeNode.sh v9.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 ---
 # MEASURE GOODPUT
@@ -45,7 +45,7 @@ docker rmi $(docker images -a -q)
 **Constant Read Generator**: ./constantReadGenerator.sh v9.0.0-goodput 1 1 8080 <read-us-ip> 8080 <write-ip> 1 500 100 a
 
 ## Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v9.0.0-goodput 1 8080 1
+**Write Node**: ./writeNode.sh v9.0.0-goodput 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 ---
 # GET LOGS:
