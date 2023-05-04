@@ -32,27 +32,25 @@ import io.grpc.stub.StreamObserver;
 import software.amazon.awssdk.regions.Region;
 
 public class ReadNode extends ComputeNode {
-    private ReaderStorage storage;
-    private AtomicLong rotCounter;
-    private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
     private final String region;
+    private final ReaderStorage storage;
+    private final AtomicLong rotCounter;
+    private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
 
     public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage, Region region)
             throws URISyntaxException {
         super(scheduler, s3Helper, String.format("%s-%s", Utils.READ_NODE_ID, region.toString()));
+        this.region = region.toString();
         this.storage = storage;
         this.rotCounter = new AtomicLong(0);
-        this.region = region.toString();
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.storage, this.s3Helper, this.s3Logs, this.region),
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.s3Helper, this.storage, this.region, this.s3Logs),
                 Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
-
-
     }
 
     public static void main(String[] args) {
@@ -67,16 +65,18 @@ public class ReadNode extends ComputeNode {
             for (int i = 1; i < args.length; i++) {
                 partitionIds.add(Integer.parseInt(args[i]));
             }
-            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
-            Region region = Utils.getCurrentRegion();
-            S3Helper s3Helper = new S3Helper(region);
-            ReaderStorage storage = new ReaderStorage();
+
+            final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
+            final Region region = Utils.getCurrentRegion();
+            final S3Helper s3Helper = new S3Helper(region);
+            final ReaderStorage storage = new ReaderStorage();
             storage.init(partitionIds);
 
-            ReadNode readNode = new ReadNode(scheduler, s3Helper, storage, region);
-            ROTServiceImpl readService = readNode.new ROTServiceImpl();
-            StableTimeServiceImpl stableTimeService = readNode.new StableTimeServiceImpl();
-            Server server = ServerBuilder.forPort(port).addService(readService).addService(stableTimeService).build();
+            final ReadNode readNode = new ReadNode(scheduler, s3Helper, storage, region);
+            final ROTServiceImpl readService = readNode.new ROTServiceImpl();
+            final StableTimeServiceImpl stableTimeService = readNode.new StableTimeServiceImpl();
+            final Server server = ServerBuilder.forPort(port).addService(readService).addService(stableTimeService)
+                    .build();
             readNode.init(server);
         } catch (URISyntaxException e) {
             System.err.println("Could not connect with AWS S3");
@@ -93,16 +93,17 @@ public class ReadNode extends ComputeNode {
         @Override
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
             // Define snapshot
-            long rotId = rotCounter.incrementAndGet();
-            String rotSnapshot = storage.getStableTime();
+            final long rotId = rotCounter.incrementAndGet();
+            final String rotSnapshot = storage.getStableTime();
 
             // Get values within the snapshot
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, KeyVersion> values = new HashMap<>(request.getKeysCount());
-            for (String key: request.getKeysList()) {
+            for (String key : request.getKeysList()) {
                 try {
                     Entry<String, ByteString> versionEntry = storage.get(key, rotSnapshot);
-                    KeyVersion version = KeyVersion.newBuilder().setTimestamp(versionEntry.getKey()).setValue(versionEntry.getValue()).build();
+                    KeyVersion version = KeyVersion.newBuilder().setTimestamp(versionEntry.getKey())
+                            .setValue(versionEntry.getValue()).build();
                     values.put(key, version);
                 } catch (Exception e) {
                     responseBuilder.setStatus(e.toString());
@@ -126,5 +127,5 @@ public class ReadNode extends ComputeNode {
             responseObserver.onCompleted();
         }
     }
-    
+
 }

@@ -38,7 +38,7 @@ public class VersionChain {
 
     public Entry<String, ByteString> getLastVersion() {
         Entry<String, ByteString> lastVersion = this.versions.lastEntry();
-        if(lastVersion == null) {
+        if (lastVersion == null) {
             lastVersion = Map.entry(Utils.MIN_TIMESTAMP, ByteString.EMPTY);
         }
         return lastVersion;

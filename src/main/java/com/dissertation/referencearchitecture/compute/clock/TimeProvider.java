@@ -4,14 +4,14 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TimeProvider {
-    private ScheduledThreadPoolExecutor scheduler;
+    private final ScheduledThreadPoolExecutor scheduler;
     private long currentTime;
 
     public TimeProvider(ScheduledThreadPoolExecutor scheduler, long delay) {
         this.scheduler = scheduler;
         this.currentTime = 0;
 
-        TimeRetriever timeRetriever = new TimeRetriever();
+        final TimeRetriever timeRetriever = new TimeRetriever();
         this.scheduler.scheduleWithFixedDelay(timeRetriever, 0, delay, TimeUnit.MILLISECONDS);
     }
 

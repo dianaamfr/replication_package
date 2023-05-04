@@ -17,33 +17,34 @@ import com.dissertation.validation.logs.S3OperationLog;
 import com.dissertation.validation.logs.Log;
 
 public class StoragePusher implements Runnable {
-    private HLC hlc;
-    private WriterStorage storage;
-    private S3Helper s3Helper;
-    private int partition;
-    private ArrayDeque<Log> logs;
+    private final S3Helper s3Helper;
+    private final WriterStorage storage;
+    private final HLC hlc;
+    private final int partition;
     private final String region;
-    private List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
+    private final List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
     private AtomicInteger counter;
+    private ArrayDeque<Log> logs;
 
-    public StoragePusher(HLC hlc, WriterStorage storage, S3Helper s3Helper, int partition, ArrayDeque<Log> logs,
-            String region, List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs, AtomicInteger counter) {
-        this.hlc = hlc;
-        this.storage = storage;
+    public StoragePusher(S3Helper s3Helper, WriterStorage storage, HLC hlc, int partition, String region, List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs, AtomicInteger counter, ArrayDeque<Log> logs) {
         this.s3Helper = s3Helper;
+        this.storage = storage;
+        this.hlc = hlc;
         this.partition = partition;
-        this.logs = logs;
         this.region = region;
         this.stableTimeStubs = stableTimeStubs;
         this.counter = counter;
+        this.logs = logs;
     }
 
     @Override
     public void run() {
+        // Checkpoint
         if(this.counter.decrementAndGet() == 0) {
             this.counter.set(Utils.CHECKPOINT_FREQUENCY);
             this.computeCheckpoint();
         }
+
 
         HLCState currentTime = this.hlc.getState();
         // Sync in the absence of writes
@@ -64,6 +65,24 @@ public class StoragePusher implements Runnable {
         }
     }
 
+    private void computeCheckpoint() {
+        // Get minimum stable time
+        String minStableTime = "";
+        for(StableTimeServiceGrpc.StableTimeServiceBlockingStub stub : this.stableTimeStubs) {
+            StableTimeResponse response = stub.stableTime(StableTimeRequest.newBuilder().build());
+            if(minStableTime.isBlank()) {
+                minStableTime = response.getStableTime();
+            } else if(minStableTime.compareTo(response.getStableTime()) > 0) {
+                minStableTime = response.getStableTime();
+            }
+        }
+        
+        // Perform checkpoint
+        if(!minStableTime.isBlank() && minStableTime.compareTo(Utils.MIN_TIMESTAMP) > 0) {
+            this.storage.pruneState(minStableTime);
+        }
+    }
+    
     private void sync(HLCState currentTime) {
         S3ReadResponse response = this.s3Helper.getClocksAfter(currentTime.toString());
         if (!response.hasTimestamp()) {
@@ -103,21 +122,4 @@ public class StoragePusher implements Runnable {
         }
     }
 
-    private void computeCheckpoint() {
-        // Get minimum stable time
-        String minStableTime = "";
-        for(StableTimeServiceGrpc.StableTimeServiceBlockingStub stub : this.stableTimeStubs) {
-            StableTimeResponse response = stub.stableTime(StableTimeRequest.newBuilder().build());
-            if(minStableTime.isBlank()) {
-                minStableTime = response.getStableTime();
-            } else if(minStableTime.compareTo(response.getStableTime()) > 0) {
-                minStableTime = response.getStableTime();
-            }
-        }
-        
-        // Perform checkpoint
-        if(!minStableTime.isBlank() && minStableTime.compareTo(Utils.MIN_TIMESTAMP) > 0) {
-            this.storage.pruneState(minStableTime);
-        }
-    }
 }

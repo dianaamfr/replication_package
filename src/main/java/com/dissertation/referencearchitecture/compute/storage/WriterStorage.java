@@ -43,7 +43,7 @@ public class WriterStorage extends Storage {
 
     @Override
     public void pruneState(String stableTime) {
-        for (Entry<String, VersionChain> entry: this.keyVersions.entrySet()) {
+        for (Entry<String, VersionChain> entry : this.keyVersions.entrySet()) {
             final String pruneEndKey = this.keyVersions.get(entry.getKey()).getPruneEndKey(stableTime);
             this.keyVersions.compute(entry.getKey(), (k, v) -> {
                 v.prune(pruneEndKey);
@@ -51,8 +51,8 @@ public class WriterStorage extends Storage {
             });
 
             JSONArray jsonVersions = this.jsonVersionChains.get(entry.getKey()).getJSONArray(Utils.LOG_VERSIONS);
-            for(int i = 0; i < jsonVersions.length(); i++) {
-                if(jsonVersions.getJSONObject(i).getString(Utils.LOG_TIMESTAMP).equals(pruneEndKey)) {
+            for (int i = 0; i < jsonVersions.length(); i++) {
+                if (jsonVersions.getJSONObject(i).getString(Utils.LOG_TIMESTAMP).equals(pruneEndKey)) {
                     return;
                 }
                 jsonVersions.remove(i);

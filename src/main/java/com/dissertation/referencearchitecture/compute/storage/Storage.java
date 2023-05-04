@@ -37,7 +37,7 @@ public class Storage {
     }
 
     public void pruneState(String stableTime) {
-        for (String key: this.keyVersions.keySet()) {
+        for (String key : this.keyVersions.keySet()) {
             this.keyVersions.compute(key, (k, v) -> {
                 final String pruneEndKey = v.getPruneEndKey(stableTime);
                 v.prune(pruneEndKey);

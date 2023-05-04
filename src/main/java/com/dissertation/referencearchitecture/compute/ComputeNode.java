@@ -12,9 +12,9 @@ import com.dissertation.validation.logs.Log;
 import io.grpc.Server;
 
 public abstract class ComputeNode {
+    protected final ScheduledThreadPoolExecutor scheduler;
+    protected final S3Helper s3Helper;
     protected Server server;
-    protected S3Helper s3Helper;
-    protected ScheduledThreadPoolExecutor scheduler;
     protected ArrayDeque<Log> logs;
     protected ArrayDeque<Log> s3Logs;
 
