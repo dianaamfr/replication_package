@@ -170,7 +170,8 @@ public class WriteNode extends ComputeNode {
                     responseBuilder.setWriteTimestamp(writeTimestamp);
                 } else {
                     writeLock.unlock();
-                    responseBuilder.setStatus("Write failed. Current version doesn't match.").setError(true);
+                    responseBuilder.setCurrentVersion(lastVersion.getKey())
+                            .setStatus("Write failed. Current version doesn't match.").setError(true);
                 }
             }
 

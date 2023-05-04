@@ -111,26 +111,6 @@ public class ReadNode extends ComputeNode {
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
-    
-        // @Override
-        // public void readVersion(ReadVersionRequest request, StreamObserver<ReadVersionResponse> responseObserver) {
-        //     // Define snapshot
-        //     final String rotSnapshot = storage.getStableTime();
-
-        //     // Get value within the snapshot
-        //     ReadVersionResponse.Builder responseBuilder = ReadVersionResponse.newBuilder().setStableTime(rotSnapshot).setError(false);
-        //     Entry<String, ByteString> versionEntry = storage.get(request.getKey(), rotSnapshot);
-
-        //     // Check if version matches
-        //     if(versionEntry.getKey().equals(request.getVersion())) {
-        //         responseBuilder.setValue(versionEntry.getValue());
-        //     } else {
-        //         responseBuilder.setError(true).setStatus("Version mismatch");
-        //     }
-    
-        //     responseObserver.onNext(responseBuilder.build());
-        //     responseObserver.onCompleted();
-        // }
     }
 
     public class StableTimeServiceImpl extends StableTimeServiceImplBase {

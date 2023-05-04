@@ -34,18 +34,6 @@ message ROTResponse {
     string status = 5;
 }
 
-// message ReadVersionRequest {
-//     string key = 1;
-//     string version = 2;
-// }
-
-// message ReadVersionResponse {
-//     bytes value = 1;
-//     string stableTime = 2;
-//     bool error = 3;
-//     string status = 4;
-// }
-
 message StableTimeRequest {}
 
 message StableTimeResponse {
@@ -59,7 +47,6 @@ service WriteService {
 
 service ROTService {
     rpc rot (ROTRequest) returns (ROTResponse);
-    // rpc readVersion (ReadVersionRequest) returns (ReadVersionResponse);
 }
 
 service StableTimeService {
