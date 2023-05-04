@@ -1,12 +1,11 @@
 package com.dissertation.eventual.s3;
 
-public class S3ReadResponse {
+public class S3ReadResponse extends S3Response {
     private final String content;
-    protected String status;
 
     public S3ReadResponse(String content) {
+        super();
         this.content = content;
-        this.status = "";
     }
 
     public S3ReadResponse() {
@@ -15,13 +14,5 @@ public class S3ReadResponse {
 
     public String getContent() {
         return this.content;
-    }
-
-    public String getStatus() {
-        return this.status;
-    }
-
-    public boolean isError() {
-        return false;
     }
 }

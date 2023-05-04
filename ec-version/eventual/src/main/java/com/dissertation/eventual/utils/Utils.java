@@ -9,7 +9,7 @@ public class Utils {
     private static final String BUCKET_SUFFIX = System.getProperty("bucketSuffix");
     public static final String S3_PARTITION_FORMAT = "p%d-%s" + BUCKET_SUFFIX;
 
-    public static final String S3_ENDPOINT = System.getenv("S3_ENDPOINT");
+    public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
 
 

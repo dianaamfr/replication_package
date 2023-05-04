@@ -19,6 +19,7 @@
         <aws.java.sdk.version>2.20.27</aws.java.sdk.version>
         <aws.lambda.java.version>1.2.0</aws.lambda.java.version>
         <slf4j.version>2.0.7</slf4j.version>
+        <json.version>20230227</json.version>
     </properties>
 
     <dependencyManagement>
@@ -58,6 +59,12 @@
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-lambda-java-core</artifactId>
             <version>${aws.lambda.java.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json.version}</version>
         </dependency>
 
         <dependency>

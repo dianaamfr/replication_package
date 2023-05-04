@@ -29,7 +29,7 @@ emptyBuckets:
 	
 # CLI
 client:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar
 
 # Validation
 

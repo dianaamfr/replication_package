@@ -2,7 +2,6 @@ package com.dissertation.eventual.s3;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 import com.dissertation.eventual.utils.Utils;
 import software.amazon.awssdk.auth.credentials.InstanceProfileCredentialsProvider;
@@ -14,6 +13,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.S3ClientBuilder;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 public class S3Helper {
@@ -27,6 +27,8 @@ public class S3Helper {
         S3ClientBuilder s3ClientBuilder = S3Client.builder()
                 .region(region)
                 .forcePathStyle(true);
+        
+        System.out.println("S3_ENDPOINT: " + Utils.S3_ENDPOINT);
 
         if (Utils.S3_ENDPOINT != null && !Utils.S3_ENDPOINT.isEmpty()) {
             return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())
@@ -37,22 +39,28 @@ public class S3Helper {
     }
 
     public S3ReadResponse read(String bucketName, String key) {
+        S3ReadResponse s3ReadResponse;
         try {
-            getObject(bucketName, key);
-        } catch (Exception e) {
-            return new S3Error(e.toString());
+            s3ReadResponse = getObject(bucketName, key);
+        } catch (NoSuchKeyException e) {
+            s3ReadResponse = new S3ReadResponse("");
+        } 
+        catch (Exception e) {
+            s3ReadResponse = new S3ReadResponse();
+            s3ReadResponse.setError(e.toString());
         }
-        return new S3ReadResponse();
+        return s3ReadResponse;
     }
 
-    public boolean write(String bucketName, String key, String value) {
+    public S3Response write(String bucketName, String key, String value) {
+        S3Response s3WriteResponse = new S3Response();
         try {
             createObject(bucketName, key, RequestBody.fromString(value));
         } catch (Exception e) {
-            System.err.println(e.toString());
-            return false;
+            s3WriteResponse.setError(e.toString());
         }
-        return true;
+
+        return s3WriteResponse;
     }
 
     private S3ReadResponse getObject(String bucketName, String key) {
