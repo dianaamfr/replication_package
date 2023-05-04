@@ -100,20 +100,13 @@ public class ReadNode extends ComputeNode {
             Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
             Map<String, KeyVersion> values = new HashMap<>(request.getKeysCount());
             for (String key : request.getKeysList()) {
-                try {
-                    Entry<String, ByteString> versionEntry = storage.get(key, rotSnapshot);
-                    KeyVersion version = KeyVersion.newBuilder().setTimestamp(versionEntry.getKey())
-                            .setValue(versionEntry.getValue()).build();
-                    values.put(key, version);
-                } catch (Exception e) {
-                    responseBuilder.setStatus(e.toString());
-                    responseBuilder.setError(true);
-                }
+                Entry<String, ByteString> versionEntry = storage.get(key, rotSnapshot);
+                KeyVersion version = KeyVersion.newBuilder().setTimestamp(versionEntry.getKey())
+                        .setValue(versionEntry.getValue()).build();
+                values.put(key, version);
             }
 
-            if (!responseBuilder.getError()) {
-                responseBuilder.setStableTime(rotSnapshot).putAllVersions(values);
-            }
+            responseBuilder.setStableTime(rotSnapshot).putAllVersions(values);
 
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();

@@ -185,8 +185,7 @@ public class ClientInterface {
 
         if(writeResponse.hasCurrentVersion()) {
             builder.append(String.format("%n Current version of %s:", key));
-            builder.append(String.format("%n  version = %s", writeResponse.getCurrentVersion().getTimestamp()));
-            builder.append(String.format("%n  value = %s%n", writeResponse.getCurrentVersion().getValue().isEmpty() ? null : Utils.stringFromByteString(writeResponse.getCurrentVersion().getValue())));
+            builder.append(String.format("%n   %s%n", writeResponse.getCurrentVersion()));
         } 
         return builder;
     }

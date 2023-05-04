@@ -19,7 +19,7 @@ message WriteResponse {
     string writeTimestamp = 1;
     bool error = 2;
     string status = 3;
-    optional KeyVersion currentVersion = 4;
+    optional string currentVersion = 4;
 }
 
 message ROTRequest {

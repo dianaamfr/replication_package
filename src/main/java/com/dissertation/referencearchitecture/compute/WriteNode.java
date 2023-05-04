@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -171,12 +170,8 @@ public class WriteNode extends ComputeNode {
                     responseBuilder.setWriteTimestamp(writeTimestamp);
                 } else {
                     writeLock.unlock();
-                    KeyVersion currentVersion = KeyVersion.newBuilder().setTimestamp(lastVersion.getKey())
-                            .setValue(lastVersion.getValue()).build();
-                    responseBuilder
-                            .setStatus("Write failed. Current version doesn't match.")
-                            .setError(true)
-                            .setCurrentVersion(currentVersion);
+                    responseBuilder.setCurrentVersion(lastVersion.getKey())
+                            .setStatus("Write failed. Current version doesn't match.").setError(true);
                 }
             }
 
