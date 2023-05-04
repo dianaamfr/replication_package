@@ -67,6 +67,7 @@ public class Client {
             rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
             rotResponse = this.readStub.rot(rotRequest);
 
+            // TODO: it will never throw error
             if (!rotResponse.getError()) {
                 pruneCache(rotResponse.getStableTime());
 
@@ -182,6 +183,19 @@ public class Client {
         }
     }
 
+    // public ReadVersionResponse requestReadVersion(String key, String version) {
+    //     ReadVersionRequest readVersionRequest = ReadVersionRequest.newBuilder()
+    //             .setKey(key)
+    //             .setVersion(version)
+    //             .build();
+
+    //     ReadVersionResponse readVersionResponse = this.readStub.readVersion(readVersionRequest);
+
+    //     // TODO: Does it make sense to search the cache for the version requested?
+    //     pruneCache(readVersionResponse.getStableTime());
+    //     return readVersionResponse;
+    // }
+    
     private void pruneCache(String stableTime) {
         List<String> toPrune = new ArrayList<>();
         for (Entry<String, KeyVersion> entry : this.cache.entrySet()) {

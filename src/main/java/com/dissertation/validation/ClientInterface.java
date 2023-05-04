@@ -164,12 +164,41 @@ public class ClientInterface {
         }
     }
 
+    // private void sendReadVersionRequest(String[] commands) {
+    //     if (commands.length != 2) {
+    //         System.err.println("Unsupported command");
+    //         return;
+    //     }
+
+    //     String key = commands[0];
+    //     String version = commands[1];
+    //     ReadVersionResponse readVersionResponse = this.client.requestReadVersion(key, commands[1]);
+
+    //     if (!readVersionResponse.getError()) {
+    //         StringBuilder builder = new StringBuilder();
+    
+    //         builder = this.addReadVersionOutput(builder, key, version, readVersionResponse);
+    //         System.out.println(builder.toString());
+    //     } else {
+    //         System.err.println(readVersionResponse.getStatus());
+    //     }
+    // }
+
     private StringBuilder addROTOutput(StringBuilder builder, Entry<String, KeyVersion> entry) {
         builder.append(String.format("%n  key = %s", entry.getKey()));
         builder.append(String.format("%n  value = %s", entry.getValue().getValue().isEmpty() ? null : Utils.stringFromByteString(entry.getValue().getValue())));
         builder.append(String.format("%n  version = %s%n", entry.getValue().getTimestamp()));
         return builder;
     }
+
+    // private StringBuilder addReadVersionOutput(StringBuilder builder, String key, String version, ReadVersionResponse readVersionResponse) {
+    //     builder.append("Read Version response:");
+    //     builder.append(String.format("%n  stableTime = %s", readVersionResponse.getStableTime()));
+    //     builder.append(String.format("%n  key = %s", key));
+    //     builder.append(String.format("%n  value = %s", readVersionResponse.getValue().isEmpty() ? null : Utils.stringFromByteString(readVersionResponse.getValue())));
+    //     builder.append(String.format("%n  version = %s%n", version));
+    //     return builder;
+    // }
 
     private StringBuilder addWriteOutput(StringBuilder builder, String key, String value, String timestamp) {
         builder.append(String.format("Write response:"));
@@ -185,8 +214,7 @@ public class ClientInterface {
 
         if(writeResponse.hasCurrentVersion()) {
             builder.append(String.format("%n Current version of %s:", key));
-            builder.append(String.format("%n  version = %s", writeResponse.getCurrentVersion().getTimestamp()));
-            builder.append(String.format("%n  value = %s%n", writeResponse.getCurrentVersion().getValue().isEmpty() ? null : Utils.stringFromByteString(writeResponse.getCurrentVersion().getValue())));
+            builder.append(String.format("%n   %s", writeResponse.getCurrentVersion()));
         } 
         return builder;
     }
