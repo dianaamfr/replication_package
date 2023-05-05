@@ -2,10 +2,10 @@ package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-public class ROTResponseLog extends Log {
+public class ReadResponseLog extends Log {
     private final long id;
 
-    public ROTResponseLog(long id, long time) {
+    public ReadResponseLog(long id, long time) {
         super(LogType.ROT_RESPONSE, time);
         this.id = id;
     }

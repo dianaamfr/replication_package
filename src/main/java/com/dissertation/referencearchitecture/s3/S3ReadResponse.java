@@ -6,7 +6,6 @@ public class S3ReadResponse {
     protected String status;
 
     public S3ReadResponse(String timestamp, String content) {
-        super();
         this.timestamp = timestamp;
         this.content = content;
         this.status = "";

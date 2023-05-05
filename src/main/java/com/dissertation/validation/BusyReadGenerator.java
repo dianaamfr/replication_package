@@ -18,18 +18,22 @@ import com.dissertation.validation.logs.ROTResponseLog;
 public class BusyReadGenerator {
     private final Client client;
     private final long endMarker;
-    private final Set<String> keys;
+    private final int keysPerRead;
+    private final List<Set<String>> readSets;
     private final ArrayDeque<Log> logs;
     private long lastPayload;
+    private int keyCounter;
 
-    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keys:String>";
+    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keysPerRead:Int> <key:String>+";
 
-    public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, Set<String> keys) {
+    public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.endMarker = endMarker;
-        this.keys = keys;
+        this.keysPerRead = keysPerRead;
+        this.readSets = getReadSets(keys);
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
+        this.keyCounter = 0;
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -43,9 +47,9 @@ public class BusyReadGenerator {
         int regionPartitions = 0;
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
-        Set<String> keys = new HashSet<>();
+        List<String> keys = new ArrayList<>();
 
-        if (args.length < 8) {
+        if (args.length < 9) {
             System.err.println(USAGE);
             return;
         }
@@ -65,11 +69,12 @@ public class BusyReadGenerator {
 
             long expectedWrites = Long.parseLong(args[addressesEndIndex]);
             long endMarker = Utils.PAYLOAD_START_LONG + expectedWrites - 1;
-            for (int i = addressesEndIndex + 1; i < args.length; i++) {
+            int keysPerRead = Integer.parseInt(args[addressesEndIndex + 1]);
+            for (int i = addressesEndIndex + 2; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
-            BusyReadGenerator reader = new BusyReadGenerator(readAddress, writeAddresses, endMarker, keys);
+            BusyReadGenerator reader = new BusyReadGenerator(readAddress, writeAddresses, endMarker, keysPerRead, keys);
             reader.run();
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,20 +82,30 @@ public class BusyReadGenerator {
         }
     }
 
+    private List<Set<String>> getReadSets(List<String> keys) {
+        List<Set<String>> readSets = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i += this.keysPerRead) {
+            readSets.add(new HashSet<String>(keys.subList(i, i + this.keysPerRead)));
+        }
+        return readSets;
+    }
+
     public void run() {
         ROTResponse rotResponse;
-        boolean newPayload = false;
-        boolean exit = false;
         long t1, t2;
         String valueStr;
         long valueLong;
+        boolean newPayload = false;
+        boolean exit = false;
 
         while (true) {
+            Set<String> requestKeys = readSets.get(this.keyCounter % readSets.size());
             t1 = System.currentTimeMillis();
-            rotResponse = this.client.requestROT(this.keys);
+            rotResponse = this.client.requestROT(requestKeys);
             t2 = System.currentTimeMillis();
 
             if (rotResponse.getError()) {
+                this.keyCounter = this.incrementKeyCounter();
                 continue;
             }
 
@@ -110,6 +125,7 @@ public class BusyReadGenerator {
                         exit = true;
                     }
                 } catch (NumberFormatException e) {
+                    this.keyCounter = this.incrementKeyCounter();
                     continue;
                 }
             }
@@ -125,5 +141,9 @@ public class BusyReadGenerator {
                 break;
             }
         }
+    }
+
+    private int incrementKeyCounter() {
+        return (this.keyCounter + 1) % this.readSets.size();
     }
 }

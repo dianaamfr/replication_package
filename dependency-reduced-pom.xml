@@ -36,22 +36,6 @@
         <version>${maven.shade.plugin.version}</version>
         <executions>
           <execution>
-            <id>client</id>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <finalName>client</finalName>
-              <transformers>
-                <transformer />
-                <transformer>
-                  <mainClass>com.dissertation.referencearchitecture.client.Client</mainClass>
-                </transformer>
-              </transformers>
-            </configuration>
-          </execution>
-          <execution>
             <id>read-node</id>
             <phase>package</phase>
             <goals>

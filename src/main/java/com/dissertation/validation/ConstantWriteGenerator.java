@@ -27,7 +27,7 @@ public class ConstantWriteGenerator {
     private CountDownLatch countDown;
     private final ArrayDeque<Log> logs;
 
-    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <keys:String>";
+    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <key:String>+";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int totalWrites, List<String> keys) {
@@ -79,9 +79,7 @@ public class ConstantWriteGenerator {
 
             long delay = Long.parseLong(args[addressesEndIndex]);
             int totalWrites = Integer.parseInt(args[addressesEndIndex + 1]);
-            for (int i = addressesEndIndex + 2; i < args.length; i++) {
-                keys.add(args[i]);
-            }
+           
 
             ConstantWriteGenerator writer = new ConstantWriteGenerator(scheduler, readAddress, writeAddresses, delay,
                     totalWrites, keys);
@@ -118,8 +116,8 @@ public class ConstantWriteGenerator {
                 WriteResponse writeResponse = client.requestWrite(key, value);
                 long t2 = System.currentTimeMillis();
 
-                logs.add(new WriteRequestLog(key, partitionId, t1));
-                logs.add(new WriteResponseLog(key, partitionId, writeResponse.getWriteTimestamp(), t2));
+                logs.add(new WriteRequestLog(partitionId, writeResponse.getWriteTimestamp(), t1));
+                logs.add(new WriteResponseLog(partitionId, writeResponse.getWriteTimestamp(), t2));
 
                 counter++;
                 payload++;

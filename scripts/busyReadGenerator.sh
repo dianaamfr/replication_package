@@ -1,6 +1,6 @@
 if [ $# -lt 10 ]
 then
-  echo "Usage: busyReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <expectedWrites> <key>+"
+  echo "Usage: busyReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <expectedWrites> <keyPerRead> <key>+"
   exit 1
 fi
 

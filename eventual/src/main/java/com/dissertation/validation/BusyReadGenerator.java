@@ -9,8 +9,8 @@ import com.dissertation.eventual.client.Client;
 import com.dissertation.eventual.s3.S3ReadResponse;
 import com.dissertation.eventual.utils.Utils;
 import com.dissertation.validation.logs.Log;
-import com.dissertation.validation.logs.ROTRequestLog;
-import com.dissertation.validation.logs.ROTResponseLog;
+import com.dissertation.validation.logs.ReadRequestLog;
+import com.dissertation.validation.logs.ReadResponseLog;
 
 public class BusyReadGenerator {
     private final Client client;
@@ -18,6 +18,7 @@ public class BusyReadGenerator {
     private final List<String> keys;
     private final ArrayDeque<Log> logs;
     private long lastPayload;
+    private int keyCounter;
 
     private static final String USAGE = "Usage: BusyReadGenerator <expectedWrites:Int> <key:String>+";
 
@@ -27,6 +28,7 @@ public class BusyReadGenerator {
         this.keys = keys;
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
+        this.keyCounter = 0;
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -61,19 +63,18 @@ public class BusyReadGenerator {
     }
 
     public void run() {
-        int counter = 0;
         S3ReadResponse response;
         long t1, t2;
         long valueLong;
 
         while (true) {
-            String key = keys.get(counter % keys.size());
+            String key = keys.get(this.keyCounter % keys.size());
             t1 = System.currentTimeMillis();
             response = this.client.read(key);
             t2 = System.currentTimeMillis();
 
             if (response.isError() || response.getContent().isBlank()) {
-                counter = this.incrementCounter(counter);
+                this.keyCounter = this.incrementKeyCounter();
                 continue;
             }
 
@@ -82,20 +83,20 @@ public class BusyReadGenerator {
                 if (valueLong > this.lastPayload) {
                     this.lastPayload = valueLong;
                     
-                    this.logs.add(new ROTRequestLog(this.lastPayload, t1));
-                    this.logs.add(new ROTResponseLog(this.lastPayload, t2));
+                    this.logs.add(new ReadRequestLog(this.lastPayload, t1));
+                    this.logs.add(new ReadResponseLog(this.lastPayload, t2));
                 }
                 if(valueLong == this.endMarker) {
                     break;
                 }
-                counter = this.incrementCounter(counter);
+                this.keyCounter = this.incrementKeyCounter();
             } catch (NumberFormatException e) {
                 continue;
             }
         }
     }
 
-    private int incrementCounter(int counter) {
-        return (counter + 1) % keys.size();
+    private int incrementKeyCounter() {
+        return (this.keyCounter + 1) % this.keys.size();
     }
 }

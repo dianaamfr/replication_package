@@ -98,11 +98,6 @@ public class ConstantWriteGenerator {
                 S3Response writeResponse = client.write(key, String.valueOf(payload));
                 long t2 = System.currentTimeMillis();
 
-                if(writeResponse.isError()) {
-                    System.err.println(writeResponse.getStatus());
-                    return;
-                }
-
                 logs.add(new WriteRequestLog(payload, partitionId, t1));
                 logs.add(new WriteResponseLog(payload, partitionId, t2));
 

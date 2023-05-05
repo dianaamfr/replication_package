@@ -2,16 +2,13 @@ package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-public class ROTRequestLog extends Log {
+import com.dissertation.validation.logs.Log.LogType;
+
+public class ReadRequestLog extends Log {
     private final long id;
 
-    public ROTRequestLog(long id, long time) {
+    public ReadRequestLog(long id, long time) {
         super(LogType.ROT_REQUEST, time);
-        this.id = id;
-    }
-
-    public ROTRequestLog(long id) {
-        super(LogType.ROT_REQUEST);
         this.id = id;
     }
 

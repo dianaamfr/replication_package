@@ -18,7 +18,8 @@ public class ConstantReadGenerator {
     private final long delay;
     private final int totalReads;
     private final List<String> keys;
-    private int counter;
+    private int keyCounter;
+    private int readCounter;
     private CountDownLatch countDown;
     private long lastPayload;
     private long startTime;
@@ -31,8 +32,8 @@ public class ConstantReadGenerator {
         this.delay = delay;
         this.totalReads = totalReads;
         this.keys = keys;
-
-        this.counter = 0;
+        this.keyCounter = 0;
+        this.readCounter = 0;
         this.countDown = new CountDownLatch(totalReads);
         this.lastPayload = 0;
 
@@ -78,37 +79,39 @@ public class ConstantReadGenerator {
     private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            if (counter < totalReads) {
-                if (counter == 0) {
+            if (readCounter < totalReads) {
+                if (readCounter == 0) {
                     startTime = System.currentTimeMillis();
                 }
                 
-                String key = keys.get(counter % keys.size());
+                String key = keys.get(keyCounter % keys.size());
                 S3ReadResponse response = client.read(key);
                 endTime = System.currentTimeMillis();
 
                 if (response.getContent().isBlank()) {
+                    keyCounter = incrementKeyCounter();
                     return;
                 }
 
-                try {
-                    long valueLong = Long.parseLong(response.getContent());
-                    if (valueLong > lastPayload) {
-                        lastPayload = valueLong;
-                    }
-                } catch (NumberFormatException e) {
-                    return;
+                long valueLong = Long.parseLong(response.getContent());
+                if (valueLong > lastPayload) {
+                    lastPayload = valueLong;
                 }
 
-                if ((counter + 1) % totalReads == 0) {
+                if ((readCounter + 1) % totalReads == 0) {
                     System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
                             endTime - startTime).toJson().toString());
                 }
 
                 countDown.countDown();
-                counter++;
+                keyCounter = incrementKeyCounter();
+                readCounter++;
             }
         }
+    }
+
+    private int incrementKeyCounter() {
+        return (this.keyCounter + 1) % this.keys.size();
     }
 
 }
