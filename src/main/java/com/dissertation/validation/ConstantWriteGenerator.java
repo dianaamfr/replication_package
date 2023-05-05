@@ -37,7 +37,6 @@ public class ConstantWriteGenerator {
         this.totalWrites = totalWrites;
         this.keys = keys;
         this.payload = Utils.PAYLOAD_START_LONG;
-
         this.counter = 0;
         this.countDown = new CountDownLatch(totalWrites);
         this.logs = new ArrayDeque<>(this.totalWrites * 2);
@@ -79,7 +78,9 @@ public class ConstantWriteGenerator {
 
             long delay = Long.parseLong(args[addressesEndIndex]);
             int totalWrites = Integer.parseInt(args[addressesEndIndex + 1]);
-           
+            for (int i = addressesEndIndex + 2; i < args.length; i++) {
+                keys.add(args[i]);
+            }
 
             ConstantWriteGenerator writer = new ConstantWriteGenerator(scheduler, readAddress, writeAddresses, delay,
                     totalWrites, keys);

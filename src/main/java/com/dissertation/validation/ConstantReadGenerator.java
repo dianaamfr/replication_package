@@ -86,8 +86,13 @@ public class ConstantReadGenerator {
                 keys.add(args[i]);
             }
 
+            if(keys.size() % keysPerRead != 0) {
+                System.err.println("The number of keys must be divisible by the keys per read.");
+                return;
+            }
+
             ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay,
-                    keysPerRead, totalReads, keys);
+                    totalReads, keysPerRead, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);

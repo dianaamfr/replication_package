@@ -44,7 +44,7 @@ public class ConstantReadGenerator {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
         List<String> keys = new ArrayList<>();
 
-        if (args.length != 3) {
+        if (args.length < 3) {
             System.err.println(USAGE);
             return;
         }
@@ -95,6 +95,7 @@ public class ConstantReadGenerator {
 
                 long valueLong = Long.parseLong(response.getContent());
                 if (valueLong > lastPayload) {
+                    System.out.println(valueLong);
                     lastPayload = valueLong;
                 }
 

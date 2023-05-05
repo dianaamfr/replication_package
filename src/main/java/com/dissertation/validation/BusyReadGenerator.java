@@ -109,6 +109,7 @@ public class BusyReadGenerator {
                 continue;
             }
 
+
             for (KeyVersion keyVersion: rotResponse.getVersionsMap().values()) {
                 valueStr = Utils.stringFromByteString(keyVersion.getValue());
                 if (valueStr.isBlank()) {
