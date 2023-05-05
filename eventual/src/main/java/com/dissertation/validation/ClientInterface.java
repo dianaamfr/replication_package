@@ -19,7 +19,7 @@ public class ClientInterface {
             Client client = new Client();
             (new ClientInterface(client)).run();
         } catch (URISyntaxException e) {
-            System.err.println(e.getMessage());
+            System.err.println("Failed to create client");
         }
     }
 
