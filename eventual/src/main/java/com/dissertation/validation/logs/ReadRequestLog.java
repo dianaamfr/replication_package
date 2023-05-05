@@ -2,8 +2,6 @@ package com.dissertation.validation.logs;
 
 import org.json.JSONObject;
 
-import com.dissertation.validation.logs.Log.LogType;
-
 public class ReadRequestLog extends Log {
     private final long id;
 

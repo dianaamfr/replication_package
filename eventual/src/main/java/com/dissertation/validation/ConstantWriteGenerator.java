@@ -9,7 +9,6 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.dissertation.eventual.client.Client;
-import com.dissertation.eventual.s3.S3Response;
 import com.dissertation.eventual.utils.Utils;
 import com.dissertation.validation.logs.Log;
 import com.dissertation.validation.logs.WriteRequestLog;
@@ -95,7 +94,7 @@ public class ConstantWriteGenerator {
 
             if (counter < totalWrites) {
                 long t1 = System.currentTimeMillis();
-                S3Response writeResponse = client.write(key, String.valueOf(payload));
+                client.write(key, String.valueOf(payload));
                 long t2 = System.currentTimeMillis();
 
                 logs.add(new WriteRequestLog(payload, partitionId, t1));
