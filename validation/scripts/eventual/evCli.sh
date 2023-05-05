@@ -6,7 +6,7 @@ fi
 
 NODE=clientInterface
 BUCKET_SUFFIX=-reference-architecture
-IMAGE="dianaamfreitas/dissertationEventualBaseline:${1}"
+IMAGE="dianaamfreitas/dissertation-eventual:${1}"
 N_PARTITIONS=$2
 
 docker run -i --name $NODE --env NODE=$NODE --env PARTITIONS=$N_PARTITIONS --env BUCKET_SUFFIX=$BUCKET_SUFFIX $IMAGE

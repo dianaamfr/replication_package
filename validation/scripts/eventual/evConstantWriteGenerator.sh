@@ -6,7 +6,7 @@ fi
 
 NODE=constantWriteGenerator
 BUCKET_SUFFIX=-reference-architecture
-IMAGE="dianaamfreitas/dissertationEventualBaseline:${1}"
+IMAGE="dianaamfreitas/dissertation-eventual:${1}"
 N_PARTITIONS=$2
 REST="${@:3}"
 
