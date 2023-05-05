@@ -14,6 +14,29 @@
     </extensions>
     <plugins>
       <plugin>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>4.0.0-M3</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-project-info-reports-plugin</artifactId>
+        <version>2.9</version>
+      </plugin>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>4.7.2.0</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.19.0</version>
+        <configuration>
+          <rulesets>
+            <ruleset>${basedir}/rulesets/pmd-basic.xml</ruleset>
+            <ruleset>${basedir}/rulesets/pmd-quickstart.xml</ruleset>
+          </rulesets>
+        </configuration>
+      </plugin>
+      <plugin>
         <artifactId>maven-shade-plugin</artifactId>
         <version>${maven.shade.plugin.version}</version>
         <executions>
@@ -33,6 +56,70 @@
               </transformers>
             </configuration>
           </execution>
+          <execution>
+            <id>busy-read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>busyReadGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>constant-write-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>constantWriteGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>constant-read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>constantReadGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>busy-write-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>busyWriteGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.BusyWriteGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
         </executions>
         <configuration>
           <transformers>
@@ -42,6 +129,29 @@
       </plugin>
     </plugins>
   </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <artifactId>maven-jxr-plugin</artifactId>
+        <version>2.5</version>
+      </plugin>
+      <plugin>
+        <groupId>com.github.spotbugs</groupId>
+        <artifactId>spotbugs-maven-plugin</artifactId>
+        <version>4.7.2.0</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.19.0</version>
+        <configuration>
+          <rulesets>
+            <ruleset>${basedir}/rulesets/pmd-basic.xml</ruleset>
+            <ruleset>${basedir}/rulesets/pmd-quickstart.xml</ruleset>
+          </rulesets>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
   <dependencyManagement>
     <dependencies>
       <dependency>

@@ -38,18 +38,18 @@ keys = a b
 writeDelay = 200
 
 readTest1:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(totalWrites) $(keys)
+	java -Ds3Endpoint=$(s3Endpoint) -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(totalWrites) $(keys)
 
 writeTest1:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar $(writeDelay) $(totalWrites) $(keys)
+	java -Ds3Endpoint=$(s3Endpoint) -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar $(writeDelay) $(totalWrites) $(keys)
 
 totalReads = 100
 readDelay = 500
 
 readTest2:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(totalReads) $(keys)
+	java -Ds3Endpoint=$(s3Endpoint) -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(totalReads) $(keys)
 
 writeTest2:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar $(keys)
+	java -Ds3Endpoint=$(s3Endpoint) -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar $(keys)
 
 	

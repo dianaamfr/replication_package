@@ -27,8 +27,6 @@ public class S3Helper {
         S3ClientBuilder s3ClientBuilder = S3Client.builder()
                 .region(region)
                 .forcePathStyle(true);
-        
-        System.out.println("S3_ENDPOINT: " + Utils.S3_ENDPOINT);
 
         if (Utils.S3_ENDPOINT != null && !Utils.S3_ENDPOINT.isEmpty()) {
             return s3ClientBuilder.credentialsProvider(ProfileCredentialsProvider.create())

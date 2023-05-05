@@ -27,3 +27,4 @@ META-INF/
 target
 logs/*.json
 validation/__pycache__
+eventual/logs/*.json

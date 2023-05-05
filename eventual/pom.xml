@@ -119,6 +119,87 @@
                             <goal>shade</goal>
                         </goals>
                     </execution>
+
+                    <!-- BUSY READ GENERATOR -->
+                    <execution>
+                        <id>busy-read-generator</id>
+                        <configuration>
+                            <finalName>busyReadGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- CONSTANT WRITE GENERATOR -->
+                    <execution>
+                        <id>constant-write-generator</id>
+                        <configuration>
+                            <finalName>constantWriteGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- CONSTANT READ GENERATOR -->
+                    <execution>
+                        <id>constant-read-generator</id>
+                        <configuration>
+                            <finalName>constantReadGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                
+                    <!-- BUSY WRITE GENERATOR -->
+                    <execution>
+                        <id>busy-write-generator</id>
+                        <configuration>
+                            <finalName>busyWriteGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.validation.BusyWriteGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                
                 </executions>
             </plugin>
         </plugins>

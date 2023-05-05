@@ -29,7 +29,6 @@ public class ConstantWriteGenerator {
     private static final String USAGE = "Usage: ConstantWriteGenerator <delay:Int> <totalWrites:Int> <key:String>+";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, long delay, int totalWrites, List<String> keys) throws URISyntaxException {
-
         this.client = new Client();
         this.delay = delay;
         this.totalWrites = totalWrites;
@@ -92,7 +91,7 @@ public class ConstantWriteGenerator {
         @Override
         public void run() {
             String key = keys.get(counter % keys.size());
-            int partitionId = Utils.getKeyPartitionId(key);
+            int partitionId = Utils.getKeyPartitionId(key); 
 
             if (counter < totalWrites) {
                 long t1 = System.currentTimeMillis();
@@ -100,6 +99,7 @@ public class ConstantWriteGenerator {
                 long t2 = System.currentTimeMillis();
 
                 if(writeResponse.isError()) {
+                    System.err.println(writeResponse.getStatus());
                     return;
                 }
 

@@ -92,7 +92,7 @@ public class ClientInterface {
         StringBuilder builder = new StringBuilder();
         builder.append("Read response:");
         builder.append(String.format("%n  key = %s", key));
-        builder.append(String.format("%n  value = %s", value));
+        builder.append(String.format("%n  value = %s", value.isBlank() ? null : value));
         return builder.toString();
     }
 
@@ -100,7 +100,7 @@ public class ClientInterface {
         StringBuilder builder = new StringBuilder();
         builder.append("Write response:");
         builder.append(String.format("%n  key = %s", key));
-        builder.append(String.format("%n  value = %s", value.isBlank() ? "null" : value));
+        builder.append(String.format("%n  value = %s", value));
         return builder.toString();
     }
 
