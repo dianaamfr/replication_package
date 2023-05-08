@@ -6,8 +6,6 @@ import os
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 LOGS_DIR = PATH + '/logs/visibility'
-LOG_RESULT_FILE = PATH + '/results/visibility/logs.csv'
-LOG_STATS_FILE = PATH + '/results/visibility/validation.csv'
 
 def get_header():
     return [
@@ -43,7 +41,13 @@ def get_read_time(df, version):
 
 
 def combine_logs(iteration_dir):
-    dest_file = open(LOG_RESULT_FILE ,'w+', newline='\n', encoding='utf-8')
+    result_dir = PATH + '/results/visibility/' + iteration_dir
+    result_file = result_dir + '/logs.csv'
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir)
+
+    dest_file = open(result_file ,'w+', newline='\n', encoding='utf-8')
+
     writer = csv.writer(dest_file)
     writer.writerow(get_header())
 
@@ -100,10 +104,16 @@ def combine_logs(iteration_dir):
             )
         i+=2
 
-def get_stats():
-    df = pd.read_csv(LOG_RESULT_FILE)
+def get_stats(iteration_dir):
+    result_file = PATH + '/results/visibility/' + iteration_dir + '/logs.csv'
+    stats_dir = PATH + '/results/visibility/' + iteration_dir
+    stats_file = stats_dir + '/validation.csv'
+    if not os.path.exists(stats_dir):
+        os.makedirs(stats_dir)
+    
+    df = pd.read_csv(result_file)
     #df = df.drop(index=0)
-    dest_file = open(LOG_STATS_FILE ,'w+', newline='\n', encoding='utf-8')
+    dest_file = open(stats_file ,'w+', newline='\n', encoding='utf-8')
     writer = csv.writer(dest_file)
     writer.writerow(['', 
         'Write to response', 
@@ -151,4 +161,4 @@ def get_stats():
 
 if __name__ == '__main__':
     combine_logs(sys.argv[1])
-    get_stats()
+    get_stats(sys.argv[1])

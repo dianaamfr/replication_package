@@ -75,7 +75,7 @@ scp -r "reference-architecture-us.pem" ubuntu@<DNS>.compute-1.amazonaws.com:~/lo
 
 **Busy Read Generator**
 docker container cp busyReadGenerator:/logs/ .
-scp -i "reference-architecture-us.pem" ubuntu@<DNS>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
+scp -r "reference-architecture-us.pem" ubuntu@<DNS>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
 
 # Eventual
 
