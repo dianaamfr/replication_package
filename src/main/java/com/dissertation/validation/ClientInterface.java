@@ -199,7 +199,7 @@ public class ClientInterface {
             builder.append(String.format("%n Current version of %s:", key));
             builder.append(String.format("%n   %s%n", writeResponse.getCurrentVersion()));
         } else {
-            builder.append(addWriteOutput(builder, key, value, writeResponse.getWriteTimestamp()));
+            addWriteOutput(builder, key, value, writeResponse.getWriteTimestamp());
         }
         return builder;
     }
