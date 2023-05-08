@@ -32,7 +32,7 @@ public class StoragePuller implements Runnable {
     public void run() {
         this.pull();
         this.storage.setStableTime();
-        this.storage.pruneState(this.storage.getStableTime());
+        // this.storage.pruneState(this.storage.getStableTime());
 
         if (Utils.VISIBILITY_LOGS) {
             this.s3Logs.add(new StableTimeLog(this.storage.getStableTime()));
