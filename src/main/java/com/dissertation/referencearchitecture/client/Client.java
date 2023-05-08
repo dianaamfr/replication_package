@@ -121,10 +121,12 @@ public class Client {
         }
 
         WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
-        this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-        KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
-                .build();
-        this.cache.put(key, version);
+        if(!writeResponse.hasCurrentVersion()) {
+            this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+            KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                    .build();
+            this.cache.put(key, version);
+        }
         return writeResponse;
     }
 
@@ -143,11 +145,12 @@ public class Client {
                 .setExpectedValue(expectedValue);
 
         WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
-   
-        this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-        KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
-                .build();
-        this.cache.put(key, version);
+        if(!writeResponse.hasCurrentVersion()) {
+            this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+            KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                    .build();
+            this.cache.put(key, version);
+        }
         return writeResponse;
     }
 
