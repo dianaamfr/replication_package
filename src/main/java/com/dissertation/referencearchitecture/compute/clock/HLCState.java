@@ -1,7 +1,9 @@
 package com.dissertation.referencearchitecture.compute.clock;
 
-import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.utils.Utils;
+
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 
 public class HLCState {
     private final long logicalTime;
@@ -46,10 +48,11 @@ public class HLCState {
         return this.lastWrite.isBlank();
     }
 
-    public static HLCState fromRecvTimestamp(String timestamp) throws InvalidTimestampException {
+    public static HLCState fromRecvTimestamp(String timestamp) throws StatusRuntimeException {
         String[] parts = timestamp.split(Utils.TIMESTAMP_SEPARATOR);
         if (parts.length != 2) {
-            throw new InvalidTimestampException();
+            Status status = Status.INVALID_ARGUMENT.withDescription("Invalid timestamp format");
+            throw status.asRuntimeException();
         }
         return new HLCState(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }

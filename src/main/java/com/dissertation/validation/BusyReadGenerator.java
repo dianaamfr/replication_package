@@ -87,14 +87,15 @@ public class BusyReadGenerator {
 
         while (true) {
             t1 = System.currentTimeMillis();
-            rotResponse = this.client.requestROT(this.keys);
-            t2 = System.currentTimeMillis();
-
-            if (rotResponse.getError()) {
+            try {
+                rotResponse = this.client.requestROT(this.keys);
+                t2 = System.currentTimeMillis();
+            } catch (Exception e) {
+                Utils.printException(e);
                 continue;
             }
 
-            for (KeyVersion keyVersion: rotResponse.getVersionsMap().values()) {
+            for (KeyVersion keyVersion : rotResponse.getVersionsMap().values()) {
                 valueStr = Utils.stringFromByteString(keyVersion.getValue());
                 if (valueStr.isBlank()) {
                     continue;
@@ -106,7 +107,7 @@ public class BusyReadGenerator {
                         this.lastPayload = valueLong;
                         newPayload = true;
                     }
-                    if(valueLong == this.endMarker) {
+                    if (valueLong == this.endMarker) {
                         exit = true;
                     }
                 } catch (NumberFormatException e) {
@@ -120,7 +121,7 @@ public class BusyReadGenerator {
                 this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
             }
 
-            if(exit) {
+            if (exit) {
                 this.client.shutdown();
                 break;
             }

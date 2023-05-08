@@ -26,7 +26,6 @@ This repository holds a Maven project with the following structure:
     - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
         - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and his last write timestamp.
         - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
-        - `exceptions`: Custom exceptions used throughout the source code.
         - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
     - `utils`: Util functions, constants and classes.
     - `validation`: Comprises classes that can be used to test the prototype, namely:
