@@ -5,11 +5,11 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
 import com.dissertation.referencearchitecture.WriteRequest;
@@ -39,7 +39,6 @@ public class WriteNode extends ComputeNode {
     private final WriterStorage storage;
     private final HLC hlc;
     private final String region;
-    private final Lock writeLock;
     private final List<StableTimeServiceGrpc.StableTimeServiceBlockingStub> stableTimeStubs;
     private AtomicInteger stableTimeCounter;
     private static final String USAGE = "Usage: WriteNode <partition> <port> (<readPort> <readIp>)+";
@@ -52,7 +51,6 @@ public class WriteNode extends ComputeNode {
         this.region = region.toString();
         this.storage = storage;
         this.hlc = hlc;
-        this.writeLock = new ReentrantLock();
         this.stableTimeStubs = stableTimeStubs;
         this.stableTimeCounter = new AtomicInteger(Utils.CHECKPOINT_FREQUENCY);
     }
@@ -76,7 +74,8 @@ public class WriteNode extends ComputeNode {
         try {
             int partition = Integer.parseInt(args[0]);
             int port = Integer.parseInt(args[1]);
-            final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(3);
+            final ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(2);
+            final ExecutorService writeExecutor = Executors.newSingleThreadExecutor();
             final Region region = Utils.getCurrentRegion();
             final S3Helper s3Helper = new S3Helper(region);
             final WriterStorage storage = new WriterStorage();
@@ -94,7 +93,7 @@ public class WriteNode extends ComputeNode {
                     stableTimeStubs);
 
             final WriteServiceImpl writeService = writeNode.new WriteServiceImpl();
-            final Server server = ServerBuilder.forPort(port).addService(writeService).build();
+            final Server server = ServerBuilder.forPort(port).executor(writeExecutor).addService(writeService).build();
             writeNode.init(server);
         } catch (URISyntaxException e) {
             System.err.println("Could not connect with AWS S3");
@@ -126,9 +125,7 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                writeLock.lock();
                 String writeTimestamp = performWrite(lastTime, request);
-                writeLock.unlock();
                 responseBuilder.setWriteTimestamp(writeTimestamp);
                 long t2 = System.currentTimeMillis();
 
@@ -162,14 +159,11 @@ public class WriteNode extends ComputeNode {
             }
 
             if (!responseBuilder.getError()) {
-                writeLock.lock();
                 Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
                 if (isExpectedVersion(lastVersion, request)) {
                     String writeTimestamp = performWrite(lastTime, request);
-                    writeLock.unlock();
                     responseBuilder.setWriteTimestamp(writeTimestamp);
                 } else {
-                    writeLock.unlock();
                     responseBuilder.setCurrentVersion(lastVersion.getKey())
                             .setStatus("Write failed. Current version doesn't match.").setError(true);
                 }
