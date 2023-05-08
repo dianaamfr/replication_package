@@ -7,46 +7,46 @@ docker rmi $(docker images -a -q)
 ## Visibility
 
 ### Reader EU-WEST-1
-**Read Node**: ./readNode.sh v9.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v9.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keys>
-**Busy Read Generator**: ./busyReadGenerator.sh v9.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
+**Read Node**: ./readNode.sh <image-tag>-visibility 1 8080 1
+**Constant Write Generator**: ./constantWriteGenerator.sh <image-tag>-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keys>
+**Busy Read Generator**: ./busyReadGenerator.sh <image-tag>-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
 
 ### Reader US-EAST-1
-**Read Node**: ./readNode.sh v9.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./busyReadGenerator.sh v9.0.0-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
+**Read Node**: ./readNode.sh <image-tag>-visibility 1 8080 1
+**Busy Read Generator**: ./busyReadGenerator.sh <image-tag>-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v9.0.0-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
+**Write Node**: ./writeNode.sh <image-tag>-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 ---
 ## Latency
 
 ### Reader EU-WEST-1
-**Read Node**: ./readNode.sh v9.0.0-latency 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v9.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keys>
-**Busy Read Generator**: ./busyReadGenerator.sh v9.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
+**Read Node**: ./readNode.sh <image-tag>-latency 1 8080 1
+**Constant Write Generator**: ./constantWriteGenerator.sh <image-tag>-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keys>
+**Busy Read Generator**: ./busyReadGenerator.sh <image-tag>-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
 
 ### Reader US-EAST-1
-**Read Node**: ./readNode.sh v9.0.0-latency 1 8080 1
-**Busy Read Generator**: ./busyReadGenerator.sh v9.0.0-latency 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
+**Read Node**: ./readNode.sh <image-tag>-latency 1 8080 1
+**Busy Read Generator**: ./busyReadGenerator.sh <image-tag>-latency 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <totalWrites> <keysPerRead> <keys>
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v9.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
+**Write Node**: ./writeNode.sh <image-tag>-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 ---
 ## Goodput
 
 ### Reader EU-WEST-1
-**Read Node**: ./readNode.sh v9.0.0-goodput 1 8080 1
-**Busy Write Generator**: ./busyWriteGenerator.sh v9.0.0-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <keys>
-**Constant Read Generator**: ./constantReadGenerator.sh v9.0.0-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keysPerRead> <keys>
+**Read Node**: ./readNode.sh <image-tag>-goodput 1 8080 1
+**Busy Write Generator**: ./busyWriteGenerator.sh <image-tag>-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <keys>
+**Constant Read Generator**: ./constantReadGenerator.sh <image-tag>-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keysPerRead> <keys>
 
 ### Reader US-EAST-1
-**Read Node**: ./readNode.sh v9.0.0-goodput 1 8080 1
-**Constant Read Generator**: ./constantReadGenerator.sh v9.0.0-goodput 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keysPerRead> <keys>
+**Read Node**: ./readNode.sh <image-tag>-goodput 1 8080 1
+**Constant Read Generator**: ./constantReadGenerator.sh <image-tag>-goodput 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keysPerRead> <keys>
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v9.0.0-goodput 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
+**Write Node**: ./writeNode.sh <image-tag>-goodput 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 ---
 ## Get Logs
