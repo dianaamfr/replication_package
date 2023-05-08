@@ -136,8 +136,8 @@ public class WriteNode extends ComputeNode {
             long t2 = System.currentTimeMillis();
 
             if (Utils.VISIBILITY_LOGS) {
-                logs.add(new WriteRequestLog(request.getKey(), partition, t1));
-                logs.add(new WriteResponseLog(request.getKey(), partition, writeTimestamp, t2));
+                logs.add(new WriteRequestLog(partition, writeTimestamp, t1));
+                logs.add(new WriteResponseLog(partition, writeTimestamp, t2));
             }
 
             responseObserver.onNext(responseBuilder.build());

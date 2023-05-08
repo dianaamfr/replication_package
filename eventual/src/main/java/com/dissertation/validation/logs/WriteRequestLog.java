@@ -3,19 +3,19 @@ package com.dissertation.validation.logs;
 import org.json.JSONObject;
 
 public class WriteRequestLog extends Log {
+   private final long id;
    private final int partition;
-   private final String version;
 
-   public WriteRequestLog(int partition, String version, long time) {
+   public WriteRequestLog(long id, int partition, long time) {
       super(LogType.WRITE_REQUEST, time);
+      this.id = id;
       this.partition = partition;
-      this.version = version;
    }
 
    @Override
    public JSONObject toJson() {
       return super.toJson()
-            .put("partition", this.partition)
-            .put("version", this.version);
+            .put("id", this.id)
+            .put("partition", this.partition);
    }
 }

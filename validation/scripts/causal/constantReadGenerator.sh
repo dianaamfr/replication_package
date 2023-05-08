@@ -1,10 +1,10 @@
 if [ $# -lt 10 ]
 then
-  echo "Usage: busyReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <expectedWrites> <key>+"
+  echo "Usage: constantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <totalReads> <keysPerRead> <key>+"
   exit 1
 fi
 
-NODE=busyReadGenerator
+NODE=constantReadGenerator
 BUCKET_SUFFIX=-reference-architecture
 IMAGE="dianaamfreitas/dissertation:${1}"
 N_PARTITIONS=$2

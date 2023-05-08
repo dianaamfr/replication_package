@@ -20,27 +20,38 @@ public class ConstantReadGenerator {
     private final Client client;
     private final long delay;
     private final int totalReads;
-    private final Set<String> keys;
-    private int counter;
+    private final int keysPerRead;
+    private final List<Set<String>> readSets;
+    private int keyCounter;
+    private int readCounter;
     private CountDownLatch countDown;
     private long lastPayload;
     private long startTime;
     private long endTime;
 
-    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keys:String>";
+    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keysPerRead:Int> <key:String>+";
 
     public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
-            List<Address> writeAddresses, long delay, int totalReads, Set<String> keys) {
+            List<Address> writeAddresses, long delay, int totalReads, int keysPerRead, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
         this.totalReads = totalReads;
-        this.keys = keys;
-
-        this.counter = 0;
+        this.keysPerRead = keysPerRead;
+        this.readSets = getReadSets(keys);
+        this.keyCounter = 0;
+        this.readCounter = 0;
         this.countDown = new CountDownLatch(totalReads);
         this.lastPayload = 0;
 
         this.scheduler = scheduler;
+    }
+
+    private List<Set<String>> getReadSets(List<String> keys) {
+        List<Set<String>> readSets = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i += this.keysPerRead) {
+            readSets.add(new HashSet<String>(keys.subList(i, i + this.keysPerRead)));
+        }
+        return readSets;
     }
 
     public static void main(String[] args) {
@@ -48,7 +59,7 @@ public class ConstantReadGenerator {
         int regionPartitions = 0;
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
-        Set<String> keys = new HashSet<>();
+        List<String> keys = new ArrayList<>();
 
         if (args.length < 9) {
             System.err.println(USAGE);
@@ -70,12 +81,18 @@ public class ConstantReadGenerator {
 
             long delay = Long.parseLong(args[addressesEndIndex]);
             int totalReads = Integer.parseInt(args[addressesEndIndex + 1]);
-            for (int i = addressesEndIndex + 2; i < args.length; i++) {
+            int keysPerRead = Integer.parseInt(args[addressesEndIndex + 2]);
+            for (int i = addressesEndIndex + 3; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
+            if(keys.size() % keysPerRead != 0) {
+                System.err.println("The number of keys must be divisible by the keys per read.");
+                return;
+            }
+
             ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay,
-                    totalReads, keys);
+                    totalReads, keysPerRead, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -97,45 +114,49 @@ public class ConstantReadGenerator {
     private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            if (counter < totalReads) {
-                if (counter == 0) {
+            if (readCounter < totalReads) {
+                if (readCounter == 0) {
                     startTime = System.currentTimeMillis();
                 }
 
+                Set<String> requestKeys = readSets.get(keyCounter % readSets.size());
                 ROTResponse rotResponse;
                 try {
-                    rotResponse = client.requestROT(keys);
+                    rotResponse = client.requestROT(requestKeys);
+                    endTime = System.currentTimeMillis();
                 } catch (Exception e) {
                     Utils.printException(e);
                     return;
                 }
-                endTime = System.currentTimeMillis();
 
                 for (KeyVersion version : rotResponse.getVersionsMap().values()) {
                     String valueStr = Utils.stringFromByteString(version.getValue());
                     if (valueStr.isBlank()) {
+                        keyCounter = incrementKeyCounter();
                         continue;
                     }
 
-                    try {
-                        long valueLong = Long.parseLong(valueStr);
-                        if (valueLong > lastPayload) {
-                            lastPayload = valueLong;
-                        }
-                    } catch (NumberFormatException e) {
-                        continue;
+                    long valueLong = Long.parseLong(valueStr);
+                    if (valueLong > lastPayload) {
+                        lastPayload = valueLong;
                     }
                 }
 
-                if ((counter + 1) % totalReads == 0) {
+                if ((readCounter + 1) % totalReads == 0) {
                     System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
                             endTime - startTime).toJson().toString());
                 }
 
                 countDown.countDown();
-                counter++;
+                keyCounter = incrementKeyCounter();
+                readCounter++;
             }
         }
+    }
+
+
+    private int incrementKeyCounter() {
+        return (this.keyCounter + 1) % this.readSets.size();
     }
 
 }

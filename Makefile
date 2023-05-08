@@ -61,11 +61,12 @@ client:
 # Validation
 
 totalWrites = 101
+keysPerRead = 2
 keys = a b
 writeDelay = 200
 
 readTest1:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keys)
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keysPerRead) $(keys)
 
 writeTest1:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
@@ -74,7 +75,7 @@ totalReads = 100
 readDelay = 500
 
 readTest2:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(totalReads) $(keys)
+	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(totalReads) $(keysPerRead) $(keys)
 
 writeTest2:
 	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)
