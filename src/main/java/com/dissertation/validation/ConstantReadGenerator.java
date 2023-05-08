@@ -102,7 +102,13 @@ public class ConstantReadGenerator {
                     startTime = System.currentTimeMillis();
                 }
 
-                ROTResponse rotResponse = client.requestROT(keys);
+                ROTResponse rotResponse;
+                try {
+                    rotResponse = client.requestROT(keys);
+                } catch (Exception e) {
+                    Utils.printException(e);
+                    return;
+                }
                 endTime = System.currentTimeMillis();
 
                 for (KeyVersion version : rotResponse.getVersionsMap().values()) {

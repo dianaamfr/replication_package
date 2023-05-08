@@ -21,7 +21,6 @@ import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.compute.clock.TimeProvider;
 import com.dissertation.referencearchitecture.compute.storage.StoragePusher;
 import com.dissertation.referencearchitecture.compute.storage.WriterStorage;
-import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
@@ -31,6 +30,8 @@ import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import software.amazon.awssdk.regions.Region;
 
@@ -111,28 +112,31 @@ public class WriteNode extends ComputeNode {
         public void write(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
             long t1 = System.currentTimeMillis();
             HLCState lastTime = new HLCState();
-            Builder responseBuilder = WriteResponse.newBuilder().setError(false);
+            Builder responseBuilder = WriteResponse.newBuilder();
 
+            // Check if key belongs to this partition
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
-                responseBuilder.setStatus(String.format("Key %s not found", request.getKey()))
-                        .setError(true);
-            } else {
-                try {
-                    lastTime = HLCState.fromRecvTimestamp(request.getLastWriteTimestamp());
-                } catch (InvalidTimestampException e) {
-                    responseBuilder.setStatus(e.toString()).setError(true);
-                }
+                Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", request.getKey()));
+                responseObserver.onError(status.asRuntimeException());
+                return;
+            } 
+
+            // Parse timestamp from client's last write
+            try {
+                lastTime = HLCState.fromRecvTimestamp(request.getLastWriteTimestamp());
+            } catch (StatusRuntimeException e) {
+                responseObserver.onError(Status.fromThrowable(e).asRuntimeException());
+                return;
             }
+            
+            // Perform write
+            String writeTimestamp = performWrite(lastTime, request);
+            responseBuilder.setWriteTimestamp(writeTimestamp);
+            long t2 = System.currentTimeMillis();
 
-            if (!responseBuilder.getError()) {
-                String writeTimestamp = performWrite(lastTime, request);
-                responseBuilder.setWriteTimestamp(writeTimestamp);
-                long t2 = System.currentTimeMillis();
-
-                if (Utils.VISIBILITY_LOGS) {
-                    logs.add(new WriteRequestLog(request.getKey(), partition, t1));
-                    logs.add(new WriteResponseLog(request.getKey(), partition, writeTimestamp, t2));
-                }
+            if (Utils.VISIBILITY_LOGS) {
+                logs.add(new WriteRequestLog(request.getKey(), partition, t1));
+                logs.add(new WriteResponseLog(request.getKey(), partition, writeTimestamp, t2));
             }
 
             responseObserver.onNext(responseBuilder.build());
@@ -142,33 +146,39 @@ public class WriteNode extends ComputeNode {
         @Override
         public void atomicWrite(WriteRequest request, StreamObserver<WriteResponse> responseObserver) {
             HLCState lastTime = new HLCState();
-            Builder responseBuilder = WriteResponse.newBuilder().setError(false);
+            Builder responseBuilder = WriteResponse.newBuilder();
 
+            // Check if key belongs to this partition
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
-                responseBuilder.setStatus(String.format("Key %s not found", request.getKey()))
-                        .setError(true);
-            } else if (!request.hasExpectedValue() && !request.hasExpectedVersion()) {
-                responseBuilder.setStatus("No expected value or version provided.")
-                        .setError(true);
+                Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", request.getKey()));
+                responseObserver.onError(status.asRuntimeException());
+                return;
+            } 
+
+            // Check if expected value or version is provided
+            if (!request.hasExpectedValue() && !request.hasExpectedVersion()) {
+                Status status = Status.INVALID_ARGUMENT.withDescription("No expected value or version provided.");
+                responseObserver.onError(status.asRuntimeException());
+                return;
+            }
+
+            // Parse timestamp from client's last write
+            try{
+                lastTime = HLCState.fromRecvTimestamp(request.getLastWriteTimestamp());
+            } catch (StatusRuntimeException e) {
+                responseObserver.onError(Status.fromThrowable(e).asRuntimeException());
+                return;
+            }
+
+            Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
+            if (!isExpectedVersion(lastVersion, request)) {
+                responseBuilder.setCurrentVersion(lastVersion.getKey());
             } else {
-                try {
-                    lastTime = HLCState.fromRecvTimestamp(request.getLastWriteTimestamp());
-                } catch (InvalidTimestampException e) {
-                    responseBuilder.setStatus(e.toString()).setError(true);
-                }
+                // Perform write
+                String writeTimestamp = performWrite(lastTime, request);
+                responseBuilder.setWriteTimestamp(writeTimestamp);
             }
-
-            if (!responseBuilder.getError()) {
-                Entry<String, ByteString> lastVersion = storage.getLastVersion(request.getKey());
-                if (isExpectedVersion(lastVersion, request)) {
-                    String writeTimestamp = performWrite(lastTime, request);
-                    responseBuilder.setWriteTimestamp(writeTimestamp);
-                } else {
-                    responseBuilder.setCurrentVersion(lastVersion.getKey())
-                            .setStatus("Write failed. Current version doesn't match.").setError(true);
-                }
-            }
-
+            
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }

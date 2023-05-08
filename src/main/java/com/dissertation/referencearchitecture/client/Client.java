@@ -16,13 +16,13 @@ import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
 import com.dissertation.referencearchitecture.WriteServiceGrpc;
 import com.dissertation.referencearchitecture.ROTResponse.Builder;
-import com.dissertation.referencearchitecture.exceptions.KeyNotFoundException;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 
 import com.google.protobuf.ByteString;
 
 import io.grpc.ManagedChannel;
+import io.grpc.Status;
 
 public class Client {
     private Map<String, KeyVersion> cache;
@@ -51,135 +51,104 @@ public class Client {
         }
     }
 
-    public ROTResponse requestROT(Set<String> keys) {
-        Builder builder = ROTResponse.newBuilder().setError(false);
+    public ROTResponse requestROT(Set<String> keys) throws Exception {
+        Builder builder = ROTResponse.newBuilder();
         ROTRequest rotRequest;
         ROTResponse rotResponse;
         Map<String, KeyVersion> versions = new HashMap<>();
 
-        try {
-            for (String key : keys) {
-                if (!this.isKeyInPartition(key)) {
-                    throw new KeyNotFoundException();
-                }
+        for (String key : keys) {
+            if (!this.isKeyInPartition(key)) {
+                Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", key));
+                throw status.asRuntimeException();
             }
-
-            rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
-            rotResponse = this.readStub.rot(rotRequest);
-
-            if (!rotResponse.getError()) {
-                pruneCache(rotResponse.getStableTime());
-
-                // Search cache
-                for (Entry<String, KeyVersion> entry : rotResponse.getVersionsMap().entrySet()) {
-                    KeyVersion cacheVersion = this.cache.getOrDefault(entry.getKey(), null);
-                    versions.put(entry.getKey(), cacheVersion != null ? cacheVersion : entry.getValue());
-                }
-                builder.putAllVersions(versions).setStableTime(rotResponse.getStableTime()).setId(rotResponse.getId());
-
-                return builder.build();
-            }
-            return rotResponse;
-        } catch (KeyNotFoundException e) {
-            return builder
-                    .setStatus(e.toString())
-                    .setError(true).build();
         }
+
+        rotRequest = ROTRequest.newBuilder().addAllKeys(keys).build();
+        rotResponse = this.readStub.rot(rotRequest);
+
+        pruneCache(rotResponse.getStableTime());
+
+        // Search cache
+        for (Entry<String, KeyVersion> entry : rotResponse.getVersionsMap().entrySet()) {
+            KeyVersion cacheVersion = this.cache.getOrDefault(entry.getKey(), null);
+            versions.put(entry.getKey(), cacheVersion != null ? cacheVersion : entry.getValue());
+        }
+        builder.putAllVersions(versions).setStableTime(rotResponse.getStableTime()).setId(rotResponse.getId());
+
+        return builder.build();
     }
 
-    public WriteResponse requestWrite(String key, ByteString value) {
-        try {
-            int partitionId = Utils.getKeyPartitionId(key);
-            if (!this.isKeyInPartition(key)) {
-                throw new KeyNotFoundException();
-            }
-
-            WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            WriteRequest writeRequest = WriteRequest.newBuilder()
-                    .setKey(key)
-                    .setValue(value)
-                    .setLastWriteTimestamp(this.lastWriteTimestamp)
-                    .build();
-
-            WriteResponse writeResponse = writeStub.write(writeRequest);
-            if (!writeResponse.getError()) {
-                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
-                        .build();
-                this.cache.put(key, version);
-            }
-            return writeResponse;
-        } catch (KeyNotFoundException e) {
-            return WriteResponse.newBuilder()
-                    .setStatus(e.toString())
-                    .setError(true)
-                    .build();
+    public WriteResponse requestWrite(String key, ByteString value) throws Exception {
+        int partitionId = Utils.getKeyPartitionId(key);
+        if (!this.isKeyInPartition(key)) {
+            Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", key));
+            throw status.asRuntimeException();
         }
+
+        WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
+        WriteRequest writeRequest = WriteRequest.newBuilder()
+                .setKey(key)
+                .setValue(value)
+                .setLastWriteTimestamp(this.lastWriteTimestamp)
+                .build();
+
+        WriteResponse writeResponse = writeStub.write(writeRequest);
+        this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+        KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                .build();
+        this.cache.put(key, version);
+        return writeResponse; 
     }
 
     public WriteResponse requestCompareVersionAndWrite(String key, ByteString value, String expectedVersion,
-            ByteString expectedValue) {
-        try {
-            int partitionId = Utils.getKeyPartitionId(key);
-            if (!this.isKeyInPartition(key)) {
-                throw new KeyNotFoundException();
-            }
-
-            WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
-                    .setKey(key)
-                    .setValue(value)
-                    .setLastWriteTimestamp(this.lastWriteTimestamp)
-                    .setExpectedVersion(expectedVersion);
-
-            if (expectedValue != null) {
-                writeRequestBuilder.setExpectedValue(expectedValue);
-            }
-
-            WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
-            if (!writeResponse.getError()) {
-                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
-                        .build();
-                this.cache.put(key, version);
-            }
-            return writeResponse;
-        } catch (KeyNotFoundException e) {
-            return WriteResponse.newBuilder()
-                    .setStatus(e.toString())
-                    .setError(true)
-                    .build();
+            ByteString expectedValue) throws Exception {
+        int partitionId = Utils.getKeyPartitionId(key);
+        if (!this.isKeyInPartition(key)) {
+            Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", key));
+            throw status.asRuntimeException();
         }
+
+        WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
+        WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
+                .setKey(key)
+                .setValue(value)
+                .setLastWriteTimestamp(this.lastWriteTimestamp)
+                .setExpectedVersion(expectedVersion);
+
+        if (expectedValue != null) {
+            writeRequestBuilder.setExpectedValue(expectedValue);
+        }
+
+        WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
+        this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+        KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                .build();
+        this.cache.put(key, version);
+        return writeResponse;
     }
 
-    public WriteResponse requestCompareValueAndWrite(String key, ByteString value, ByteString expectedValue) {
-        try {
-            int partitionId = Utils.getKeyPartitionId(key);
-            if (!this.isKeyInPartition(key)) {
-                throw new KeyNotFoundException();
-            }
-
-            WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
-            WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
-                    .setKey(key)
-                    .setValue(value)
-                    .setLastWriteTimestamp(this.lastWriteTimestamp)
-                    .setExpectedValue(expectedValue);
-
-            WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
-            if (!writeResponse.getError()) {
-                this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
-                KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
-                        .build();
-                this.cache.put(key, version);
-            }
-            return writeResponse;
-        } catch (KeyNotFoundException e) {
-            return WriteResponse.newBuilder()
-                    .setStatus(e.toString())
-                    .setError(true)
-                    .build();
+    public WriteResponse requestCompareValueAndWrite(String key, ByteString value, ByteString expectedValue) throws Exception {
+        int partitionId = Utils.getKeyPartitionId(key);
+        if (!this.isKeyInPartition(key)) {
+            Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", key));
+            throw status.asRuntimeException();
         }
+
+        WriteServiceGrpc.WriteServiceBlockingStub writeStub = this.writeStubs.get(partitionId);
+        WriteRequest.Builder writeRequestBuilder = WriteRequest.newBuilder()
+                .setKey(key)
+                .setValue(value)
+                .setLastWriteTimestamp(this.lastWriteTimestamp)
+                .setExpectedValue(expectedValue);
+
+        WriteResponse writeResponse = writeStub.atomicWrite(writeRequestBuilder.build());
+   
+        this.lastWriteTimestamp = writeResponse.getWriteTimestamp();
+        KeyVersion version = KeyVersion.newBuilder().setTimestamp(this.lastWriteTimestamp).setValue(value)
+                .build();
+        this.cache.put(key, version);
+        return writeResponse;
     }
 
     private void pruneCache(String stableTime) {

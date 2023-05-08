@@ -10,6 +10,7 @@ import org.json.JSONArray;
 import com.dissertation.validation.logs.Log;
 import com.google.protobuf.ByteString;
 
+import io.grpc.Status;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.regions.providers.DefaultAwsRegionProviderChain;
@@ -98,5 +99,10 @@ public class Utils {
         } catch (IOException e) {
             System.err.println("Failed to write logs to file.");
         }
+    }
+
+    public static void printException(Exception e) {
+        Status status = Status.fromThrowable(e);
+        System.err.println(status.getCode() + " : " + status.getDescription());
     }
 }

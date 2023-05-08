@@ -115,7 +115,13 @@ public class ConstantWriteGenerator {
                 ByteString value = Utils.byteStringFromString(String.valueOf(payload));
 
                 long t1 = System.currentTimeMillis();
-                WriteResponse writeResponse = client.requestWrite(key, value);
+                WriteResponse writeResponse;
+                try {
+                    writeResponse = client.requestWrite(key, value);
+                } catch (Exception e) {
+                    Utils.printException(e);
+                    return;
+                }
                 long t2 = System.currentTimeMillis();
 
                 logs.add(new WriteRequestLog(key, partitionId, t1));

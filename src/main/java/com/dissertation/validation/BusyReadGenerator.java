@@ -87,10 +87,11 @@ public class BusyReadGenerator {
 
         while (true) {
             t1 = System.currentTimeMillis();
-            rotResponse = this.client.requestROT(this.keys);
-            t2 = System.currentTimeMillis();
-
-            if (rotResponse.getError()) {
+            try {
+                rotResponse = this.client.requestROT(this.keys);
+                t2 = System.currentTimeMillis();
+            } catch (Exception e) {
+                Utils.printException(e);
                 continue;
             }
 

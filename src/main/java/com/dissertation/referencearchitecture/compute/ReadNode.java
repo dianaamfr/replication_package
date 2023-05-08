@@ -97,7 +97,7 @@ public class ReadNode extends ComputeNode {
             final String rotSnapshot = storage.getStableTime();
 
             // Get values within the snapshot
-            Builder responseBuilder = ROTResponse.newBuilder().setId(rotId).setError(false);
+            Builder responseBuilder = ROTResponse.newBuilder().setId(rotId);
             Map<String, KeyVersion> values = new HashMap<>(request.getKeysCount());
             for (String key : request.getKeysList()) {
                 Entry<String, ByteString> versionEntry = storage.get(key, rotSnapshot);

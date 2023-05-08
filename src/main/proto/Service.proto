@@ -17,9 +17,7 @@ message WriteRequest {
 
 message WriteResponse {
     string writeTimestamp = 1;
-    bool error = 2;
-    string status = 3;
-    optional string currentVersion = 4;
+    optional string currentVersion = 2;
 }
 
 message ROTRequest {
@@ -30,8 +28,6 @@ message ROTResponse {
     map<string, KeyVersion> versions = 1;
     string stableTime = 2;
     int64 id = 3;
-    bool error = 4;
-    string status = 5;
 }
 
 message StableTimeRequest {}

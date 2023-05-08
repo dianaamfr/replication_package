@@ -9,11 +9,13 @@ import com.dissertation.referencearchitecture.StableTimeRequest;
 import com.dissertation.referencearchitecture.StableTimeResponse;
 import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
 import com.dissertation.referencearchitecture.compute.clock.HLC;
-import com.dissertation.referencearchitecture.exceptions.InvalidTimestampException;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.S3OperationLog;
+
+import io.grpc.StatusRuntimeException;
+
 import com.dissertation.validation.logs.Log;
 
 public class StoragePusher implements Runnable {
@@ -93,7 +95,7 @@ public class StoragePusher implements Runnable {
         HLCState recvTime;
         try {
             recvTime = HLCState.fromRecvTimestamp(response.getTimestamp());
-        } catch (InvalidTimestampException e) {
+        } catch (StatusRuntimeException e) {
             System.err.println(String.format("Invalid recent timestamp"));
             return;
         }
