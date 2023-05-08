@@ -98,14 +98,14 @@ public class ClientInterface {
             return;
         }
 
-        ROTResponse rotResponse; 
+        ROTResponse rotResponse;
         try {
-            rotResponse = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));   
+            rotResponse = this.client.requestROT(new HashSet<>(Arrays.asList(commands)));
         } catch (Exception e) {
             Utils.printException(e);
             return;
         }
-        
+
         StringBuilder builder = new StringBuilder();
         builder.append("ROT response:");
         builder.append(String.format("%n  stableTime = %s", rotResponse.getStableTime()));
@@ -130,7 +130,8 @@ public class ClientInterface {
             Utils.printException(e);
             return;
         }
-        System.out.println(this.addWriteOutput(new StringBuilder(), key, commands[1], writeResponse.getWriteTimestamp()).toString());
+        System.out.println(this.addWriteOutput(new StringBuilder(), key, commands[1], writeResponse.getWriteTimestamp())
+                .toString());
     }
 
     private void sendCompareVersionAndWriteRequest(String[] commands) {
@@ -143,7 +144,8 @@ public class ClientInterface {
         ByteString value = Utils.byteStringFromString(commands[1]);
         WriteResponse writeResponse;
         try {
-            writeResponse = this.client.requestCompareVersionAndWrite(key, value, commands[2], commands.length == 4 ? Utils.byteStringFromString(commands[3]) : null);
+            writeResponse = this.client.requestCompareVersionAndWrite(key, value, commands[2],
+                    commands.length == 4 ? Utils.byteStringFromString(commands[3]) : null);
         } catch (Exception e) {
             Utils.printException(e);
             return;
@@ -162,20 +164,21 @@ public class ClientInterface {
         ByteString value = Utils.byteStringFromString(commands[1]);
         ByteString expectedValue = commands.length == 3 ? Utils.byteStringFromString(commands[2]) : ByteString.EMPTY;
         WriteResponse writeResponse;
-        
+
         try {
-          writeResponse = this.client.requestCompareValueAndWrite(key, value, expectedValue);  
+            writeResponse = this.client.requestCompareValueAndWrite(key, value, expectedValue);
         } catch (Exception e) {
             Utils.printException(e);
             return;
         }
-        
+
         System.out.println(this.addAtomicWriteOutput(new StringBuilder(), key, commands[1], writeResponse).toString());
     }
 
     private StringBuilder addROTOutput(StringBuilder builder, Entry<String, KeyVersion> entry) {
         builder.append(String.format("%n  key = %s", entry.getKey()));
-        builder.append(String.format("%n  value = %s", entry.getValue().getValue().isEmpty() ? null : Utils.stringFromByteString(entry.getValue().getValue())));
+        builder.append(String.format("%n  value = %s", entry.getValue().getValue().isEmpty() ? null
+                : Utils.stringFromByteString(entry.getValue().getValue())));
         builder.append(String.format("%n  version = %s%n", entry.getValue().getTimestamp()));
         return builder;
     }
@@ -188,9 +191,10 @@ public class ClientInterface {
         return builder;
     }
 
-    public StringBuilder addAtomicWriteOutput(StringBuilder builder, String key, String value, WriteResponse writeResponse) {
+    public StringBuilder addAtomicWriteOutput(StringBuilder builder, String key, String value,
+            WriteResponse writeResponse) {
 
-        if(writeResponse.hasCurrentVersion()) {
+        if (writeResponse.hasCurrentVersion()) {
             builder.append(String.format("Write failed:"));
             builder.append(String.format("%n Current version of %s:", key));
             builder.append(String.format("%n   %s%n", writeResponse.getCurrentVersion()));

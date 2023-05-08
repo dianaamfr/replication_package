@@ -95,7 +95,7 @@ public class BusyReadGenerator {
                 continue;
             }
 
-            for (KeyVersion keyVersion: rotResponse.getVersionsMap().values()) {
+            for (KeyVersion keyVersion : rotResponse.getVersionsMap().values()) {
                 valueStr = Utils.stringFromByteString(keyVersion.getValue());
                 if (valueStr.isBlank()) {
                     continue;
@@ -107,7 +107,7 @@ public class BusyReadGenerator {
                         this.lastPayload = valueLong;
                         newPayload = true;
                     }
-                    if(valueLong == this.endMarker) {
+                    if (valueLong == this.endMarker) {
                         exit = true;
                     }
                 } catch (NumberFormatException e) {
@@ -121,7 +121,7 @@ public class BusyReadGenerator {
                 this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
             }
 
-            if(exit) {
+            if (exit) {
                 this.client.shutdown();
                 break;
             }

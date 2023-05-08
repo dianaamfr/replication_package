@@ -116,10 +116,11 @@ public class WriteNode extends ComputeNode {
 
             // Check if key belongs to this partition
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
-                Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", request.getKey()));
+                Status status = Status.INVALID_ARGUMENT
+                        .withDescription(String.format("Key %s not found", request.getKey()));
                 responseObserver.onError(status.asRuntimeException());
                 return;
-            } 
+            }
 
             // Parse timestamp from client's last write
             try {
@@ -128,7 +129,7 @@ public class WriteNode extends ComputeNode {
                 responseObserver.onError(Status.fromThrowable(e).asRuntimeException());
                 return;
             }
-            
+
             // Perform write
             String writeTimestamp = performWrite(lastTime, request);
             responseBuilder.setWriteTimestamp(writeTimestamp);
@@ -150,10 +151,11 @@ public class WriteNode extends ComputeNode {
 
             // Check if key belongs to this partition
             if (Utils.getKeyPartitionId(request.getKey()) != partition) {
-                Status status = Status.INVALID_ARGUMENT.withDescription(String.format("Key %s not found", request.getKey()));
+                Status status = Status.INVALID_ARGUMENT
+                        .withDescription(String.format("Key %s not found", request.getKey()));
                 responseObserver.onError(status.asRuntimeException());
                 return;
-            } 
+            }
 
             // Check if expected value or version is provided
             if (!request.hasExpectedValue() && !request.hasExpectedVersion()) {
@@ -163,7 +165,7 @@ public class WriteNode extends ComputeNode {
             }
 
             // Parse timestamp from client's last write
-            try{
+            try {
                 lastTime = HLCState.fromRecvTimestamp(request.getLastWriteTimestamp());
             } catch (StatusRuntimeException e) {
                 responseObserver.onError(Status.fromThrowable(e).asRuntimeException());
@@ -178,7 +180,7 @@ public class WriteNode extends ComputeNode {
                 String writeTimestamp = performWrite(lastTime, request);
                 responseBuilder.setWriteTimestamp(writeTimestamp);
             }
-            
+
             responseObserver.onNext(responseBuilder.build());
             responseObserver.onCompleted();
         }
