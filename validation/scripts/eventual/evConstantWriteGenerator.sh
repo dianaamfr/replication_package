@@ -1,4 +1,4 @@
-if [ $# -le 5 ]
+if [ $# -lt 5 ]
 then
   echo "Usage: evConstantWriteGenerator.sh <imageTag> <totalPartitions> <delay> <totalWrites> <key>+"
   exit 1

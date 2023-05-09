@@ -1,3 +1,11 @@
+# BUILD:
+**Latency**: docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation:v12.0.0-latency --build-arg visibility_logs=false --build-arg goodput_logs=false --push . 
+**Goodput**: docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation:v12.0.0-goodput --build-arg visibility_logs=false --build-arg goodput_logs=true --push .
+**Visibility**: docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation:v12.0.0-visibility --build-arg visibility_logs=true --build-arg goodput_logs=false --push .
+
+**Eventual**:
+docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation-eventual:v2.0.0 --push .
+
 # Docker clean
 **On every machine**
 docker rm -f $(docker ps -a -q)
@@ -82,18 +90,18 @@ scp -r "reference-architecture-us.pem" ubuntu@<DNS>.compute-1.amazonaws.com:~/lo
 ## Visibility + Latency
 
 ### EU-WEST-1
-**Constant Write Generator**: ./evConstantWriteGenerator.sh v1.0.0 1 <delay> <totalWrites> <keys>
-**Busy Read Generator**: ./evBusyReadGenerator.sh v1.0.0 1 <totalWrites> <keys>
+**Constant Write Generator**: ./evConstantWriteGenerator.sh v2.0.0 1 <delay> <totalWrites> <keys>
+**Busy Read Generator**: ./evBusyReadGenerator.sh v2.0.0 1 <totalWrites> <keys>
 
 ### US-EAST-1
-**Busy Read Generator**: ./evBusyReadGenerator.sh v1.0.0 1 <totalWrites> <keys>
+**Busy Read Generator**: ./evBusyReadGenerator.sh v2.0.0 1 <totalWrites> <keys>
 
 ---
 ## Goodput
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v1.0.0 1 <keys>
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 <delay> <totalWrites> <keys>
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 <keys>
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 <delay> <totalWrites> <keys>
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 <delay> <totalWrites> <keys>
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 <delay> <totalWrites> <keys>

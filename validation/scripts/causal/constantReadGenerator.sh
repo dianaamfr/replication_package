@@ -1,4 +1,4 @@
-if [ $# -lt 10 ]
+if [ $# -lt 11 ]
 then
   echo "Usage: constantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <keysPerRead> <key>+"
   exit 1

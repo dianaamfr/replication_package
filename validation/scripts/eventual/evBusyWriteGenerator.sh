@@ -1,4 +1,4 @@
-if [ $# -le 3 ]
+if [ $# -lt 3 ]
 then
   echo "Usage: evBusyWriteGenerator.sh <imageTag> <totalPartitions> <key>+"
   exit 1

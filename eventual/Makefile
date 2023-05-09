@@ -35,7 +35,7 @@ client:
 
 totalWrites = 110
 keys = a b
-writeDelay = 200
+writeDelay = 50
 
 readTest1:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(totalWrites) $(keys)

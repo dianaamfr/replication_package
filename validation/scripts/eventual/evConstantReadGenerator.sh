@@ -1,4 +1,4 @@
-if [ $# -le 5 ]
+if [ $# -lt 5 ]
 then
   echo "Usage: evConstantReadGenerator.sh <imageTag> <totalPartitions> <readDelay> <key>+"
   exit 1

@@ -6,11 +6,11 @@
 - 1 key per read
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v1.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 50 a
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 50 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 a
 
 ---
 ## Test 2
@@ -19,11 +19,11 @@
 - 1 key per read
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v1.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 100 a
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 100 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 a
 
 ---
 ## Test 3
@@ -32,11 +32,11 @@
 - 1 key per read
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v1.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 500 a
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v1.0.0 1 500 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 a
 
 ---
 # Get Logs

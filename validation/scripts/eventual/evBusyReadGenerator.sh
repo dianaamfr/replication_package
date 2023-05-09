@@ -1,4 +1,4 @@
-if [ $# -le 4  ]
+if [ $# -lt 4  ]
 then
   echo "Usage: evBusyReadGenerator.sh <imageTag> <totalPartitions> <expectedWrites> <key>+"
   exit 1
