@@ -16,26 +16,24 @@ public class ConstantReadGenerator {
     private ScheduledThreadPoolExecutor scheduler;
     private final Client client;
     private final long delay;
-    private final int totalReads;
     private final List<String> keys;
     private int keyCounter;
-    private int readCounter;
     private CountDownLatch countDown;
     private long lastPayload;
     private long startTime;
     private long endTime;
+    private boolean exit;
 
-    private static final String USAGE = "Usage: ConstantReadGenerator <delay:Int> <totalReads:Int> <key:String>+";
+    private static final String USAGE = "Usage: ConstantReadGenerator <delay:Int> <key:String>+";
 
-    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, int totalReads, List<String> keys) throws URISyntaxException {
+    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, List<String> keys) throws URISyntaxException {
         this.client = new Client();
         this.delay = delay;
-        this.totalReads = totalReads;
         this.keys = keys;
         this.keyCounter = 0;
-        this.readCounter = 0;
-        this.countDown = new CountDownLatch(totalReads);
+        this.countDown = new CountDownLatch(1);
         this.lastPayload = 0;
+        this.exit = false;
 
         this.scheduler = scheduler;
     }
@@ -51,12 +49,11 @@ public class ConstantReadGenerator {
 
         try {
             long delay = Long.parseLong(args[0]);
-            int totalReads = Integer.parseInt(args[1]);
-            for (int i = 2; i < args.length; i++) {
+            for (int i = 1; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
-            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, delay, totalReads, keys);
+            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, delay, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -66,7 +63,9 @@ public class ConstantReadGenerator {
     }
 
     private void run() {
+        this.startTime = System.currentTimeMillis();
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
+        
         try {
             this.countDown.await();
             this.scheduler.shutdown();
@@ -79,11 +78,7 @@ public class ConstantReadGenerator {
     private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            if (readCounter < totalReads) {
-                if (readCounter == 0) {
-                    startTime = System.currentTimeMillis();
-                }
-                
+            if (!exit) {
                 String key = keys.get(keyCounter % keys.size());
                 S3ReadResponse response = client.read(key);
                 endTime = System.currentTimeMillis();
@@ -95,18 +90,17 @@ public class ConstantReadGenerator {
 
                 long valueLong = Long.parseLong(response.getContent());
                 if (valueLong > lastPayload) {
-                    System.out.println(valueLong);
                     lastPayload = valueLong;
                 }
 
-                if ((readCounter + 1) % totalReads == 0) {
+                if (endTime - startTime >= Utils.GOODPUT_TIME) {
                     System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
                             endTime - startTime).toJson().toString());
+                    countDown.countDown();
+                    exit = true;
                 }
 
-                countDown.countDown();
                 keyCounter = incrementKeyCounter();
-                readCounter++;
             }
         }
     }

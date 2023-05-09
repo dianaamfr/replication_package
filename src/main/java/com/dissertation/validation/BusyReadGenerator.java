@@ -126,7 +126,6 @@ public class BusyReadGenerator {
                         exit = true;
                     }
                 } catch (NumberFormatException e) {
-                    this.keyCounter = this.incrementKeyCounter();
                     continue;
                 }
             }

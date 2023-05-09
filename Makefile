@@ -60,7 +60,7 @@ client:
 
 # Validation
 
-totalWrites = 101
+totalWrites = 110
 keysPerRead = 2
 keys = a b
 writeDelay = 200
@@ -71,11 +71,10 @@ readTest1:
 writeTest1:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
-totalReads = 100
-readDelay = 500
+readDelay = 50
 
 readTest2:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(totalReads) $(keysPerRead) $(keys)
+	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(keysPerRead) $(keys)
 
 writeTest2:
 	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)

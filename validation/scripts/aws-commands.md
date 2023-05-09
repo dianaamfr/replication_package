@@ -39,11 +39,11 @@ docker rmi $(docker images -a -q)
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh <image-tag>-goodput 1 8080 1
 **Busy Write Generator**: ./busyWriteGenerator.sh <image-tag>-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <keys>
-**Constant Read Generator**: ./constantReadGenerator.sh <image-tag>-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keysPerRead> <keys>
+**Constant Read Generator**: ./constantReadGenerator.sh <image-tag>-goodput 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 <delay> <keysPerRead> <keys>
 
 ### Reader US-EAST-1
 **Read Node**: ./readNode.sh <image-tag>-goodput 1 8080 1
-**Constant Read Generator**: ./constantReadGenerator.sh <image-tag>-goodput 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <delay> <totalWrites> <keysPerRead> <keys>
+**Constant Read Generator**: ./constantReadGenerator.sh <image-tag>-goodput 1 1 8080 <read-us-ip> 8080 <write-ip> 1 <delay> <keysPerRead> <keys>
 
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh <image-tag>-goodput 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>

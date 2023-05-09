@@ -33,7 +33,7 @@ client:
 
 # Validation
 
-totalWrites = 101
+totalWrites = 110
 keys = a b
 writeDelay = 200
 
@@ -43,11 +43,10 @@ readTest1:
 writeTest1:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar $(writeDelay) $(totalWrites) $(keys)
 
-totalReads = 100
-readDelay = 500
+readDelay = 50
 
 readTest2:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(totalReads) $(keys)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(keys)
 
 writeTest2:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar $(keys)
