@@ -42,7 +42,7 @@ public class ConstantReadGenerator {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
         List<String> keys = new ArrayList<>();
 
-        if (args.length < 3) {
+        if (args.length < 2) {
             System.err.println(USAGE);
             return;
         }
