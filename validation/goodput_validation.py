@@ -45,7 +45,3 @@ def get_stats(iteration_dir):
     
     df_results.to_csv(stats_file)
 
-
-if __name__ == '__main__':
-    combine_logs(sys.argv[1])
-    get_stats(sys.argv[1])

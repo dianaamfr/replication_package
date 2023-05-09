@@ -158,7 +158,3 @@ def get_stats(iteration_dir):
     writer.writerow(['mean'] + df_results.mean().values.tolist())
     writer.writerow(['max'] + df_results.max().values.tolist())
     writer.writerow(['min'] + df_results.min().values.tolist())
-
-if __name__ == '__main__':
-    combine_logs(sys.argv[1])
-    get_stats(sys.argv[1])
