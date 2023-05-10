@@ -1,7 +1,6 @@
-import sys
-import csv
 import pandas as pd
-from utils import get_data, get_file, get_diff
+import matplotlib.pyplot as plt
+from utils import get_data, get_diff
 import os
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -36,35 +35,72 @@ def get_store_time(df, version):
 def get_stable_time(df, version):
     return df[(df['logType'] == 'STABLE_TIME') & (df['stableTime'] >= version)].sort_values('stableTime').iloc[0]['time']
 
-def get_read_time(df, version):
+def get_read_time_cc(df, version):
     return df[(df['logType'] == 'ROT_RESPONSE') & (df['stableTime'] >= version)].sort_values('stableTime').iloc[0]['time']
 
+def get_read_time_ev(df, id):
+    return df[(df['logType'] == 'ROT_RESPONSE') & (df['id'] >= id)].sort_values('id').iloc[0]['time']
 
-def combine_logs(iteration_dir):
-    result_dir = PATH + '/results/visibility/' + iteration_dir
-    result_file = result_dir + '/logs.csv'
-    if not os.path.exists(result_dir):
-        os.makedirs(result_dir)
-
-    dest_file = open(result_file ,'w+', newline='\n', encoding='utf-8')
-
-    writer = csv.writer(dest_file)
-    writer.writerow(get_header())
-
-    # Log files
-    write_client = get_file(LOGS_DIR + '/' + iteration_dir, 'writeclient-eu-west-1')
-    write_node = get_file(LOGS_DIR + '/' + iteration_dir, 'writenode-1')
-    
-    # Data frames
-    pusher_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writenode-1-s3')
-    puller_eu_df = get_data(LOGS_DIR + '/' + iteration_dir, 'readnode-eu-west-1-s3')
-    puller_us_df = get_data(LOGS_DIR + '/' + iteration_dir, 'readnode-us-east-1-s3')
-    
+def ev_visibility_times(iteration_dir):
+    write_client_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writeclient-eu-west-1')
     read_client_eu = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-eu-west-1')
     read_client_us = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-us-east-1')
 
-    i = 0
-    for client_request, client_response in zip(write_client[::2], write_client[1::2]):
+    pd_result_eu = pd.DataFrame();
+    pd_result_us = pd.DataFrame();
+
+    for i in range(0, len(write_client_df), 2):
+        client_request = write_client_df.iloc[i]
+        client_response = write_client_df.iloc[i+1]
+
+        # Get request time
+        request_time = client_request['time']
+
+        # Get response time
+        response_time = client_response['time']
+
+        # Get the time when the version was first read in each read client
+        read_time_eu = get_read_time_ev(read_client_eu, client_response['id'])
+        read_time_us = get_read_time_ev(read_client_us, client_response['id'])
+
+        pd_result_eu = pd_result_eu.append({
+            'version': client_response['id'],
+            'client_request': request_time,
+            'client_response': response_time,
+            'read_client_response': read_time_eu,
+            }, ignore_index=True)
+
+        pd_result_us = pd_result_us.append({
+            'version': client_response['id'],
+            'client_request': request_time,
+            'client_response': response_time,
+            'read_client_response': read_time_us,
+            }, ignore_index=True)
+
+    return pd_result_eu, pd_result_us
+
+def cc_visibility_times(iteration_dir):
+    write_client_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writeclient-eu-west-1')
+    write_node_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writenode-1')
+    pusher_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writenode-1-s3')
+    puller_eu_df = get_data(LOGS_DIR + '/' + iteration_dir, 'readnode-eu-west-1-s3')
+    puller_us_df = get_data(LOGS_DIR + '/' + iteration_dir, 'readnode-us-east-1-s3')
+    read_client_eu = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-eu-west-1')
+    read_client_us = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-us-east-1')
+
+    pd_result_eu = pd.DataFrame();
+    pd_result_us = pd.DataFrame();
+   
+    for i in range(0, len(write_client_df), 2):
+        client_request = write_client_df.iloc[i]
+        client_response = write_client_df.iloc[i+1]
+
+        # Get request time
+        request_time = client_request['time']
+
+        # Get response time
+        response_time = client_response['time']
+
         # Get the time when the version was first pushed in the write node
         push_time = get_push_time(pusher_df, client_response['version'])
 
@@ -81,80 +117,79 @@ def combine_logs(iteration_dir):
         stable_time_us = get_stable_time(puller_us_df, client_response['version'])
 
         # Get the time when the version was first read in each read client
-        read_time_eu = get_read_time(read_client_eu, client_response['version'])
-        read_time_us = get_read_time(read_client_us, client_response['version'])
+        read_time_eu = get_read_time_cc(read_client_eu, client_response['version'])
+        read_time_us = get_read_time_cc(read_client_us, client_response['version'])
+
+        pd_result_eu = pd_result_eu.append({
+            'version': client_response['version'],
+            'client_request': request_time,
+            'write_node_receive': write_node_df.iloc[i]['time'],
+            'write_node_respond': write_node_df.iloc[i+1]['time'],
+            'client_response': response_time,
+            'write_node_push': push_time,
+            'read_node_pull': pull_time_eu,
+            'read_node_store': store_time_eu,
+            'read_node_stable': stable_time_eu,
+            'read_client_response': read_time_eu,
+            }, ignore_index=True)
+
+        pd_result_us = pd_result_us.append({
+            'version': client_response['version'],
+            'client_request': request_time,
+            'write_node_receive': write_node_df.iloc[i]['time'],
+            'write_node_respond': write_node_df.iloc[i+1]['time'],
+            'client_response': response_time,
+            'write_node_push': push_time,
+            'read_node_pull': pull_time_us,
+            'read_node_store': store_time_us,
+            'read_node_stable': stable_time_us,
+            'read_client_response': read_time_us,
+            }, ignore_index=True)
+
+    return pd_result_eu, pd_result_us
+
+def visibility_tables(df_ev_eu, df_cc_eu, df_ev_us, df_cc_us):
+    # Write Latency & Visibility comparison table
+    df_ev_eu_stats = get_stats(df_ev_eu)
+    df_cc_eu_stats = get_stats(df_cc_eu)
+    df_ev_us_stats = get_stats(df_ev_us)
+    df_cc_us_stats = get_stats(df_cc_us)
+
+    get_table(df_ev_eu_stats, 'Eventual Consistency Write Latency & Visibility - EU', 'write_latency_visibility_ev_eu.png')
+    get_table(df_cc_eu_stats, 'Causal Consistency Write Latency & Visibility - EU', 'write_latency_visibility_cc_eu.png')
+    get_table(df_ev_us_stats, 'Eventual Consistency Write Latency & Visibility - US', 'write_latency_visibility_ev_us.png')
+    get_table(df_cc_us_stats, 'Causal Consistency Write Latency & Visibility - US', 'write_latency_visibility_cc_us.png')
+
+def get_table(df, title, filename):
+    plt.annotate(title, (0.5, 0.7), xycoords='axes fraction', ha='center', va='bottom', fontsize=10)
+    plt.table(cellText=df.values.round(2), colLabels=df.columns, loc='center', cellLoc='center')
+    plt.axis('off')
+    plt.savefig(PATH + '/results/plots/' + filename + '.png', dpi=300, bbox_inches='tight')
+    plt.clf()
+
+def get_time_diff_ev(df_ev):
+    df_ev_diff = pd.DataFrame()
+    df_ev_diff['response_time'] = get_diff(df_ev, 'client_request', 'client_response')
+    df_ev_diff['read_time'] = get_diff(df_ev, 'client_request', 'read_client_response')
+    return df_ev_diff
+
+def get_time_diff_cc(df_cc):
+    df_cc_diff = pd.DataFrame()
+    df_cc_diff['response_time'] = get_diff(df_cc, 'client_request', 'client_response')
+    df_cc_diff['push_time'] = get_diff(df_cc, 'client_request', 'write_node_push')
+    df_cc_diff['pull_time'] = get_diff(df_cc, 'client_request', 'read_node_pull')
+    df_cc_diff['store_time'] = get_diff(df_cc, 'client_request', 'read_node_store')
+    df_cc_diff['stable_time'] = get_diff(df_cc, 'client_request', 'read_node_stable')
+    df_cc_diff['read_time'] = get_diff(df_cc, 'client_request', 'read_client_response')
+    return df_cc_diff
 
 
-        writer.writerow([
-            client_response['version'], 
-            client_request['time'], 
-            write_node[i]['time'],  
-            write_node[i+1]['time'], 
-            client_response['time'],
-            push_time, 
-            pull_time_eu,
-            store_time_eu,
-            stable_time_eu,
-            pull_time_us,
-            store_time_us,
-            stable_time_us,
-            read_time_eu,
-            read_time_us
-            ]
-            )
-        i+=2
-
-def get_stats(iteration_dir):
-    result_file = PATH + '/results/visibility/' + iteration_dir + '/logs.csv'
-    stats_dir = PATH + '/results/visibility/' + iteration_dir
-    stats_file = stats_dir + '/validation.csv'
-    if not os.path.exists(stats_dir):
-        os.makedirs(stats_dir)
-    
-    df = pd.read_csv(result_file)
-    #df = df.drop(index=0)
-    dest_file = open(stats_file ,'w+', newline='\n', encoding='utf-8')
-    writer = csv.writer(dest_file)
-    writer.writerow(['', 
-        'Write to response', 
-        'Write to push',
-        'Write to pull (EU)',
-        'Write to pull (US)',
-        'Write to stable (EU)', 
-        'Write to stable (US)', 
-        'Write to store (EU)', 
-        'Write to store (US)',
-        'Write to read (EU)',
-        'Write to read (US)'
-        ])
-
-    response_time = get_diff(df, 'client_request', 'client_response')
-    push_time = get_diff(df, 'client_request', 'write_node_push')
-    pull_time_eu = get_diff(df, 'client_request', 'read_node_eu_pull')
-    pull_time_us = get_diff(df, 'client_request', 'read_node_us_pull')
-    store_time_eu = get_diff(df, 'client_request', 'read_node_eu_store')
-    store_time_us = get_diff(df, 'client_request', 'read_node_us_store')
-    stable_time_eu = get_diff(df, 'client_request', 'read_node_eu_stable')
-    stable_time_us = get_diff(df, 'client_request', 'read_node_us_stable')
-    read_time_eu = get_diff(df, 'client_request', 'read_client_eu_response')
-    read_time_us = get_diff(df, 'client_request', 'read_client_us_response')
-
-    data = {'response_time': response_time,
-        'push_time': push_time,
-        'pull_time_eu': pull_time_eu,
-        'pull_time_us': pull_time_us,
-        'store_time_eu': store_time_eu,
-        'store_time_us': store_time_us,
-        'stable_time_eu': stable_time_eu,
-        'stable_time_us': stable_time_us,
-        'read_time_eu': read_time_eu,
-        'read_time_us': read_time_us}
-
-    df_results = pd.DataFrame(data)
-
-    writer.writerow(['99%'] + df_results.quantile(q=0.99).values.tolist())
-    writer.writerow(['95%'] + df_results.quantile(q=0.95).values.tolist())
-    writer.writerow(['50%'] + df_results.quantile(q=0.50).values.tolist())
-    writer.writerow(['mean'] + df_results.mean().values.tolist())
-    writer.writerow(['max'] + df_results.max().values.tolist())
-    writer.writerow(['min'] + df_results.min().values.tolist())
+def get_stats(df):
+    return pd.DataFrame({
+        '99%': df.quantile(0.99),
+        '95%': df.quantile(0.95),
+        '70%': df.quantile(0.7),
+        '50%': df.quantile(0.5),
+        'mean': df.mean(),
+        'min': df.min(),
+        'max': df.max()})

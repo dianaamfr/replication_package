@@ -1,1 +1,24 @@
-[{"logType":"ROT_REQUEST","time":1683576711863,"id":34286},{"logType":"ROT_RESPONSE","time":1683576711867,"id":34286,"stableTime":"00000001683576677352-00000000000000000024"},{"logType":"ROT_REQUEST","time":1683576716980,"id":41760},{"logType":"ROT_RESPONSE","time":1683576716980,"id":41760,"stableTime":"00000001683576677352-00000000000000000109"}]
+[
+    {
+        "logType": "ROT_REQUEST",
+        "time": 1683576711863,
+        "id": 34286
+    },
+    {
+        "logType": "ROT_RESPONSE",
+        "time": 1683576711867,
+        "id": 34286,
+        "stableTime": "00000001683576677352-00000000000000000024"
+    },
+    {
+        "logType": "ROT_REQUEST",
+        "time": 1683576716980,
+        "id": 41760
+    },
+    {
+        "logType": "ROT_RESPONSE",
+        "time": 1683576716980,
+        "id": 41760,
+        "stableTime": "00000001683576677352-00000000000000000109"
+    }
+]

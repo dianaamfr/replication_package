@@ -54,13 +54,13 @@ def latency_boxplot(df_ev_latency, df_cc_latency):
     plt.tight_layout()    
     plt.savefig(PATH + '/results/plots/latency_boxplot.png', dpi=300)
     plt.clf()
-
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
 
 def latency_stats(df_ev_latency, df_cc_latency): 
     df_ev_stats = latency_table(df_ev_latency)
     df_cc_stats = latency_table(df_cc_latency)
-    df_ev_stats.index = ['ev_latency']
-    df_cc_stats.index = ['cc_latency']
+    df_ev_stats.index = ['EV']
+    df_cc_stats.index = ['CC']
 
     df_result = pd.concat([df_ev_stats.round(2), df_cc_stats.round(2)])
     df_result['name'] = df_result.index
@@ -73,6 +73,7 @@ def latency_stats(df_ev_latency, df_cc_latency):
     plt.annotate('Latency (ms)', (0.5, 0.7), xycoords='axes fraction', ha='center', va='bottom', fontsize=10)
     plt.savefig(PATH + '/results/plots/latency_table.png', dpi=300, bbox_inches='tight')
     plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
 
 def latency_histogram(df_ev_latency, df_cc_latency):
     plt.figure(figsize=(10, 7))
@@ -85,6 +86,7 @@ def latency_histogram(df_ev_latency, df_cc_latency):
 
     plt.savefig(PATH + '/results/plots/latency_histogram.png', dpi=300)
     plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
 
 def latency_table(df):
     return pd.DataFrame({
