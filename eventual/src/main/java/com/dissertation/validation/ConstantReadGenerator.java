@@ -22,19 +22,16 @@ public class ConstantReadGenerator {
     private long lastPayload;
     private long startTime;
     private long endTime;
-    private boolean exit;
 
     private static final String USAGE = "Usage: ConstantReadGenerator <delay:Int> <key:String>+";
 
-    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, List<String> keys) throws URISyntaxException {
+    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, int totalReads, List<String> keys) throws URISyntaxException {
         this.client = new Client();
         this.delay = delay;
         this.keys = keys;
         this.keyCounter = 0;
-        this.countDown = new CountDownLatch(1);
+        this.countDown = new CountDownLatch(totalReads);
         this.lastPayload = 0;
-        this.exit = false;
-
         this.scheduler = scheduler;
     }
 
@@ -42,18 +39,19 @@ public class ConstantReadGenerator {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
         List<String> keys = new ArrayList<>();
 
-        if (args.length < 2) {
+        if (args.length < 3) {
             System.err.println(USAGE);
             return;
         }
 
         try {
             long delay = Long.parseLong(args[0]);
-            for (int i = 1; i < args.length; i++) {
+            int totalReads = Integer.parseInt(args[1]);
+            for (int i = 2; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
-            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, delay, keys);
+            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, delay, totalReads, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -78,7 +76,9 @@ public class ConstantReadGenerator {
     private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            if (!exit) {
+            boolean newPayload = false;
+            
+            if(countDown.getCount() > 0) {
                 String key = keys.get(keyCounter % keys.size());
                 S3ReadResponse response = client.read(key);
                 endTime = System.currentTimeMillis();
@@ -91,13 +91,17 @@ public class ConstantReadGenerator {
                 long valueLong = Long.parseLong(response.getContent());
                 if (valueLong > lastPayload) {
                     lastPayload = valueLong;
+                    newPayload = true;
                 }
 
-                if (endTime - startTime >= Utils.GOODPUT_TIME) {
-                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
-                            endTime - startTime).toJson().toString());
+                if (newPayload) {
                     countDown.countDown();
-                    exit = true;
+                    newPayload = false;
+
+                    if(countDown.getCount() - 1 == 0) {
+                        System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
+                            endTime - startTime).toJson().toString());
+                    }
                 }
 
                 keyCounter = incrementKeyCounter();

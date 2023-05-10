@@ -26,21 +26,18 @@ public class ConstantReadGenerator {
     private long lastPayload;
     private long startTime;
     private long endTime;
-    private boolean exit;
 
-    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <keysPerRead:Int> <key:String>+";
+    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keysPerRead:Int> <key:String>+";
 
     public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
-            List<Address> writeAddresses, long delay, int keysPerRead, List<String> keys) {
+            List<Address> writeAddresses, long delay, int totalReads, int keysPerRead, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
         this.keysPerRead = keysPerRead;
         this.readSets = getReadSets(keys);
         this.keyCounter = 0;
-        this.countDown = new CountDownLatch(1);
+        this.countDown = new CountDownLatch(totalReads);
         this.lastPayload = 0;
-        this.exit = false;
-
         this.scheduler = scheduler;
     }
 
@@ -59,7 +56,7 @@ public class ConstantReadGenerator {
         List<Address> writeAddresses = new ArrayList<>();
         List<String> keys = new ArrayList<>();
 
-        if (args.length < 9) {
+        if (args.length < 10) {
             System.err.println(USAGE);
             return;
         }
@@ -78,18 +75,19 @@ public class ConstantReadGenerator {
             }
 
             long delay = Long.parseLong(args[addressesEndIndex]);
-            int keysPerRead = Integer.parseInt(args[addressesEndIndex + 1]);
-            for (int i = addressesEndIndex + 2; i < args.length; i++) {
+            int totalReads = Integer.parseInt(args[addressesEndIndex + 1]);
+            int keysPerRead = Integer.parseInt(args[addressesEndIndex + 2]);
+            for (int i = addressesEndIndex + 3; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
-            if(keys.size() % keysPerRead != 0) {
+            if (keys.size() % keysPerRead != 0) {
                 System.err.println("The number of keys must be divisible by the keys per read.");
                 return;
             }
 
             ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay,
-                    keysPerRead, keys);
+                    totalReads, keysPerRead, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -99,7 +97,7 @@ public class ConstantReadGenerator {
     private void run() {
         this.startTime = System.currentTimeMillis();
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
-        
+
         try {
             this.countDown.await();
             this.scheduler.shutdown();
@@ -113,7 +111,9 @@ public class ConstantReadGenerator {
     private class ReadGeneratorRequest implements Runnable {
         @Override
         public void run() {
-            if (!exit) {
+            boolean newPayload = false;
+
+            if (countDown.getCount() > 0) {
                 Set<String> requestKeys = readSets.get(keyCounter % readSets.size());
 
                 ROTResponse rotResponse;
@@ -135,22 +135,24 @@ public class ConstantReadGenerator {
                     long valueLong = Long.parseLong(valueStr);
                     if (valueLong > lastPayload) {
                         lastPayload = valueLong;
+                        newPayload = true;
                     }
                 }
 
-
-                if (endTime - startTime >= Utils.GOODPUT_TIME) {
-                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
-                    endTime - startTime).toJson().toString());
+                if (newPayload) {
                     countDown.countDown();
-                    exit = true;
+                    newPayload = false;
+
+                    if(countDown.getCount() - 1 == 0) {
+                        System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
+                            endTime - startTime).toJson().toString());
+                    }
                 }
 
                 keyCounter = incrementKeyCounter();
             }
         }
     }
-
 
     private int incrementKeyCounter() {
         return (this.keyCounter + 1) % this.readSets.size();

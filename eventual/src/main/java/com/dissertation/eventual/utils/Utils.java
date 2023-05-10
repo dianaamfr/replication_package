@@ -20,7 +20,6 @@ public class Utils {
     public static final String S3_ENDPOINT = System.getProperty("s3Endpoint");
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
     public static final int MAX_LOGS = 300;
-    public static final int GOODPUT_TIME = 60000;
     public static final long PAYLOAD_START_LONG = 274877906944L;
     public static final long PAYLOAD_END_LONG = 549755813887L;
 
