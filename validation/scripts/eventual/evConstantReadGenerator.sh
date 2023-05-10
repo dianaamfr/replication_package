@@ -1,6 +1,6 @@
 if [ $# -lt 5 ]
 then
-  echo "Usage: evConstantReadGenerator.sh <imageTag> <totalPartitions> <readDelay> <key>+"
+  echo "Usage: evConstantReadGenerator.sh <imageTag> <totalPartitions> <readDelay> <totalReads> <key>+"
   exit 1
 fi
 

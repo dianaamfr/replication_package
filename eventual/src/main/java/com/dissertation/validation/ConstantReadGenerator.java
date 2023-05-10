@@ -98,7 +98,7 @@ public class ConstantReadGenerator {
                     countDown.countDown();
                     newPayload = false;
 
-                    if(countDown.getCount() - 1 == 0) {
+                    if(countDown.getCount() == 0) {
                         System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
                             endTime - startTime).toJson().toString());
                     }

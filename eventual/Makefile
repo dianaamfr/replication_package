@@ -1,4 +1,4 @@
-.ONESHELL: # Applies to every targets in the file!
+                                                                                                                                                                                                      .ONESHELL: # Applies to every targets in the file!
 # Variables
 suffix=-reference-architecture
 partition1Bucket = p1-us-east-1$(suffix)

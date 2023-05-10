@@ -2,41 +2,41 @@
 
 ## Test 1
 - Read Delay = 50ms
-- Reads for 60s(1min)
+- 10 new reads
 - 1 key per read
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 10 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 10 a
 
 ---
 ## Test 2
 - Write Delay = 100ms
-- Reads for 60s(1min)
+- 10 new reads
 - 1 key per read
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 10 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 10 a
 
 ---
 ## Test 3
 - Write Delay = 500ms
-- Reads for 60s(1min)
+- 10 new reads
 - 1 key per read
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 10 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 10 a
 
 ---
 # Get Logs
