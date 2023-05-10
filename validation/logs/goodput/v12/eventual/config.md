@@ -4,6 +4,7 @@
 - Read Delay = 50ms
 - 10 new reads
 - 1 key per read
+- 3 iterations
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
@@ -17,6 +18,7 @@
 - Write Delay = 100ms
 - 10 new reads
 - 1 key per read
+- 3 iterations
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
@@ -30,6 +32,7 @@
 - Write Delay = 500ms
 - 10 new reads
 - 1 key per read
+- 3 iterations
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a

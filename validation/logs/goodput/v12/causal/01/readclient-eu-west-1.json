@@ -1,7 +1,5 @@
 [
-    {"logType":"GOODPUT","time":60023,"totalVersions":93520},
-    {"logType":"GOODPUT","time":60030,"totalVersions":93779},
-    {"logType":"GOODPUT","time":60026,"totalVersions":84236},
-    {"logType":"GOODPUT","time":60024,"totalVersions":86413},
-    {"logType":"GOODPUT","time":60028,"totalVersions":89355}
+    {"logType":"GOODPUT","time":54441,"totalVersions":91303},
+    {"logType":"GOODPUT","time":57882,"totalVersions":94813},
+    {"logType":"GOODPUT","time":58023,"totalVersions":92362}
 ]

@@ -5,7 +5,7 @@
 - 10 new reads
 - Read Delay = 50ms
 - 1 key per read
-- 5 iterations
+- 3 iterations
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-goodput 1 8080 1
@@ -27,7 +27,7 @@
 - 10 new reads
 - Read Delay = 100ms
 - 1 key per read
-- 5 iterations
+- 3 iterations
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-goodput 1 8080 1
@@ -47,7 +47,7 @@
 - Reads during 60s (1min)
 - Read Delay = 500ms
 - 1 key per read
-- 5 iterations
+- 3 iterations
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-goodput 1 8080 1
