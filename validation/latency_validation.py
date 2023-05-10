@@ -52,7 +52,7 @@ def latency_boxplot(df_ev_latency, df_cc_latency):
     fig.suptitle('Latency Distributions')
 
     plt.tight_layout()    
-    plt.savefig(PATH + '/results/plots/latency_boxplot.png')
+    plt.savefig(PATH + '/results/plots/latency_boxplot.png', dpi=300)
     plt.clf()
 
 
@@ -62,11 +62,16 @@ def latency_stats(df_ev_latency, df_cc_latency):
     df_ev_stats.index = ['ev_latency']
     df_cc_stats.index = ['cc_latency']
 
-    df_result = pd.concat([df_ev_stats.round(2), df_cc_stats.round(2)], axis=0)
+    df_result = pd.concat([df_ev_stats.round(2), df_cc_stats.round(2)])
+    df_result['name'] = df_result.index
+    df_result = df_result.reset_index(drop=True)
 
-    plt.table(cellText=df_result.values, colLabels=df_result.columns)
+    df_result = pd.concat([df_result['name'], df_result.drop('name', axis=1)], axis=1)
+
+    plt.table(cellText=df_result.values, colLabels=df_result.columns, cellLoc='center', loc='center')
     plt.axis('off')
-    plt.savefig(PATH + '/results/plots/latency_table.png', bbox_inches='tight', loc='center')
+    plt.annotate('Latency (ms)', (0.5, 0.7), xycoords='axes fraction', ha='center', va='bottom', fontsize=10)
+    plt.savefig(PATH + '/results/plots/latency_table.png', dpi=300, bbox_inches='tight')
     plt.clf()
 
 def latency_histogram(df_ev_latency, df_cc_latency):
@@ -78,7 +83,7 @@ def latency_histogram(df_ev_latency, df_cc_latency):
     plt.xlabel('Latency (ms)')
     plt.ylabel('Frequency')
 
-    plt.savefig(PATH + '/results/plots/latency_histogram.png')
+    plt.savefig(PATH + '/results/plots/latency_histogram.png', dpi=300)
     plt.clf()
 
 def latency_table(df):

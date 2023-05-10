@@ -9,11 +9,11 @@ def latency_validation(path_ev, path_cc):
     df_ev_latency = latency_times(path_ev, 'eu-west-1')
     df_cc_latency = latency_times(path_cc, 'eu-west-1')
 
-    # Latency distribution boxplot
-    latency_boxplot(df_ev_latency, df_cc_latency)
-
     # Latency distribution table
     latency_stats(df_ev_latency, df_cc_latency)
+
+    # Latency distribution boxplot
+    latency_boxplot(df_ev_latency, df_cc_latency)
 
     # Latency histogram
     latency_histogram(df_ev_latency, df_cc_latency)
