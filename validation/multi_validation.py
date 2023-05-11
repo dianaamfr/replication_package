@@ -1,16 +1,15 @@
 import sys
-from latency_validation import latency_times, latency_throughput_relation
+from latency_validation import latency_throughput_relation
+from visibility_validation import visibility_throughput_relation
 
 def latency_validation(path_ev, path_cc):
     latency_throughput_relation(path_ev, path_cc)
-
-    pass
 
 def goodput_validation(path_ev, path_cc):
     pass
 
 def visibility_validation(path_ev, path_cc):
-    pass
+    visibility_throughput_relation(path_ev, path_cc)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:

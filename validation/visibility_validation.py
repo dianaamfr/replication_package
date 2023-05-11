@@ -326,3 +326,72 @@ def visibility_histogram_cc(df_cc_eu, df_cc_us):
     plt.savefig(PATH + '/results/plots/visibility_cc_histogram.png', dpi=300)
     plt.clf()
     plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
+
+def visibility_throughput_relation(path_ev, path_cc):
+    df_ev_eu_200, df_ev_us_200 = ev_visibility_times(path_ev + '03')
+    df_cc_eu_200, df_cc_us_200 = cc_visibility_times(path_cc + '03')
+    
+    df_ev_eu_100, df_ev_us_100 = ev_visibility_times(path_ev + '02')
+    df_cc_eu_100, df_cc_us_100 = cc_visibility_times(path_cc + '02')
+    
+    df_ev_eu_50, df_ev_us_50 = ev_visibility_times(path_ev + '01')
+    df_cc_eu_50, df_cc_us_50 = cc_visibility_times(path_cc + '01')
+
+    throughput = [5000/200, 5000/100, 5000/50]
+    dfs_ev_eu = [df_ev_eu_200, df_ev_eu_100, df_ev_eu_50]
+    dfs_ev_us = [df_ev_us_200, df_ev_us_100, df_ev_us_50]
+    dfs_cc_eu = [df_cc_eu_200, df_cc_eu_100, df_cc_eu_50]
+    dfs_cc_us = [df_cc_us_200, df_cc_us_100, df_cc_us_50]
+
+    for i in range(0, len(throughput)):
+        dfs_ev_eu[i] = get_time_diff_ev(dfs_ev_eu[i])
+        dfs_ev_us[i] = get_time_diff_ev(dfs_ev_us[i])
+        dfs_cc_eu[i] = get_time_diff_ev(dfs_cc_eu[i])
+        dfs_cc_us[i] = get_time_diff_ev(dfs_cc_us[i])
+
+    df_ev_eu = throughput_latency_df(dfs_ev_eu, throughput)
+    df_ev_us = throughput_latency_df(dfs_ev_us, throughput)
+    df_cc_eu = throughput_latency_df(dfs_cc_eu, throughput)
+    df_cc_us = throughput_latency_df(dfs_cc_us, throughput)
+
+    max_latency_eu = math.ceil(max(df_ev_eu['p99'].max(), df_cc_eu['p99'].max()))
+    max_latency_us = math.ceil(max(df_ev_us['p99'].max(), df_cc_us['p99'].max()))
+    
+    fig, axs = plt.subplots(1, 2, figsize=(20, 12))
+
+    axs[0].plot(df_ev_eu['throughput'], df_ev_eu['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Latency')
+    axs[0].plot(df_cc_eu['throughput'], df_cc_eu['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Latency')
+    axs[0].plot(df_ev_eu['throughput'], df_ev_eu['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Latency')
+    axs[0].plot(df_cc_eu['throughput'], df_cc_eu['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Latency')
+    axs[0].grid(True)
+    axs[0].legend()
+    axs[0].set_xlabel('Throughput (writes/s)')
+    axs[0].set_ylabel('Visibility (ms)')
+    axs[0].set_yticks(range(0, max_latency_eu + 1, 1000))
+    axs[0].set_title('EU Visibility vs Throughput')
+
+    axs[1].plot(df_ev_us['throughput'], df_ev_us['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Latency')
+    axs[1].plot(df_cc_us['throughput'], df_cc_us['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Latency')
+    axs[1].plot(df_ev_us['throughput'], df_ev_us['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Latency')
+    axs[1].plot(df_cc_us['throughput'], df_cc_us['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Latency')
+    axs[1].grid(True)
+    axs[1].legend()
+    axs[1].set_xlabel('Throughput (writes/s)')
+    axs[1].set_ylabel('Visibility (ms)')
+    axs[1].set_yticks(range(0, max_latency_us + 1, 1000))
+    axs[1].set_title('US Visibility vs Throughput')
+
+    plt.suptitle('Visibility for different throughput values')
+    plt.savefig(PATH + '/results/plots/visibility_with_throughput.png', dpi=300)
+    plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
+
+def throughput_latency_df(dfs, throughput):  
+    df_result = pd.DataFrame()
+    for i in range(len(dfs)):
+        df_result = df_result.append({
+            'throughput': throughput[i], 
+            'mean': dfs[i]['read_time'].mean(), 
+            'p99': dfs[i]['read_time'].quantile(q=0.99)}, 
+            ignore_index=True)
+    return df_result
