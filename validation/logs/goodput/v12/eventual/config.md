@@ -29,17 +29,17 @@
 
 ---
 ## Test 3
-- Write Delay = 500ms
+- Write Delay = 200ms
 - 10 new reads
 - 1 key per read
 - 3 iterations
 
 ### EU-WEST-1
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 10 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 200 10 a
 
 ### US-EAST-1
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 500 10 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 200 10 a
 
 ---
 # Get Logs

@@ -44,8 +44,8 @@
 ---
 ## Test 3
 - Push/Pull Rate = 5ms
-- Reads during 60s (1min)
-- Read Delay = 500ms
+- 10 new reads
+- Read Delay = 200ms
 - 1 key per read
 - 3 iterations
 
