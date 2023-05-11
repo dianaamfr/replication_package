@@ -3,6 +3,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from utils import get_data
 import os
+import math 
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 LOGS_DIR = PATH + '/logs/latency'
@@ -98,3 +99,46 @@ def latency_table(df):
         'mean': [df['latency'].mean()],
         'max': [df['latency'].max()],
         'min': [df['latency'].min()]})
+
+
+# Multivariate
+def latency_throughput_relation(path_ev, path_cc):
+    df_ev_200 = latency_times(path_ev + '03', 'eu-west-1')
+    df_ev_100 = latency_times(path_ev + '02', 'eu-west-1')
+    df_ev_50 = latency_times(path_ev + '01', 'eu-west-1')
+
+    df_cc_200 = latency_times(path_cc + '03', 'eu-west-1')
+    df_cc_100 = latency_times(path_cc + '02', 'eu-west-1')
+    df_cc_50 = latency_times(path_cc + '01', 'eu-west-1')
+
+    df_ev = latency_throughput_df([df_ev_200, df_ev_100, df_ev_50], [5000/200, 5000/100, 5000/50])
+    df_cc = latency_throughput_df([df_cc_200, df_cc_100, df_cc_50] , [5000/200, 5000/100, 5000/50])
+
+    max_latency = math.ceil(max(df_ev['p99'].max(), df_cc['p99'].max()))
+    
+    plt.figure(figsize=(10, 15))
+    plt.plot(df_ev['throughput'], df_ev['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Latency')
+    plt.plot(df_cc['throughput'], df_cc['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Latency')
+    plt.plot(df_ev['throughput'], df_ev['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Latency')
+    plt.plot(df_cc['throughput'], df_cc['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Latency')
+    plt.grid(True)
+    plt.legend()
+    plt.yticks(range(0, max_latency, 5))
+
+    plt.xlabel('Throughput (writes/s)')
+    plt.ylabel('Latency (ms)')
+
+    plt.title('Latency for different throughput values')
+    plt.savefig(PATH + '/results/plots/latency_with_throughput.png', dpi=300)
+    plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
+
+def latency_throughput_df(dfs, throughput):  
+    df_result = pd.DataFrame()
+    for i in range(len(dfs)):
+        df_result = df_result.append({
+            'throughput': throughput[i], 
+            'mean': dfs[i]['latency'].mean(), 
+            'p99': dfs[i]['latency'].quantile(q=0.99)}, 
+            ignore_index=True)
+    return df_result
