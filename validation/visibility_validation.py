@@ -1,4 +1,6 @@
 import pandas as pd
+import seaborn as sns
+import math
 import matplotlib.pyplot as plt
 from utils import get_data, get_diff
 import os
@@ -148,21 +150,17 @@ def cc_visibility_times(iteration_dir):
 
     return pd_result_eu, pd_result_us
 
-def visibility_tables(df_ev_eu, df_cc_eu, df_ev_us, df_cc_us):
-    # Write Latency & Visibility comparison table
-    df_ev_eu_stats = get_stats(df_ev_eu)
-    df_cc_eu_stats = get_stats(df_cc_eu)
-    df_ev_us_stats = get_stats(df_ev_us)
-    df_cc_us_stats = get_stats(df_cc_us)
-
-    get_table(df_ev_eu_stats, 'Eventual Consistency Write Latency & Visibility - EU', 'write_latency_visibility_ev_eu.png')
-    get_table(df_cc_eu_stats, 'Causal Consistency Write Latency & Visibility - EU', 'write_latency_visibility_cc_eu.png')
-    get_table(df_ev_us_stats, 'Eventual Consistency Write Latency & Visibility - US', 'write_latency_visibility_ev_us.png')
-    get_table(df_cc_us_stats, 'Causal Consistency Write Latency & Visibility - US', 'write_latency_visibility_cc_us.png')
-
 def get_table(df, title, filename):
+    df = df.round(2)
+    df['name'] = df.index
+    columns = list(df.columns)
+    columns.remove('name')
+    new_order = ['name'] + columns
+    df = df[new_order]
+
+    df.reset_index(drop=True, inplace=True)
     plt.annotate(title, (0.5, 0.7), xycoords='axes fraction', ha='center', va='bottom', fontsize=10)
-    plt.table(cellText=df.values.round(2), colLabels=df.columns, loc='center', cellLoc='center')
+    plt.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center')
     plt.axis('off')
     plt.savefig(PATH + '/results/plots/' + filename + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
@@ -183,7 +181,6 @@ def get_time_diff_cc(df_cc):
     df_cc_diff['read_time'] = get_diff(df_cc, 'client_request', 'read_client_response')
     return df_cc_diff
 
-
 def get_stats(df):
     return pd.DataFrame({
         '99%': df.quantile(0.99),
@@ -193,3 +190,115 @@ def get_stats(df):
         'mean': df.mean(),
         'min': df.min(),
         'max': df.max()})
+
+def visibility_tables(df_ev_eu, df_cc_eu, df_ev_us, df_cc_us):
+    # Write Latency & Visibility comparison table
+    df_ev_eu_stats = get_stats(df_ev_eu)
+    df_cc_eu_stats = get_stats(df_cc_eu)
+    df_ev_us_stats = get_stats(df_ev_us)
+    df_cc_us_stats = get_stats(df_cc_us)
+
+    get_table(df_ev_eu_stats, 'Eventual Consistency Write Latency & Visibility - EU', 'write_latency_visibility_ev_eu.png')
+    get_table(df_cc_eu_stats, 'Causal Consistency Write Latency & Visibility - EU', 'write_latency_visibility_cc_eu.png')
+    get_table(df_ev_us_stats, 'Eventual Consistency Write Latency & Visibility - US', 'write_latency_visibility_ev_us.png')
+    get_table(df_cc_us_stats, 'Causal Consistency Write Latency & Visibility - US', 'write_latency_visibility_cc_us.png')
+
+def addPercentiles(df, percentiles, ax):
+    visibility_ev_eu_summary = df['read_time'].describe(percentiles=[p/100 for p in percentiles])
+
+    for p in percentiles:
+        ax.axhline(visibility_ev_eu_summary[f'{p}%'], linestyle='--', color='green', label=f'{p}%')
+
+    ax.axhline(visibility_ev_eu_summary['mean'], linestyle='-', color='blue', label='mean')
+    ax.axhline(visibility_ev_eu_summary['min'], linestyle=':', color='gray', label='min')
+    ax.axhline(visibility_ev_eu_summary['max'], linestyle=':', color='gray', label='max')
+    ax.legend()
+    ax.set_xlabel('')
+
+def visibility_boxplot(df_ev_eu, df_cc_eu, df_ev_us, df_cc_us):
+    percentiles = [50, 70, 95, 99]
+    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(10, 15))
+
+    min_visibility_eu = math.ceil(min(min(df_ev_eu['read_time']), min(df_cc_eu['read_time'])))
+    min_visibility_us = math.ceil(min(min(df_ev_us['read_time']), min(df_cc_us['read_time'])))
+
+    max_visibility_eu = math.ceil(max(max(df_ev_eu['read_time']), max(df_cc_eu['read_time'])))
+    max_visibility_us = math.ceil(max(max(df_ev_us['read_time']), max(df_cc_us['read_time'])))
+
+    axs[0,0].set_ylim(min_visibility_eu, max_visibility_eu)
+    axs[0,1].set_ylim(min_visibility_eu, max_visibility_eu)
+    axs[1,0].set_ylim(min_visibility_us, max_visibility_us)
+    axs[1,1].set_ylim(min_visibility_us, max_visibility_us)
+
+    df_ev_eu.plot.box(y='read_time', ax=axs[0,0], grid=True)
+    axs[0,0].set_title('Eventually Consistent EU')
+    
+    df_cc_eu.plot.box(y='read_time', ax=axs[0,1], grid=True)
+    axs[0,1].set_title('Causally Consistent EU')
+    
+    df_ev_us.plot.box(y='read_time', ax=axs[1,0], grid=True)
+    axs[1,0].set_title('Eventually Consistent US')
+
+    df_cc_us.plot.box(y='read_time', ax=axs[1,1], grid=True)
+    axs[1,1].set_title('Causally Consistent US')
+
+    addPercentiles(df_ev_eu, percentiles, axs[0,0])
+    addPercentiles(df_cc_eu, percentiles, axs[0,1])
+    addPercentiles(df_ev_us, percentiles, axs[1,0])
+    addPercentiles(df_cc_us, percentiles, axs[1,1])
+
+    fig.suptitle('Visibility Distribution')
+
+    plt.tight_layout()    
+    plt.savefig(PATH + '/results/plots/visibility_boxplot.png', dpi=300)
+    plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
+
+def stable_time_boxplot(df_eu, df_us):
+    percentiles = [50, 70, 95, 99]
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(10, 8))
+
+    min_stable_time = math.ceil(min(min(df_eu['read_time']), min(df_us['read_time'])))
+    max_stable_time = math.ceil(max(max(df_eu['read_time']), max(df_us['read_time'])))
+
+    axs[0].set_ylim(min_stable_time, max_stable_time)
+    axs[1].set_ylim(min_stable_time, max_stable_time)
+
+    df_eu.plot.box(y='stable_time', ax=axs[0], grid=True)
+    axs[0].set_title('EU')
+
+    df_us.plot.box(y='stable_time', ax=axs[1], grid=True)
+    axs[1].set_title('US')
+
+    addPercentiles(df_eu, percentiles, axs[0])
+    addPercentiles(df_us, percentiles, axs[1])
+
+    plt.savefig(PATH + '/results/plots/stable_time_boxplot.png', dpi=300)
+    plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
+
+def visibility_histogram(df_ev_eu, df_cc_eu, df_ev_us, df_cc_us):
+    fig, axs = plt.subplots(2, 2, figsize=(10, 15))
+
+    sns.histplot(data=df_ev_eu, x="read_time", kde=True, color="skyblue", ax=axs[0, 0])
+    sns.histplot(data=df_ev_us, x="read_time", kde=True, color="olive", ax=axs[0, 1])
+    sns.histplot(data=df_cc_eu, x="read_time", kde=True, color="gold", ax=axs[1, 0])
+    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="teal", ax=axs[1, 1])
+
+    plt.savefig(PATH + '/results/plots/visibility_histogram.png', dpi=300)
+    plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
+
+def visibility_histogram_cc(df_cc_eu, df_cc_us):
+    fig, axs = plt.subplots(3, 2, figsize=(20, 10))
+
+    sns.histplot(data=df_cc_eu, x="response_time", kde=True, color="skyblue", ax=axs[0, 0])
+    sns.histplot(data=df_cc_eu, x="push_time", kde=True, color="olive", ax=axs[0, 1])
+    sns.histplot(data=df_cc_eu, x="pull_time", kde=True, color="gold", ax=axs[1, 0])
+    sns.histplot(data=df_cc_eu, x="store_time", kde=True, color="teal", ax=axs[1, 1])
+    sns.histplot(data=df_cc_eu, x="stable_time", kde=True, color="magenta", ax=axs[1, 1])
+    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="red", ax=axs[1, 1])
+
+    plt.savefig(PATH + '/results/plots/visibility_cc_histogram.png', dpi=300)
+    plt.clf()
+    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']

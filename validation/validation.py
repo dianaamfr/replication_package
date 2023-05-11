@@ -1,7 +1,8 @@
 import sys
 from latency_validation import latency_times, latency_stats, latency_boxplot, latency_histogram
 from goodput_validation import goodput_times, goodput_stats
-from visibility_validation import ev_visibility_times, cc_visibility_times, get_time_diff_ev, get_time_diff_cc, visibility_tables
+from visibility_validation import ev_visibility_times, cc_visibility_times, get_time_diff_ev, get_time_diff_cc, \
+    visibility_tables, visibility_boxplot, stable_time_boxplot, visibility_histogram, visibility_histogram_cc
 import os
 
 PATH = os.path.dirname(os.path.abspath(__file__))
@@ -36,15 +37,20 @@ def visibility_validation(path_ev, path_cc):
 
     visibility_tables(df_ev_diff_eu, df_cc_diff_eu, df_ev_diff_us, df_cc_diff_us)
 
-    # TODO: Boxplot & density plot with the time it takes for a write to be visible to a read
-    # TODO: visibility_boxplot(df_ev_visibility_eu, df_cc_visibility_eu)
-    # TODO: visibility_boxplot(df_ev_visibility_us, df_cc_visibility_us)
+    # Boxplot with the time it takes for a write to be visible to a read
+    visibility_boxplot(df_ev_diff_eu, df_cc_diff_eu, df_ev_diff_us, df_cc_diff_us)
 
-    # TODO: Boxplot & density plot with the time it takes for a write to be stable
+    # Boxplotwith the time it takes for a write to be stable
+    stable_time_boxplot(df_cc_diff_eu,df_cc_diff_us)
 
     # TODO: Duration of each phase
 
-    # TODO: Distribution of the visibility times (comparison between eu and west for eventual and causal)
+
+    # Distribution of the visibility times (comparison between eu and west for eventual and causal)
+    visibility_histogram(df_ev_diff_eu, df_cc_diff_eu, df_ev_diff_us, df_cc_diff_us)
+
+    # Distribution of the visibility times of each phase
+    visibility_histogram_cc(df_cc_diff_eu, df_cc_diff_us)
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
