@@ -79,7 +79,7 @@ def ev_visibility_times(iteration_dir):
             'read_client_response': read_time_us,
             }, ignore_index=True)
 
-    return pd_result_eu, pd_result_us
+    return pd_result_eu.tail(100), pd_result_us.tail(100)
 
 def cc_visibility_times(iteration_dir):
     write_client_df = get_data(LOGS_DIR + '/' + iteration_dir, 'writeclient-eu-west-1')
@@ -148,7 +148,7 @@ def cc_visibility_times(iteration_dir):
             'read_client_response': read_time_us,
             }, ignore_index=True)
 
-    return pd_result_eu, pd_result_us
+    return pd_result_eu.tail(100), pd_result_us.tail(100)
 
 def get_table(df, title, filename):
     df = df.round(2)
@@ -281,10 +281,22 @@ def visibility_histogram(df_ev_eu, df_cc_eu, df_ev_us, df_cc_us):
     fig, axs = plt.subplots(2, 2, figsize=(10, 15))
 
     sns.histplot(data=df_ev_eu, x="read_time", kde=True, color="skyblue", ax=axs[0, 0])
+    axs[0,0].set_title('Eventually Consistent EU')
+    axs[0,0].set_xlabel('Read Time')
+    
     sns.histplot(data=df_ev_us, x="read_time", kde=True, color="olive", ax=axs[0, 1])
+    axs[0,1].set_title('Eventually Consistent US')
+    axs[0,1].set_xlabel('Read Time')
+    
     sns.histplot(data=df_cc_eu, x="read_time", kde=True, color="gold", ax=axs[1, 0])
-    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="teal", ax=axs[1, 1])
+    axs[1,0].set_title('Causally Consistent EU')
+    axs[1,0].set_xlabel('Read Time')
 
+    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="teal", ax=axs[1, 1])
+    axs[1,1].set_title('Causally Consistent US')
+    axs[1,1].set_xlabel('Read Time')
+
+    plt.suptitle('Visibility Distribution')
     plt.savefig(PATH + '/results/plots/visibility_histogram.png', dpi=300)
     plt.clf()
     plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
@@ -293,12 +305,24 @@ def visibility_histogram_cc(df_cc_eu, df_cc_us):
     fig, axs = plt.subplots(3, 2, figsize=(20, 10))
 
     sns.histplot(data=df_cc_eu, x="response_time", kde=True, color="skyblue", ax=axs[0, 0])
-    sns.histplot(data=df_cc_eu, x="push_time", kde=True, color="olive", ax=axs[0, 1])
-    sns.histplot(data=df_cc_eu, x="pull_time", kde=True, color="gold", ax=axs[1, 0])
-    sns.histplot(data=df_cc_eu, x="store_time", kde=True, color="teal", ax=axs[1, 1])
-    sns.histplot(data=df_cc_eu, x="stable_time", kde=True, color="magenta", ax=axs[1, 1])
-    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="red", ax=axs[1, 1])
+    axs[0,0].set_xlabel('Response Time')
 
+    sns.histplot(data=df_cc_eu, x="push_time", kde=True, color="olive", ax=axs[0,1])
+    axs[0,1].set_xlabel('Push Time')
+
+    sns.histplot(data=df_cc_eu, x="pull_time", kde=True, color="gold", ax=axs[1, 0])
+    axs[1,0].set_xlabel('Push Time')
+
+    sns.histplot(data=df_cc_eu, x="store_time", kde=True, color="teal", ax=axs[1, 1])
+    axs[1,1].set_xlabel('Store Time')
+
+    sns.histplot(data=df_cc_eu, x="stable_time", kde=True, color="magenta", ax=axs[2, 0])
+    axs[2,0].set_xlabel('Stable Time')
+
+    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="red", ax=axs[2, 1])
+    axs[2,1].set_xlabel('Read Time')
+
+    plt.suptitle('Causally Consistent Write & Latency Visibility')
     plt.savefig(PATH + '/results/plots/visibility_cc_histogram.png', dpi=300)
     plt.clf()
     plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']

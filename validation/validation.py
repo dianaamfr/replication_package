@@ -43,9 +43,6 @@ def visibility_validation(path_ev, path_cc):
     # Boxplotwith the time it takes for a write to be stable
     stable_time_boxplot(df_cc_diff_eu,df_cc_diff_us)
 
-    # TODO: Duration of each phase
-
-
     # Distribution of the visibility times (comparison between eu and west for eventual and causal)
     visibility_histogram(df_ev_diff_eu, df_cc_diff_eu, df_ev_diff_us, df_cc_diff_us)
 
