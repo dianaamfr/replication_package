@@ -1,4 +1,5 @@
 import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
 from utils import get_data
 import os
@@ -77,8 +78,8 @@ def latency_stats(df_ev_latency, df_cc_latency):
 
 def latency_histogram(df_ev_latency, df_cc_latency):
     plt.figure(figsize=(10, 7))
-    plt.hist(df_ev_latency['latency'], alpha=0.5, bins=30, label='EV')
-    plt.hist(df_cc_latency['latency'], alpha=0.5, bins=30, label='CC')
+    sns.histplot(data=df_ev_latency, x="latency", kde=True, color="teal", label='EV')
+    sns.histplot(data=df_cc_latency, x="latency", kde=True, color="orange", label='CC')
 
     plt.legend(loc='upper right')
     plt.xlabel('Latency (ms)')
@@ -97,4 +98,3 @@ def latency_table(df):
         'mean': [df['latency'].mean()],
         'max': [df['latency'].max()],
         'min': [df['latency'].min()]})
-
