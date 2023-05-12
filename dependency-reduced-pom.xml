@@ -94,7 +94,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
+                  <mainClass>com.dissertation.validation.singleClient.ConstantWriteGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -110,7 +110,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ClientInterface</mainClass>
+                  <mainClass>com.dissertation.validation.singleClient.ClientInterface</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -126,7 +126,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                  <mainClass>com.dissertation.validation.singleClient.ConstantReadGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -142,7 +142,23 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.BusyWriteGenerator</mainClass>
+                  <mainClass>com.dissertation.validation.singleClient.BusyWriteGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+          <execution>
+            <id>multi-constant-write-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>multiConstantWriteGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.multiClient.ConstantWriteGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>

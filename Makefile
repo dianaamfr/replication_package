@@ -80,4 +80,9 @@ readTest2:
 writeTest2:
 	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)
 
+writesPerClient = 6
+clients = 1
+keysPerPartition = 1
 	
+writeTest3:
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(writesPerClient) $(keysPerPartition) $(clients)

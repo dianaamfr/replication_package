@@ -1,4 +1,4 @@
-package com.dissertation.validation;
+package com.dissertation.validation.singleClient;
 
 import java.util.ArrayList;
 import java.util.HashSet;
