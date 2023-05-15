@@ -337,7 +337,7 @@ def visibility_throughput_relation(path_ev, path_cc):
     df_ev_eu_50, df_ev_us_50 = ev_visibility_times(path_ev + '01')
     df_cc_eu_50, df_cc_us_50 = cc_visibility_times(path_cc + '01')
 
-    throughput = [5000/200, 5000/100, 5000/50]
+    throughput = [5, 10, 20]
     dfs_ev_eu = [df_ev_eu_200, df_ev_eu_100, df_ev_eu_50]
     dfs_ev_us = [df_ev_us_200, df_ev_us_100, df_ev_us_50]
     dfs_cc_eu = [df_cc_eu_200, df_cc_eu_100, df_cc_eu_50]

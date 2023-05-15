@@ -1,13 +1,13 @@
 import sys
-from latency_validation import latency_times, latency_stats, latency_boxplot, latency_histogram
-from goodput_validation import goodput_times, goodput_stats
-from visibility_validation import ev_visibility_times, cc_visibility_times, get_time_diff_ev, get_time_diff_cc, \
+from evaluation.latency import latency_times, latency_stats, latency_boxplot, latency_histogram
+from evaluation.goodput import goodput_times, goodput_stats
+from evaluation.visibility import ev_visibility_times, cc_visibility_times, get_time_diff_ev, get_time_diff_cc, \
     visibility_tables, visibility_boxplot, stable_time_boxplot, visibility_histogram, visibility_histogram_cc
 import os
 
 PATH = os.path.dirname(os.path.abspath(__file__))
 
-def latency_validation(path_ev, path_cc):
+def latency_evaluation(path_ev, path_cc):
     df_ev_latency = latency_times(path_ev, 'eu-west-1')
     df_cc_latency = latency_times(path_cc, 'eu-west-1')
 
@@ -20,13 +20,13 @@ def latency_validation(path_ev, path_cc):
     # Latency histogram
     latency_histogram(df_ev_latency, df_cc_latency)
 
-def goodput_validation(path_ev, path_cc):
+def goodput_evaluation(path_ev, path_cc):
     df_ev_goodput = goodput_times(path_ev, 'eu-west-1')
     df_cc_goodput= goodput_times(path_cc, 'eu-west-1')
 
     goodput_stats(df_ev_goodput, df_cc_goodput)
 
-def visibility_validation(path_ev, path_cc):
+def visibility_evaluation(path_ev, path_cc):
     df_ev_eu, df_ev_us = ev_visibility_times(path_ev)
     df_cc_eu, df_cc_us = cc_visibility_times(path_cc)
 
@@ -51,13 +51,13 @@ def visibility_validation(path_ev, path_cc):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('Usage: python3 validation.py <image-tag> <test-id>')
+        print('Usage: python3 evaluation.py <image-tag> <test-id>')
         exit(1)
 
     path_ev = sys.argv[1] + '/eventual/' + sys.argv[2]
     path_cc = sys.argv[1] + '/causal/' + sys.argv[2]
 
-    latency_validation(path_ev, path_cc)
-    goodput_validation(path_ev, path_cc)
-    visibility_validation(path_ev, path_cc)
+    latency_evaluation(path_ev, path_cc)
+    goodput_evaluation(path_ev, path_cc)
+    visibility_evaluation(path_ev, path_cc)
     

@@ -111,7 +111,7 @@ def latency_throughput_relation(path_ev, path_cc):
     df_cc_100 = latency_times(path_cc + '02', 'eu-west-1')
     df_cc_50 = latency_times(path_cc + '01', 'eu-west-1')
 
-    throughput = [5000/200, 5000/100, 5000/50]
+    throughput = [5, 10, 20]
     df_ev = latency_throughput_df([df_ev_200, df_ev_100, df_ev_50], throughput)
     df_cc = latency_throughput_df([df_cc_200, df_cc_100, df_cc_50] , throughput)
 
