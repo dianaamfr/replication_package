@@ -41,14 +41,6 @@ public class ConstantReadGenerator {
         this.scheduler = scheduler;
     }
 
-    private List<Set<String>> getReadSets(List<String> keys) {
-        List<Set<String>> readSets = new ArrayList<>();
-        for (int i = 0; i < keys.size(); i += this.keysPerRead) {
-            readSets.add(new HashSet<String>(keys.subList(i, i + this.keysPerRead)));
-        }
-        return readSets;
-    }
-
     public static void main(String[] args) {
         ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
         int regionPartitions = 0;
@@ -92,6 +84,14 @@ public class ConstantReadGenerator {
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
         }
+    }
+
+    private List<Set<String>> getReadSets(List<String> keys) {
+        List<Set<String>> readSets = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i += this.keysPerRead) {
+            readSets.add(new HashSet<String>(keys.subList(i, i + this.keysPerRead)));
+        }
+        return readSets;
     }
 
     private void run() {

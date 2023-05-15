@@ -40,32 +40,6 @@ public class ConstantWriteGenerator {
         this.init(clients, writesPerClient, keys, readAddress, writeAddresses);
     }
 
-    public void init(int clients, int writesPerClient, List<String> keys, Address readAddress, List<Address> writeAddresses) {
-        for(int i = 0; i < clients; i++) {
-            Client client = new Client(readAddress, writeAddresses);
-            ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
-            int startIndex = i % keys.size();
-            CountDownLatch countdown = new CountDownLatch(writesPerClient);
-            this.countdowns.add(countdown);
-            this.logs.add(logs);
-            this.scheduler.scheduleAtFixedRate(new WriteGeneratorRequest(client, countdown, keys, logs, startIndex), 0, this.delay, TimeUnit.MILLISECONDS);
-        }
-    }
-
-    public void run() {
-        this.startSignal.countDown();
-        try {
-            for(CountDownLatch countDown : this.countdowns) {
-                countDown.await();
-            }
-            this.scheduler.shutdown();
-            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
-            Utils.logsToFile(this.logs);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     public static void main(String[] args) {
         int regionPartitions = 0;
         Address readAddress;
@@ -114,6 +88,32 @@ public class ConstantWriteGenerator {
         }
     }
 
+    public void init(int clients, int writesPerClient, List<String> keys, Address readAddress, List<Address> writeAddresses) {
+        for(int i = 0; i < clients; i++) {
+            Client client = new Client(readAddress, writeAddresses);
+            ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
+            int startIndex = i % keys.size();
+            CountDownLatch countdown = new CountDownLatch(writesPerClient);
+            this.countdowns.add(countdown);
+            this.logs.add(logs);
+            this.scheduler.scheduleAtFixedRate(new WriteGeneratorRequest(client, countdown, keys, logs, startIndex), 0, this.delay, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    public void run() {
+        this.startSignal.countDown();
+        try {
+            for(CountDownLatch countDown : this.countdowns) {
+                countDown.await();
+            }
+            this.scheduler.shutdown();
+            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            Utils.logsToFile(this.logs);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
     private class WriteGeneratorRequest implements Runnable {
         private Client client;
         private CountDownLatch countDown;

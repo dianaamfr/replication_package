@@ -2,7 +2,6 @@ package com.dissertation.validation.multiClient;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -22,7 +21,6 @@ import com.dissertation.validation.logs.ROTResponseLog;
 public class BusyReadGenerator {
     private ExecutorService executor;
     private final long endMarker;
-    private final int keysPerRead;
     private final List<ArrayDeque<Log>> logs;
     private final int readSetsSize;
     private final CountDownLatch startSignal;
@@ -33,35 +31,12 @@ public class BusyReadGenerator {
     public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead, int keysPerPartition, int clients) {
         this.executor = executor;
         this.endMarker = endMarker;
-        this.keysPerRead = keysPerRead;
         this.logs = new ArrayList<>();
         this.startSignal = new CountDownLatch(1);
         this.countDown = new CountDownLatch(1);
-        List<Set<String>> readSets = getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition));
+        List<Set<String>> readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
         this.readSetsSize = readSets.size();
         this.init(clients, readSets, readAddress, writeAddresses);
-    }
-
-    public void init(int clients, List<Set<String>> keys, Address readAddress, List<Address> writeAddresses) {
-        System.out.println(keys);
-        for(int i = 0; i < clients; i++) {
-            Client client = new Client(readAddress, writeAddresses);
-            ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
-            int startIndex = i % keys.size();
-            this.logs.add(logs);
-            this.executor.submit(new ReadGeneratorRequest(client, keys, logs, startIndex));
-        }
-    }
-
-    public void run() {
-        this.startSignal.countDown();
-        try {
-            this.executor.shutdown();
-            this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
-            Utils.logsToFile(this.logs);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     public static void main(String[] args) {
@@ -103,12 +78,26 @@ public class BusyReadGenerator {
         }
     }
 
-    private List<Set<String>> getReadSets(List<String> keys) {
-        List<Set<String>> readSets = new ArrayList<>();
-        for (int i = 0; i < keys.size(); i += this.keysPerRead) {
-            readSets.add(new HashSet<String>(keys.subList(i, i + this.keysPerRead)));
+    public void init(int clients, List<Set<String>> keys, Address readAddress, List<Address> writeAddresses) {
+        System.out.println(keys);
+        for(int i = 0; i < clients; i++) {
+            Client client = new Client(readAddress, writeAddresses);
+            ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
+            int startIndex = i % keys.size();
+            this.logs.add(logs);
+            this.executor.submit(new ReadGeneratorRequest(client, keys, logs, startIndex));
         }
-        return readSets;
+    }
+
+    public void run() {
+        this.startSignal.countDown();
+        try {
+            this.executor.shutdown();
+            this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            Utils.logsToFile(this.logs);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private class ReadGeneratorRequest implements Runnable {

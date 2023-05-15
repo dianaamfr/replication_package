@@ -4,8 +4,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 
@@ -133,4 +136,13 @@ public class Utils {
         }
         return keys;
     }
+
+    public static List<Set<String>> getReadSets(List<String> keys, int keysPerRead) {
+        List<Set<String>> readSets = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i += keysPerRead) {
+            readSets.add(new HashSet<String>(keys.subList(i, i + keysPerRead)));
+        }
+        return readSets;
+    }
+
 }

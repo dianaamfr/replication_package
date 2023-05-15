@@ -2,7 +2,6 @@ package com.dissertation.validation.singleClient;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +17,6 @@ import com.dissertation.validation.logs.ROTResponseLog;
 public class BusyReadGenerator {
     private final Client client;
     private final long endMarker;
-    private final int keysPerRead;
     private final List<Set<String>> readSets;
     private final ArrayDeque<Log> logs;
     private long lastPayload;
@@ -29,8 +27,7 @@ public class BusyReadGenerator {
     public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.endMarker = endMarker;
-        this.keysPerRead = keysPerRead;
-        this.readSets = getReadSets(keys);
+        this.readSets = Utils.getReadSets(keys, keysPerRead);
         this.logs = new ArrayDeque<>(Utils.MAX_LOGS);
         this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
         this.keyCounter = 0;
@@ -80,14 +77,6 @@ public class BusyReadGenerator {
             e.printStackTrace();
             System.err.println(USAGE);
         }
-    }
-
-    private List<Set<String>> getReadSets(List<String> keys) {
-        List<Set<String>> readSets = new ArrayList<>();
-        for (int i = 0; i < keys.size(); i += this.keysPerRead) {
-            readSets.add(new HashSet<String>(keys.subList(i, i + this.keysPerRead)));
-        }
-        return readSets;
     }
 
     public void run() {
