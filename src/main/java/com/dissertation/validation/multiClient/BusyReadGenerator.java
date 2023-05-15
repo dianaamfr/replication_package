@@ -78,8 +78,7 @@ public class BusyReadGenerator {
         }
     }
 
-    public void init(int clients, List<Set<String>> keys, Address readAddress, List<Address> writeAddresses) {
-        System.out.println(keys);
+    private void init(int clients, List<Set<String>> keys, Address readAddress, List<Address> writeAddresses) {
         for(int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);

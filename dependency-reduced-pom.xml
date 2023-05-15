@@ -179,6 +179,22 @@
               </transformers>
             </configuration>
           </execution>
+          <execution>
+            <id>multi-busy-write-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>multiBusyWriteGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.multiClient.BusyWriteGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
         </executions>
         <configuration>
           <transformers>

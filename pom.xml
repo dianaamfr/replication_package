@@ -310,7 +310,7 @@
                         </goals>
                     </execution>
 
-                      <!-- MULTI CLIENT BYSY READ GENERATOR -->
+                    <!-- MULTI CLIENT BUSY READ GENERATOR -->
                     <execution>
                         <id>multi-busy-read-generator</id>
                         <configuration>
@@ -330,6 +330,25 @@
                         </goals>
                     </execution>
                 
+                    <!-- MULTI CLIENT BUSY WRITE GENERATOR -->
+                    <execution>
+                        <id>multi-busy-write-generator</id>
+                        <configuration>
+                            <finalName>multiBusyWriteGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.validation.multiClient.BusyWriteGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

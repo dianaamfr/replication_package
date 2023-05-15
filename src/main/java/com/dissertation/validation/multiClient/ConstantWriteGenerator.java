@@ -88,7 +88,7 @@ public class ConstantWriteGenerator {
         }
     }
 
-    public void init(int clients, int writesPerClient, List<String> keys, Address readAddress, List<Address> writeAddresses) {
+    private void init(int clients, int writesPerClient, List<String> keys, Address readAddress, List<Address> writeAddresses) {
         for(int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);

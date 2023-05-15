@@ -85,8 +85,15 @@ clients = 100
 keysPerPartition = 10
 totalWrites = 1000
 
-writeTest3:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(writesPerClient) $(keysPerPartition) $(clients)
 
 readTest3:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyReadGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keysPerRead) $(keysPerPartition) $(clients)
+
+writeTest3:
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(writesPerClient) $(keysPerPartition) $(clients)
+
+readTest4:
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantReadGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(totalReads) $(keysPerRead) $(keysPerPartition) $(clients)
+
+writeTest4:
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keysPerPartition) $(clients)
