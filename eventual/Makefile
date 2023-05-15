@@ -1,5 +1,5 @@
-                                                                                                                                                                                                      .ONESHELL: # Applies to every targets in the file!
-# Variables
+.ONESHELL: 
+
 suffix=-reference-architecture
 partition1Bucket = p1-us-east-1$(suffix)
 partition2Bucket = p2-us-east-1$(suffix)
@@ -9,7 +9,10 @@ region = us-east-1
 partitions = 2
 regionPartitions = 2
 
-# Setup
+###############
+# Local Setup #
+###############
+
 all:
 	mvn clean
 	mvn package
@@ -26,30 +29,40 @@ createBuckets:
 emptyBuckets:
 	awslocal s3 rm s3://$(partition1Bucket) --recursive
 	awslocal s3 rm s3://$(partition2Bucket) --recursive
-	
-# CLI
+
+
+#######
+# CLI #
+#######
+
 client:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar
 
-# Validation
+
+#################################
+# Single Client Load Generators #
+#################################
 
 totalWrites = 110
 keys = a b
 writeDelay = 50
 
-readTest1:
+readDelay = 50
+expectedWrites = 10
+
+# Single client read and write generators to measure latency with constant throughput 
+singleBusyRead:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(totalWrites) $(keys)
 
-writeTest1:
+singleConstantWrite:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar $(writeDelay) $(totalWrites) $(keys)
 
-readDelay = 50
-totalReads = 10
 
-readTest2:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(totalReads) $(keys)
+# Single client read and write generators to measure goodput with constant latency
+singleConstantRead:
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(expectedWrites) $(keys)
 
-writeTest2:
+singleBusyWrite:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar $(keys)
 
 	

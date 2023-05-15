@@ -28,7 +28,7 @@ This repository holds a Maven project with the following structure:
         - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
         - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
     - `utils`: Util functions, constants and classes.
-    - `validation`: Comprises classes that can be used to test the prototype, namely:
+    - `evaluation`: Comprises classes that can be used to test the prototype, namely:
         - `ClientInterface`: To test the prototype through a command-line interface.
         - `logs`: Classes that represent logs of each relevant operation. Used for validating the prototype.
         - `BusyReadGenerator`: A single-threaded reader that issues read requests with no delay to all the keys provided in the arguments.
@@ -36,7 +36,7 @@ This repository holds a Maven project with the following structure:
         - `ConstantReadGenerator`: A single-threaded reader that issues read requests with a fixed delay to all the keys provided in the arguments.
         - `BusyWriteGenerator`: A single-threaded writer that issues write requests with no delay, alternating between the provided set of keys.
 - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
-- `logs`: Stores the logs that result from the validation.
+- `logs`: Stores the logs that result from the evaluation.
 - `scripts`: Holds useful scripts for running each component of the prototype with docker.
 
 ### Dependencies

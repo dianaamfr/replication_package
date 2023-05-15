@@ -5,9 +5,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayDeque;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
+import com.dissertation.evaluation.logs.Log;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Utils;
-import com.dissertation.validation.logs.Log;
 
 import io.grpc.Server;
 

@@ -6,7 +6,7 @@ import java.util.ArrayDeque;
 
 import org.json.JSONArray;
 
-import com.dissertation.validation.logs.Log;
+import com.dissertation.evaluation.logs.Log;
 
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.regions.Region;

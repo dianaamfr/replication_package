@@ -190,7 +190,7 @@
                         </goals>
                     </execution>
 
-                    <!-- BUSY READ GENERATOR -->
+                    <!-- SINGLE BUSY READ GENERATOR -->
                     <execution>
                         <id>busy-read-generator</id>
                         <configuration>
@@ -200,7 +200,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.BusyReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -210,7 +210,7 @@
                         </goals>
                     </execution>
 
-                    <!-- CONSTANT WRITE GENERATOR -->
+                    <!-- SINGLE CONSTANT WRITE GENERATOR -->
                     <execution>
                         <id>constant-write-generator</id>
                         <configuration>
@@ -220,7 +220,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.singleClient.ConstantWriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.ConstantWriteGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -240,7 +240,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.singleClient.ClientInterface</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.ClientInterface</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -250,7 +250,7 @@
                         </goals>
                     </execution>
 
-                    <!-- CONSTANT READ GENERATOR -->
+                    <!-- SINGLE CONSTANT READ GENERATOR -->
                     <execution>
                         <id>constant-read-generator</id>
                         <configuration>
@@ -260,7 +260,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.singleClient.ConstantReadGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.ConstantReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -270,7 +270,7 @@
                         </goals>
                     </execution>
                 
-                    <!-- BUSY WRITE GENERATOR -->
+                    <!-- SINGLE BUSY WRITE GENERATOR -->
                     <execution>
                         <id>busy-write-generator</id>
                         <configuration>
@@ -280,7 +280,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.singleClient.BusyWriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.BusyWriteGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -300,7 +300,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.multiClient.ConstantWriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.multiClient.ConstantWriteGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -320,7 +320,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.multiClient.BusyReadGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.multiClient.BusyReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -340,7 +340,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.multiClient.BusyWriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.multiClient.BusyWriteGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

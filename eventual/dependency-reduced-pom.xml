@@ -28,7 +28,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ClientInterface</mainClass>
+                  <mainClass>com.dissertation.evaluation.ClientInterface</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -44,7 +44,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
+                  <mainClass>com.dissertation.evaluation.BusyReadGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -60,7 +60,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
+                  <mainClass>com.dissertation.evaluation.ConstantWriteGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -76,7 +76,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                  <mainClass>com.dissertation.evaluation.ConstantReadGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>
@@ -92,7 +92,7 @@
               <transformers>
                 <transformer />
                 <transformer>
-                  <mainClass>com.dissertation.validation.BusyWriteGenerator</mainClass>
+                  <mainClass>com.dissertation.evaluation.BusyWriteGenerator</mainClass>
                 </transformer>
               </transformers>
             </configuration>

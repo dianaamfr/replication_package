@@ -26,5 +26,5 @@ bin/
 META-INF/
 target
 logs/*.json
-validation/__pycache__
+evaluation/__pycache__
 eventual/logs/*.json

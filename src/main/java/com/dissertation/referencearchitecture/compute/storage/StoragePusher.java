@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.dissertation.referencearchitecture.compute.clock.HLCState;
+import com.dissertation.evaluation.logs.Log;
+import com.dissertation.evaluation.logs.S3OperationLog;
 import com.dissertation.referencearchitecture.StableTimeRequest;
 import com.dissertation.referencearchitecture.StableTimeResponse;
 import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
@@ -12,11 +14,8 @@ import com.dissertation.referencearchitecture.compute.clock.HLC;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
-import com.dissertation.validation.logs.S3OperationLog;
 
 import io.grpc.StatusRuntimeException;
-
-import com.dissertation.validation.logs.Log;
 
 public class StoragePusher implements Runnable {
     private final S3Helper s3Helper;
