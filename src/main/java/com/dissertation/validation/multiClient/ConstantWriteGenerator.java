@@ -96,7 +96,7 @@ public class ConstantWriteGenerator {
             CountDownLatch countdown = new CountDownLatch(writesPerClient);
             this.countdowns.add(countdown);
             this.logs.add(logs);
-            this.scheduler.scheduleAtFixedRate(new WriteGeneratorRequest(client, countdown, keys, logs, startIndex), 0, this.delay, TimeUnit.MILLISECONDS);
+            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(client, countdown, keys, logs, startIndex), 0, this.delay, TimeUnit.MILLISECONDS);
         }
     }
 
