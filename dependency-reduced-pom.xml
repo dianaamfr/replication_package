@@ -163,6 +163,22 @@
               </transformers>
             </configuration>
           </execution>
+          <execution>
+            <id>multi-busy-read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>multiBusyReadGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.validation.multiClient.BusyReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
         </executions>
         <configuration>
           <transformers>

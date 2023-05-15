@@ -4,6 +4,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.List;
 
 import org.json.JSONArray;
 
@@ -84,6 +86,14 @@ public class Utils {
         return String.format(Utils.S3_PARTITION_FORMAT, partitionId, region);
     }
 
+    public static void logsToFile(List<ArrayDeque<Log>> logsList) {
+        ArrayDeque<Log> totalLogs = new ArrayDeque<>();
+        for(ArrayDeque<Log> logs : logsList) {
+            totalLogs.addAll(logs);
+        }
+        Utils.logToFile(totalLogs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
+    }
+
     public static void logToFile(ArrayDeque<Log> logs, String file) {
         FileWriter fw;
         try {
@@ -104,5 +114,23 @@ public class Utils {
     public static void printException(Exception e) {
         Status status = Status.fromThrowable(e);
         System.err.println(status.getCode() + " : " + status.getDescription());
+    }
+
+    public static List<String> generateKeys(List<Address> writeAddresses, int keysPerPartition) {
+        List<String> keys = Arrays.asList(new String[writeAddresses.size() * keysPerPartition]);
+        for (int i = 0; i < writeAddresses.size(); i++) { // 0 a 2
+            int count = 0;
+            for (int j = 0; j < 26; j++) { // 0 a 25
+                String key = String.valueOf((char)(j + 1 + 64));
+                if(Utils.getKeyPartitionId(key) == writeAddresses.get(i).getPartitionId()) {
+                    keys.set(i + count * writeAddresses.size(), key);
+                    count++;
+                    if(count == keysPerPartition) {
+                        break;
+                    }
+                }
+            }
+        }
+        return keys;
     }
 }

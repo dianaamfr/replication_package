@@ -2,7 +2,6 @@ package com.dissertation.validation.multiClient;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -37,7 +36,7 @@ public class ConstantWriteGenerator {
         this.logs = new ArrayList<>();
         this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
 
-        List<String> keys = generateKeys(writeAddresses, keysPerPartition);
+        List<String> keys = Utils.generateKeys(writeAddresses, keysPerPartition);
         this.init(clients, writesPerClient, keys, readAddress, writeAddresses);
     }
 
@@ -45,7 +44,7 @@ public class ConstantWriteGenerator {
         for(int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
-            int startIndex = (i * writesPerClient) % keys.size();
+            int startIndex = i % keys.size();
             CountDownLatch countdown = new CountDownLatch(writesPerClient);
             this.countdowns.add(countdown);
             this.logs.add(logs);
@@ -53,22 +52,18 @@ public class ConstantWriteGenerator {
         }
     }
 
-    public List<String> generateKeys(List<Address> writeAddresses, int keysPerPartition) {
-        List<String> keys = Arrays.asList(new String[writeAddresses.size() * keysPerPartition]);
-        for (int i = 0; i < writeAddresses.size(); i++) { // 0 a 2
-            int count = 0;
-            for (int j = 0; j < 26; j++) { // 0 a 25
-                String key = String.valueOf((char)(j + 1 + 64));
-                if(Utils.getKeyPartitionId(key) == writeAddresses.get(i).getPartitionId()) {
-                    keys.set(i + count * writeAddresses.size(), key);
-                    count++;
-                    if(count == keysPerPartition) {
-                        break;
-                    }
-                }
+    public void run() {
+        this.startSignal.countDown();
+        try {
+            for(CountDownLatch countDown : this.countdowns) {
+                countDown.await();
             }
+            this.scheduler.shutdown();
+            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
+            Utils.logsToFile(this.logs);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
-        return keys;
     }
 
     public static void main(String[] args) {
@@ -76,7 +71,7 @@ public class ConstantWriteGenerator {
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
 
-        if (args.length < 11) {
+        if (args.length < 10) {
             System.err.println(USAGE);
             return;
         }
@@ -89,7 +84,7 @@ public class ConstantWriteGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            if (args.length < addressesEndIndex + 3) {
+            if (args.length < addressesEndIndex + 4) {
                 System.err.println(USAGE);
                 return;
             }
@@ -119,28 +114,6 @@ public class ConstantWriteGenerator {
         }
     }
 
-    public void run() {
-        this.startSignal.countDown();
-        try {
-            for(CountDownLatch countDown : this.countdowns) {
-                countDown.await();
-            }
-            this.scheduler.shutdown();
-            this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
-            this.saveLogs();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void saveLogs() {
-        ArrayDeque<Log> totalLogs = new ArrayDeque<>();
-        for(ArrayDeque<Log> logs : this.logs) {
-            totalLogs.addAll(logs);
-        }
-        Utils.logToFile(totalLogs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
-    }
-
     private class WriteGeneratorRequest implements Runnable {
         private Client client;
         private CountDownLatch countDown;
@@ -159,7 +132,6 @@ public class ConstantWriteGenerator {
         @Override
         public void run() {
             try {
-
                 startSignal.await();
             } catch (InterruptedException e) {
                 System.err.println("Interrupted while waiting for start signal");
