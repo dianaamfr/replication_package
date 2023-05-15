@@ -7,7 +7,6 @@ import java.util.List;
 import com.dissertation.eventual.client.Client;
 import com.dissertation.eventual.utils.Utils;
 
-
 public class BusyWriteGenerator {
     private final Client client;
     private final List<String> keys;
@@ -21,7 +20,7 @@ public class BusyWriteGenerator {
 
     public static void main(String[] args) {
         List<String> keys = new ArrayList<>();
-        
+
         if (args.length < 1) {
             System.err.println(USAGE);
             return;

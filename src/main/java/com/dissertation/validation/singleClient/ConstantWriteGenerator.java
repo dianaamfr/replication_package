@@ -17,29 +17,29 @@ import com.dissertation.validation.logs.WriteResponseLog;
 import com.google.protobuf.ByteString;
 
 public class ConstantWriteGenerator {
-    private ScheduledThreadPoolExecutor scheduler;
-    private Client client;
+    private final ScheduledThreadPoolExecutor scheduler;
+    private final Client client;
     private final long delay;
-    private int totalWrites;
+    private final int totalWrites;
     private final List<String> keys;
+    private final CountDownLatch countDown;
+    private final ArrayDeque<Log> logs;
     private long payload;
     private int counter;
-    private CountDownLatch countDown;
-    private final ArrayDeque<Log> logs;
 
     private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <key:String>+";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int totalWrites, List<String> keys) {
-
+        this.scheduler = scheduler;
         this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
         this.totalWrites = totalWrites;
         this.keys = keys;
-        this.payload = Utils.PAYLOAD_START_LONG;
-        this.counter = 0;
         this.countDown = new CountDownLatch(totalWrites);
         this.logs = new ArrayDeque<>(this.totalWrites * 2);
+        this.payload = Utils.PAYLOAD_START_LONG;
+        this.counter = 0;
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -47,8 +47,6 @@ public class ConstantWriteGenerator {
                         String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
             }
         });
-
-        this.scheduler = scheduler;
     }
 
     public static void main(String[] args) {

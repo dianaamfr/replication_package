@@ -15,12 +15,12 @@ import com.dissertation.utils.Utils;
 import com.dissertation.validation.logs.GoodputLog;
 
 public class ConstantReadGenerator {
-    private ScheduledThreadPoolExecutor scheduler;
+    private final ScheduledThreadPoolExecutor scheduler;
     private final Client client;
     private final long delay;
     private final List<Set<String>> readSets;
+    private final CountDownLatch countDown;
     private int keyCounter;
-    private CountDownLatch countDown;
     private long lastPayload;
     private long startTime;
     private long endTime;
@@ -29,13 +29,13 @@ public class ConstantReadGenerator {
 
     public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int totalReads, int keysPerRead, List<String> keys) {
+        this.scheduler = scheduler;
         this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
         this.readSets = Utils.getReadSets(keys, keysPerRead);
-        this.keyCounter = 0;
         this.countDown = new CountDownLatch(totalReads);
+        this.keyCounter = 0;
         this.lastPayload = 0;
-        this.scheduler = scheduler;
     }
 
     public static void main(String[] args) {
@@ -132,9 +132,9 @@ public class ConstantReadGenerator {
                     countDown.countDown();
                     newPayload = false;
 
-                    if(countDown.getCount() == 0) {
+                    if (countDown.getCount() == 0) {
                         System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
-                            endTime - startTime).toJson().toString());
+                                endTime - startTime).toJson().toString());
                     }
                 }
 

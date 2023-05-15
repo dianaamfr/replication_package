@@ -24,7 +24,8 @@ public class BusyReadGenerator {
 
     private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keysPerRead:Int> <key:String>+";
 
-    public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead, List<String> keys) {
+    public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead,
+            List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);
         this.endMarker = endMarker;
         this.readSets = Utils.getReadSets(keys, keysPerRead);
@@ -59,7 +60,7 @@ public class BusyReadGenerator {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            if (args.length < addressesEndIndex + 2) {
+            if (args.length < addressesEndIndex + 3) {
                 System.err.println(USAGE);
                 return;
             }
@@ -99,7 +100,7 @@ public class BusyReadGenerator {
                 continue;
             }
 
-            for (KeyVersion keyVersion: rotResponse.getVersionsMap().values()) {
+            for (KeyVersion keyVersion : rotResponse.getVersionsMap().values()) {
                 valueStr = Utils.stringFromByteString(keyVersion.getValue());
                 if (valueStr.isBlank()) {
                     continue;

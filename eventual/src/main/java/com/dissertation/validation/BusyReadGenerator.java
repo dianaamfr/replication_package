@@ -40,7 +40,7 @@ public class BusyReadGenerator {
 
     public static void main(String[] args) {
         List<String> keys = new ArrayList<>();
-        
+
         if (args.length < 2) {
             System.err.println(USAGE);
             return;
@@ -82,11 +82,11 @@ public class BusyReadGenerator {
                 valueLong = Long.parseLong(response.getContent());
                 if (valueLong > this.lastPayload) {
                     this.lastPayload = valueLong;
-                    
+
                     this.logs.add(new ReadRequestLog(this.lastPayload, t1));
                     this.logs.add(new ReadResponseLog(this.lastPayload, t2));
                 }
-                if(valueLong == this.endMarker) {
+                if (valueLong == this.endMarker) {
                     break;
                 }
                 this.keyCounter = this.incrementKeyCounter();

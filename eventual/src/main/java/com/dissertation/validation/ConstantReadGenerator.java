@@ -13,26 +13,27 @@ import com.dissertation.eventual.utils.Utils;
 import com.dissertation.validation.logs.GoodputLog;
 
 public class ConstantReadGenerator {
-    private ScheduledThreadPoolExecutor scheduler;
+    private final ScheduledThreadPoolExecutor scheduler;
     private final Client client;
     private final long delay;
     private final List<String> keys;
+    private final CountDownLatch countDown;
     private int keyCounter;
-    private CountDownLatch countDown;
     private long lastPayload;
     private long startTime;
     private long endTime;
 
     private static final String USAGE = "Usage: ConstantReadGenerator <delay:Int> <key:String>+";
 
-    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, int totalReads, List<String> keys) throws URISyntaxException {
+    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, int totalReads, List<String> keys)
+            throws URISyntaxException {
+        this.scheduler = scheduler;
         this.client = new Client();
         this.delay = delay;
         this.keys = keys;
-        this.keyCounter = 0;
         this.countDown = new CountDownLatch(totalReads);
+        this.keyCounter = 0;
         this.lastPayload = 0;
-        this.scheduler = scheduler;
     }
 
     public static void main(String[] args) {
@@ -63,7 +64,7 @@ public class ConstantReadGenerator {
     private void run() {
         this.startTime = System.currentTimeMillis();
         this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(), 0, this.delay, TimeUnit.MILLISECONDS);
-        
+
         try {
             this.countDown.await();
             this.scheduler.shutdown();
@@ -77,8 +78,8 @@ public class ConstantReadGenerator {
         @Override
         public void run() {
             boolean newPayload = false;
-            
-            if(countDown.getCount() > 0) {
+
+            if (countDown.getCount() > 0) {
                 String key = keys.get(keyCounter % keys.size());
                 S3ReadResponse response = client.read(key);
                 endTime = System.currentTimeMillis();
@@ -98,9 +99,9 @@ public class ConstantReadGenerator {
                     countDown.countDown();
                     newPayload = false;
 
-                    if(countDown.getCount() == 0) {
+                    if (countDown.getCount() == 0) {
                         System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
-                            endTime - startTime).toJson().toString());
+                                endTime - startTime).toJson().toString());
                     }
                 }
 
