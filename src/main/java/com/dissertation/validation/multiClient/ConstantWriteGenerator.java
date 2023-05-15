@@ -2,11 +2,11 @@ package com.dissertation.validation.multiClient;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -29,7 +29,7 @@ public class ConstantWriteGenerator {
     private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <writesPerClient:Int> <keysPerPartition:String> <clients:Int>";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
-            List<Address> writeAddresses, long delay, int writesPerClient, int regionPartitions, int keysPerPartition, int clients) {
+            List<Address> writeAddresses, long delay, int writesPerClient, int keysPerPartition, int clients) {
         this.delay = delay;
         this.scheduler = scheduler;
         this.startSignal = new CountDownLatch(1);
@@ -37,7 +37,7 @@ public class ConstantWriteGenerator {
         this.logs = new ArrayList<>();
         this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
 
-        List<String> keys = generateKeys(regionPartitions, keysPerPartition);
+        List<String> keys = generateKeys(writeAddresses, keysPerPartition);
         this.init(clients, writesPerClient, keys, readAddress, writeAddresses);
     }
 
@@ -53,11 +53,19 @@ public class ConstantWriteGenerator {
         }
     }
 
-    public List<String> generateKeys(int regionPartitions,int keysPerPartition) {
-        List<String> keys = new ArrayList<>();
-        for (int i = 0; i < regionPartitions; i++) {
-            for (int j = 0; j < keysPerPartition; j++) {
-                keys.add(String.valueOf((char)(i + 1 + 64)));
+    public List<String> generateKeys(List<Address> writeAddresses, int keysPerPartition) {
+        List<String> keys = Arrays.asList(new String[writeAddresses.size() * keysPerPartition]);
+        for (int i = 0; i < writeAddresses.size(); i++) { // 0 a 2
+            int count = 0;
+            for (int j = 0; j < 26; j++) { // 0 a 25
+                String key = String.valueOf((char)(j + 1 + 64));
+                if(Utils.getKeyPartitionId(key) == writeAddresses.get(i).getPartitionId()) {
+                    keys.set(i + count * writeAddresses.size(), key);
+                    count++;
+                    if(count == keysPerPartition) {
+                        break;
+                    }
+                }
             }
         }
         return keys;
@@ -104,7 +112,7 @@ public class ConstantWriteGenerator {
             ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(clients);
 
             ConstantWriteGenerator writer = new ConstantWriteGenerator(scheduler, readAddress, writeAddresses, delay,
-                    writesPerClient, regionPartitions, keysPerPartition, clients);
+                    writesPerClient, keysPerPartition, clients);
             writer.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -160,11 +168,8 @@ public class ConstantWriteGenerator {
             
             int count = (int) this.countDown.getCount();
             if (count > 0) {
-                System.out.println(count);
                 String key = this.keys.get((count + this.startIndex) % this.keys.size());
-                System.out.println(key);
                 long valuePayload = payload.getAndIncrement();
-                System.out.println(valuePayload);
                 ByteString value = Utils.byteStringFromString(String.valueOf(valuePayload));
                 int partitionId = Utils.getKeyPartitionId(key);
 
