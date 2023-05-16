@@ -1,16 +1,48 @@
 import pandas as pd
+import seaborn as sns
+import numpy as np
 import matplotlib.pyplot as plt
+from utils import  PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS
 from utils import get_data
-import math
-import os
 
 PAYLOAD_BYTES = 12
-PATH = os.path.dirname(os.path.abspath(__file__))
-LOGS_DIR = PATH + '/logs/goodput'
+EC_LATENCY_PATH = PATH + '/logs/goodput' + EC_DIR + '/d_'
+CC_LATENCY_PATH = PATH + '/logs/goodput' + CC_DIR + '/d_'
 
-def goodput_times(iteration_dir, region):
-    df = get_data(LOGS_DIR + '/' + iteration_dir, 'readclient-' + region)
+RESULT_PATH = PATH + '/results/goodput'
+
+def goodput_evaluation():
+    dfs = []
+
+    for delay in DELAYS:
+        df_ev_goodput = get_goodput_times(EC_LATENCY_PATH, delay)
+        df_cc_goodput = get_goodput_times(CC_LATENCY_PATH, delay)
+
+        # Latency distribution table
+        goodput_distribution_table(df_ev_goodput, df_cc_goodput, delay)
+
+        df_ev_goodput['consistency'] = 'EC'
+        df_ev_goodput['latency'] = "{:.0f}".format(delay)
+        df_cc_goodput['consistency'] = 'CC'
+        df_cc_goodput['latency'] = "{:.0f}".format(delay)
+
+        dfs.append(df_ev_goodput)
+        dfs.append(df_cc_goodput)
+
+    df = pd.concat(dfs).reset_index(drop=True)
+
+    # Goodput barplot
+    goodput_average_barplot(df, 'writes_per_second')
+    goodput_average_barplot(df, 'bytes_per_second')
+
+    # Goodput latency relation
+    goodput_latency_relation(df, 'writes_per_second')
+    goodput_latency_relation(df, 'bytes_per_second')
     
+
+def get_goodput_times(path, delay):
+    df = get_data(path + str(delay), 'readclient-' + LOCAL_REGION)
+
     df_result = pd.DataFrame()
     df_result['elapsed_time'] = df['time']
     df_result['total_writes'] = df['totalVersions']
@@ -20,61 +52,59 @@ def goodput_times(iteration_dir, region):
 
     return df_result
 
-def goodput_stats(df_ev_goodput, df_cc_goodput):
-    df_ev_stats = df_ev_goodput.mean().to_frame().transpose()
-    df_cc_stats = df_cc_goodput.mean().to_frame().transpose()
-    df_ev_stats.index = ['EV']
+def goodput_distribution_table(df_ev_goodput, df_cc_goodput, delay):
+    df_ev_stats = df_ev_goodput.mean().to_frame().transpose().round(2)
+    df_cc_stats = df_cc_goodput.mean().to_frame().transpose().round(2)
+    df_ev_stats.index = ['EC']
     df_cc_stats.index = ['CC']
 
-    df_result = pd.concat([df_ev_stats.round(2), df_cc_stats.round(2)])
-    df_result['name'] = df_result.index
+    df_result = pd.concat([df_ev_stats, df_cc_stats])
+    df_result['consistency'] = df_result.index
     df_result = df_result.reset_index(drop=True)
 
-    df_result = pd.concat([df_result['name'], df_result.drop('name', axis=1)], axis=1)
+    df_result = pd.concat([df_result['consistency'], df_result.drop('consistency', axis=1)], axis=1)
 
     plt.table(cellText=df_result.values, colLabels=df_result.columns, cellLoc='center', loc='center')
     plt.axis('off')
     plt.annotate('Goodput', (0.5, 0.7), xycoords='axes fraction', ha='center', va='bottom', fontsize=10)
-    plt.savefig(PATH + '/results/plots/goodput_table.png', dpi=300, bbox_inches='tight')
+    plt.savefig(RESULT_PATH + '/goodput_table_' + str(delay) + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
-    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
 
-def goodput_latency_relation(path_ev, path_cc):
-    df_ev_50 = goodput_times(path_ev + '01', 'eu-west-1')
-    df_ev_100 = goodput_times(path_ev + '02', 'eu-west-1')
-    df_ev_200 = goodput_times(path_ev + '03', 'eu-west-1')
+def goodput_average_barplot(df, goodput_var):
+    _, ax = plt.subplots(figsize=(10, 10))
+    grouped_data = df.groupby(["latency", "consistency"])[goodput_var]
+    average_goodput = grouped_data.mean().round(2).reset_index()
 
-    df_cc_50 = goodput_times(path_cc + '01', 'eu-west-1')
-    df_cc_100 = goodput_times(path_cc + '02', 'eu-west-1')
-    df_cc_200 = goodput_times(path_cc + '03', 'eu-west-1')
+    sns.barplot(data=average_goodput, x="latency", y=goodput_var, hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=['50', '100', '200'])
+    ax.xaxis.grid(True)
+    ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
+    ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, [label.capitalize() for label in labels], loc="lower right")
+    plt.savefig(RESULT_PATH + '/' + goodput_var + '_barplot.png', dpi=300)
+    plt.clf() 
 
-    latencies = [50, 100, 200]
-    df_ev = throughput_latency_df([df_ev_50, df_ev_100, df_ev_200], latencies)
-    df_cc = throughput_latency_df([df_cc_50, df_cc_100, df_cc_200] , latencies)
+def goodput_latency_relation(df, goodput_var):
+    _, ax = plt.subplots(figsize=(10, 10))
+
+    estimator_99 = lambda data: np.percentile(data, 99)
+    estimator_95 = lambda data: np.percentile(data, 95)
+    linestyles = [
+        (1, 1),
+        (3, 5, 1, 5), 
+        (5, 5)]
+
+    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[0], linestyles[0]],
+                 markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False)
+    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[1], linestyles[1]],
+                 markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False)
+    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[2], linestyles[2]],
+                 markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False)
     
-    plt.figure(figsize=(10, 15))
-    plt.plot(df_ev['latency'], df_ev['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Goodput')
-    plt.plot(df_cc['latency'], df_cc['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Goodput')
-    plt.plot(df_ev['latency'], df_ev['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Goodput')
-    plt.plot(df_cc['latency'], df_cc['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Goodput')
-    plt.grid(True)
-    plt.legend()
-
-    plt.xlabel('Goodput (writes/s)')
-    plt.ylabel('Goodput (writes/s)')
-
-    plt.title('Goodput for different read latencies')
-    plt.savefig(PATH + '/results/plots/goodput_with_latency.png', dpi=300)
+    ax.xaxis.grid(True)
+    ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
+    ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, [label.capitalize() for label in labels], loc="lower right")
+    plt.savefig(RESULT_PATH + '/' + goodput_var + '_with_latency.png', dpi=300)
     plt.clf()
-    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
-
-
-def throughput_latency_df(dfs, latencies):
-    df_result = pd.DataFrame()
-    for i in range(len(dfs)):
-        df_result = df_result.append({
-            'latency': latencies[i], 
-            'mean': dfs[i]['writes_per_second'].mean(), 
-            'p99': dfs[i]['writes_per_second'].quantile(q=0.99)}, 
-            ignore_index=True)
-    return df_result

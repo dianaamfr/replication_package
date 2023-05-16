@@ -3,9 +3,8 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, PERCENTILES_FLOAT, PERCENTILES
+from utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS
 from utils import get_data, df_describe
-import math 
 
 EC_LATENCY_PATH = PATH + '/logs/latency' + EC_DIR + '/d_'
 CC_LATENCY_PATH = PATH + '/logs/latency' + CC_DIR + '/d_'
@@ -31,7 +30,7 @@ def latency_evaluation():
         latency_distribution_table(df_ev_latency, df_cc_latency, delay)
 
     # Latency distribution boxplots
-    df = pd.concat(dfs)
+    df = pd.concat(dfs).reset_index(drop=True)
     latency_boxplot(df, outliers=False, interval=5, fig_size=(15, 7))
     latency_boxplot(df, outliers=True, interval=10, fig_size=(20, 7))
 
@@ -99,7 +98,7 @@ def latency_average_barplot(df):
     grouped_data = df.groupby(["goodput", "consistency"])["latency"]
     average_latency = grouped_data.mean().reset_index()
 
-    sns.barplot(data=average_latency, x="goodput", y="latency", hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=[5, 10, 20])
+    sns.barplot(data=average_latency, x="goodput", y="latency", hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=['5', '10', '20'])
     ax.xaxis.grid(True)
     ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
     ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
