@@ -4,39 +4,60 @@ A prototype implementation of a cloud-native causally consistent system.
 
 ## Description
 
-This repository holds a prototype implementation of a candidate reference architecture for a cloud-native causally consistent read-heavy system that is being designed to prove the dissertation's hypothesis. With this prototype, we aim to study the feasibility of the candidate reference architecture and identify any impediments and possible improvements at an early stage.
+This repository holds a prototype implementation of a candidate reference architecture for a cloud-native causally consistent read-heavy system. With this prototype, we aim to study the feasibility of a candidate reference architecture and identify any impediments and possible improvements at an early stage.
 
 For a more detailed description of the reference architecture please refer to [Reference Architecture](#candidate-reference-architecture).
 
 
 ## Prototype Features
 ### Features
-- **ECDS**: Compatible with AWS S3.
-- **Compute Layer**: Provides ROTs and Writes through gRPC and uses AWS S3 for persistance.
-- **Client Layer**: Connects with the Compute Layer through gRPC.
+- **Storage Layer**: Amazon S3 Simple Storage Service.
+- **Compute Layer**: Read Nodes provide ROTs from the stable frontier whereas Write Nodes provide single-key writes and atomic writes.
+- **Client Layer**: Forwards the operations to the appropriate Compute Nodes. Stores the client's writes until they are known to be stable.
+- **Communication**: gRPC framework.
 - **Clock**: Hybrid Logical Clock.
-- **Consistency**: Stable time computation, read-you-writes for multiple writers through client cache and last write timestamp for monotonic writes.
-- **Clock Synchronization**: Each *Write Compute Node* asynchronously persists his clock value in an S3 bucket and fetches the last clock value that has been stored. If the fetched clock value is higher than its own, it advances its clock.
+- **Consistency**: Provides Causal Consistency: ROTs are always performed from a stable time, read-you-writes is guaranteed for multiple writers by storing unstable writes in the client cache and monotonic writes are ensured by including the previous write timestamp of the client in subsequent requests.
+- **Clock Synchronization**: Write Nodes asynchronously persists their last clock value in an S3 bucket. In the absence of updates, they fetch the last clock value that has been stored. If the fetched clock value is higher than its own, it advances its clock.
+- **Check-pointing**: Periodically, write nodes replace a prefix of their log with a checkpoint. For that purpose, they get the minimum stable time from the Read Nodes that replicate their partition and only remove versions below the stable frontier established by that time (always keeping the latest stable version of each key).
 
 ## Getting Started
 
-### Structure 
-This repository holds a Maven project with the following structure:
-- `src/main/java` comprises the project's source code and follows the structure below:
-    - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
-        - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and his last write timestamp.
-        - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
+### Structure
+**Causally Consistent Prototype**
+A Maven project with the following structure:
+- `src/main` comprises the project's source code and follows the structure below:
+    - `java/com/dissertation`:
+        - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
+            - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and his last write timestamp.
+            - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
+            - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
+        - `utils`: Util functions, constants and classes.
+        - `evaluation`: Comprises classes that can be used to evaluate the prototype:
+            - `logs`: Classes that represent logs of each relevant operation. Used for validating the prototype.
+            - `singleClient`:
+                - `ClientInterface`: To test the prototype through a command-line interface.
+                - `BusyReadGenerator`: A single-threaded reader that issues read requests with no delay to the keys provided in the arguments.
+                - `ConstantWriteGenerator`: A single-threaded writer that issues a configurable number of write requests at a fixed rate, alternating between the provided set of keys.
+                - `ConstantReadGenerator`: A single-threaded reader that issues read requests with a fixed delay to all the keys provided in the arguments for the given amount of time.
+                - `BusyWriteGenerator`: A single-threaded writer that issues write requests with no delay, alternating between the provided set of keys.
+    - `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
+
+**Eventually Consistent Baseline**
+For comparison with our causally consistent prototype, which uses S3 as the storage layer, we developed an eventually consistent baseline where clients issue read and write requests directly to S3. It consists of a Maven project with the following structure:
+- `eventual/src/main/java/com/dissertation`:
+    - `eventual`:  Comprises the classes that implement the eventually consistent baseline
+        - `client`: Contains the `Client` class, which can be used to issue read and write operations to S3.
         - `s3`: Provide the necessary functions to perform put and get operations in AWS S3.
-    - `utils`: Util functions, constants and classes.
-    - `evaluation`: Comprises classes that can be used to test the prototype, namely:
+        - 
+    - `evaluation`: Comprises classes that can be used to evaluate the baseline:
+        - `logs`: Classes that represent logs of each relevant operation. Used for validating the baseline.
         - `ClientInterface`: To test the prototype through a command-line interface.
-        - `logs`: Classes that represent logs of each relevant operation. Used for validating the prototype.
-        - `BusyReadGenerator`: A single-threaded reader that issues read requests with no delay to all the keys provided in the arguments.
+        - `BusyReadGenerator`: A single-threaded reader that issues read requests with no delay to the keys provided in the arguments.
         - `ConstantWriteGenerator`: A single-threaded writer that issues a configurable number of write requests at a fixed rate, alternating between the provided set of keys.
-        - `ConstantReadGenerator`: A single-threaded reader that issues read requests with a fixed delay to all the keys provided in the arguments.
+        - `ConstantReadGenerator`: A single-threaded reader that issues read requests with a fixed delay to all the keys provided in the arguments for the given amount of time.
         - `BusyWriteGenerator`: A single-threaded writer that issues write requests with no delay, alternating between the provided set of keys.
-- `proto`: Holds the `.proto` file that defines the services provided by read and write nodes.
-- `logs`: Stores the logs that result from the evaluation.
+    - `utils`: Util functions, constants and classes.
+**Evaluation**
 - `scripts`: Holds useful scripts for running each component of the prototype with docker.
 
 ### Dependencies
@@ -94,7 +115,3 @@ Logical clock or Hybrid Logical Clock
 - *Read Compute Nodes* must determine the *stableTime* from which ROTs can be performed. The client must store the timestamp of his last write (*lastWriteTimestamp*) so that it ensures monotonic writes. That timestamp must be sent in the next write request so that the server may update his clock and ensure that the second write is time stamped with a higher version than the first.
 - Given that there are multiple writers, clocks must be synchronized to ensure writes become visible.
 - When a *Read Compute Node* receives a ROT request, it reads from the *stableTime* and sends back the *stableTime* together with the requested values so that the client may prune his cache and determine which values to return. After pruning the cache, if the client has a version in his cache of one of the requested items, he must return the value in his cache to ensure read-your-writes.
-
-**Clock Synchronization**
-
-![Clock Synchronization](images/clock-sync.png)
