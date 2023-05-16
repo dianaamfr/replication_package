@@ -58,7 +58,11 @@ For comparison with our causally consistent prototype, which uses S3 as the stor
         - `BusyWriteGenerator`: A single-threaded writer that issues write requests with no delay, alternating between the provided set of keys.
     - `utils`: Util functions, constants and classes.
 **Evaluation**
-- `scripts`: Holds useful scripts for running each component of the prototype with docker.
+- `evaluation`:
+    - `logs`: Stores the evaluation logs generated when running the evaluation scripts in AWS.
+    - `results`: Stores the plots and other results  the analysis of the logs.
+    - `scripts`: Holds useful scripts for running each component of the prototype with docker and to generate the logs.
+    TODO: organize and document evaluation scripts
 
 ### Dependencies
 To test locally: 
