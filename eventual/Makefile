@@ -47,8 +47,8 @@ totalWrites = 110
 keys = a b
 writeDelay = 50
 
-readDelay = 50
-expectedWrites = 10
+readDelay = 200
+readTime = 20000
 
 # Single client read and write generators to measure latency with constant throughput 
 singleBusyRead:
@@ -60,7 +60,7 @@ singleConstantWrite:
 
 # Single client read and write generators to measure goodput with constant latency
 singleConstantRead:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(expectedWrites) $(keys)
+	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(readDelay) $(readTime) $(keys)
 
 singleBusyWrite:
 	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar $(keys)

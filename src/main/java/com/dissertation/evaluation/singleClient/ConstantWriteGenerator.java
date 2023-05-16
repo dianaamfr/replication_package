@@ -27,7 +27,9 @@ public class ConstantWriteGenerator {
     private long payload;
     private int counter;
 
-    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalWrites:Int> <key:String>+";
+    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+            "<delay:Int> <totalWrites:Int> <key:String>+";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int totalWrites, List<String> keys) {

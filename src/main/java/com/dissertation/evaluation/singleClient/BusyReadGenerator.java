@@ -22,7 +22,9 @@ public class BusyReadGenerator {
     private long lastPayload;
     private int keyCounter;
 
-    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keysPerRead:Int> <key:String>+";
+    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+            "<expectedWrites:Int> <keysPerRead:Int> <key:String>+";
 
     public BusyReadGenerator(Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead,
             List<String> keys) {

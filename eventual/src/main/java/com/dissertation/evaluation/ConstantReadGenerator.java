@@ -16,7 +16,7 @@ public class ConstantReadGenerator {
     private final ScheduledThreadPoolExecutor scheduler;
     private final Client client;
     private final long delay;
-    private final long endMarker;
+    private final int readTime;
     private final List<String> keys;
     private final CountDownLatch countDown;
     private int keyCounter;
@@ -24,14 +24,14 @@ public class ConstantReadGenerator {
     private long startTime;
     private long endTime;
 
-    private static final String USAGE = "Usage: ConstantReadGenerator <delay:Int> <key:String>+";
+    private static final String USAGE = "Usage: ConstantReadGenerator <delay:Int> <readTime:Int> <key:String>+";
 
-    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, long endMarker, List<String> keys)
+    public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, long delay, int readTime, List<String> keys)
             throws URISyntaxException {
         this.scheduler = scheduler;
         this.client = new Client();
         this.delay = delay;
-        this.endMarker = endMarker;
+        this.readTime = readTime;
         this.keys = keys;
         this.countDown = new CountDownLatch(1);
         this.keyCounter = 0;
@@ -49,13 +49,12 @@ public class ConstantReadGenerator {
 
         try {
             long delay = Long.parseLong(args[0]);
-            int expectedWrites = Integer.parseInt(args[1]);
-            long endMarker = Utils.PAYLOAD_START_LONG + expectedWrites - 1;
+            int readTime = Integer.parseInt(args[1]);
             for (int i = 2; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
-            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, delay, endMarker, keys);
+            ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, delay, readTime, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -94,12 +93,13 @@ public class ConstantReadGenerator {
                 if (valueLong > lastPayload) {
                     lastPayload = valueLong;
                 }
-                if (valueLong == endMarker) {
-                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
-                            endTime - startTime).toJson().toString());
-                }
-
                 keyCounter = incrementKeyCounter();
+            }
+
+            if (endTime - startTime >= readTime) {
+                countDown.countDown();
+                System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG + 1 : 0,
+                        endTime - startTime).toJson().toString());
             }
         }
     }

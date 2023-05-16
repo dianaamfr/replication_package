@@ -77,8 +77,8 @@ writeDelay = 50
 totalWrites = 110
 
 keysPerRead = 2
-expectedWrites = 110
 readDelay = 50
+readTime = 20000
 
 # Single client read and write generators to measure latency with constant throughput 
 singleBusyRead:
@@ -90,7 +90,7 @@ singleConstantWrite:
 
 # Single client read and write generators to measure goodput with constant latency
 singleConstantRead:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(expectedWrites) $(keysPerRead) $(keys)
+	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(readTime) $(keysPerRead) $(keys)
 
 singleBusyWrite:
 	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)

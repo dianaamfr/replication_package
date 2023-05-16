@@ -12,7 +12,8 @@ public class BusyWriteGenerator {
     private final Client client;
     private final List<String> keys;
 
-    private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <keys:String>";
+    private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <keys:String>";
 
     public BusyWriteGenerator(Address readAddress, List<Address> writeAddresses, List<String> keys) {
         this.client = new Client(readAddress, writeAddresses);

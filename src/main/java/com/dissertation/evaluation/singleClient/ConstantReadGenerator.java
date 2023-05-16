@@ -18,7 +18,7 @@ public class ConstantReadGenerator {
     private final ScheduledThreadPoolExecutor scheduler;
     private final Client client;
     private final long delay;
-    private final long endMarker;
+    private final int readTime;
     private final List<Set<String>> readSets;
     private final CountDownLatch countDown;
     private int keyCounter;
@@ -26,14 +26,16 @@ public class ConstantReadGenerator {
     private long startTime;
     private long endTime;
 
-    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <totalReads:Int> <keysPerRead:Int> <key:String>+";
+    private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+            "<delay:Int> <readTime:Int> <keysPerRead:Int> <key:String>+";
 
     public ConstantReadGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
-            List<Address> writeAddresses, long delay, long endMarker, int keysPerRead, List<String> keys) {
+            List<Address> writeAddresses, long delay, int readTime, int keysPerRead, List<String> keys) {
         this.scheduler = scheduler;
         this.client = new Client(readAddress, writeAddresses);
         this.delay = delay;
-        this.endMarker = endMarker;
+        this.readTime = readTime;
         this.readSets = Utils.getReadSets(keys, keysPerRead);
         this.countDown = new CountDownLatch(1);
         this.keyCounter = 0;
@@ -66,8 +68,7 @@ public class ConstantReadGenerator {
             }
 
             long delay = Long.parseLong(args[addressesEndIndex]);
-            int expectedWrites = Integer.parseInt(args[addressesEndIndex + 1]);
-            long endMarker = Utils.PAYLOAD_START_LONG + expectedWrites - 1;
+            int readTime = Integer.parseInt(args[addressesEndIndex + 1]);
             int keysPerRead = Integer.parseInt(args[addressesEndIndex + 2]);
             for (int i = addressesEndIndex + 3; i < args.length; i++) {
                 keys.add(args[i]);
@@ -79,7 +80,7 @@ public class ConstantReadGenerator {
             }
 
             ConstantReadGenerator reader = new ConstantReadGenerator(scheduler, readAddress, writeAddresses, delay,
-                    endMarker, keysPerRead, keys);
+                    readTime, keysPerRead, keys);
             reader.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -126,11 +127,12 @@ public class ConstantReadGenerator {
                     if (valueLong > lastPayload) {
                         lastPayload = valueLong;
                     }
-                    if(valueLong == endMarker) {
-                        countDown.countDown();
-                        System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG : 0,
-                                endTime - startTime).toJson().toString());
-                    }
+                }
+
+                if (endTime - startTime >= readTime) {
+                    countDown.countDown();
+                    System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG + 1 : 0,
+                            endTime - startTime).toJson().toString());
                 }
                 keyCounter = incrementKeyCounter();
             }

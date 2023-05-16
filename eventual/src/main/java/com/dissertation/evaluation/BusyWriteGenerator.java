@@ -46,6 +46,7 @@ public class BusyWriteGenerator {
         while (payload < Utils.PAYLOAD_END_LONG) {
             key = keys.get((int) (count % keys.size()));
             this.client.write(key, String.valueOf(payload));
+            count++;
             payload++;
         }
     }
