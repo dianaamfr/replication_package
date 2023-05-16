@@ -32,12 +32,12 @@ def goodput_evaluation():
     df = pd.concat(dfs).reset_index(drop=True)
 
     # Goodput barplot
-    goodput_average_barplot(df, 'writes_per_second')
-    goodput_average_barplot(df, 'bytes_per_second')
+    goodput_average_barplot(df, 'writes_per_second', 'Goodput (writes/s)')
+    goodput_average_barplot(df, 'bytes_per_second', 'Goodput (bytes/s)')
 
     # Goodput latency relation
-    goodput_latency_relation(df, 'writes_per_second')
-    goodput_latency_relation(df, 'bytes_per_second')
+    goodput_latency_relation(df, 'writes_per_second', 'Goodput (erites/s)')
+    goodput_latency_relation(df, 'bytes_per_second', 'Goodput (bytes/s)')
     
 
 def get_goodput_times(path, delay):
@@ -70,21 +70,21 @@ def goodput_distribution_table(df_ev_goodput, df_cc_goodput, delay):
     plt.savefig(RESULT_PATH + '/goodput_table_' + str(delay) + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
 
-def goodput_average_barplot(df, goodput_var):
+def goodput_average_barplot(df, goodput_var, ylabel):
     _, ax = plt.subplots(figsize=(10, 10))
     grouped_data = df.groupby(["latency", "consistency"])[goodput_var]
     average_goodput = grouped_data.mean().round(2).reset_index()
 
-    sns.barplot(data=average_goodput, x="latency", y=goodput_var, hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=['50', '100', '200'])
+    sns.barplot(data=average_goodput, x="latency", y=goodput_var, hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=['50', '100', '200'], alpha=0.8)
     ax.xaxis.grid(True)
-    ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
-    ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
+    ax.set_xlabel(ax.get_xlabel().capitalize() + " (ms)", labelpad=10)
+    ax.set_ylabel(ylabel, labelpad=10)
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, [label.capitalize() for label in labels], loc="lower right")
+    ax.legend(handles, [label.capitalize() for label in labels], loc="upper right")
     plt.savefig(RESULT_PATH + '/' + goodput_var + '_barplot.png', dpi=300)
     plt.clf() 
 
-def goodput_latency_relation(df, goodput_var):
+def goodput_latency_relation(df, goodput_var, ylabel):
     _, ax = plt.subplots(figsize=(10, 10))
 
     estimator_99 = lambda data: np.percentile(data, 99)
@@ -102,8 +102,8 @@ def goodput_latency_relation(df, goodput_var):
                  markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False)
     
     ax.xaxis.grid(True)
-    ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
-    ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
+    ax.set_xlabel(ax.get_xlabel().capitalize() + " (ms)", labelpad=10)
+    ax.set_ylabel(ylabel, labelpad=10)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize() for label in labels], loc="lower right")
     plt.savefig(RESULT_PATH + '/' + goodput_var + '_with_latency.png', dpi=300)

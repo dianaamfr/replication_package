@@ -7,7 +7,8 @@ from goodput import goodput_evaluation
 if __name__ == '__main__':
     mpl.rcParams['font.family'] = 'Verdana'
     sns.set(font_scale=1.5, style='whitegrid')
-    sns.set_palette("icefire")
+    palette = ["#006f73", "#ff7349"]
+    sns.set_palette(palette)
 
     latency_evaluation()
     goodput_evaluation()
