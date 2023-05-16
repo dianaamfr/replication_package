@@ -1,5 +1,6 @@
 [
-    {"logType":"GOODPUT","time":54441,"totalVersions":91303},
-    {"logType":"GOODPUT","time":57882,"totalVersions":94813},
-    {"logType":"GOODPUT","time":58023,"totalVersions":92362}
+    {"logType":"GOODPUT","time":20042,"totalVersions":9784},
+    {"logType":"GOODPUT","time":20052,"totalVersions":11310},
+    {"logType":"GOODPUT","time":20034,"totalVersions":11775}
 ]
+
