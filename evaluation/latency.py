@@ -35,13 +35,15 @@ def latency_evaluation():
     latency_boxplot(df, outliers=False, interval=5, fig_size=(15, 7))
     latency_boxplot(df, outliers=True, interval=10, fig_size=(20, 7))
 
-    # Latency barplot
-    latency_barplot(df)
-
+    # TODO: rethink the scales of this plot
     # Latency histogram
     # latency_histogram(df)
 
+    # Latency barplot
+    latency_average_barplot(df)
 
+    # Latency throughput relation
+    latency_throughput_relation(df)
 
 
 # Univariate
@@ -92,12 +94,12 @@ def latency_histogram(df):
     plt.savefig(RESULT_PATH + '/latency_histogram.png', dpi=300)
     plt.clf()
 
-def latency_barplot(df):
+def latency_average_barplot(df):
     _, ax = plt.subplots(figsize=(10, 10))
     grouped_data = df.groupby(["goodput", "consistency"])["latency"]
     average_latency = grouped_data.mean().reset_index()
 
-    sns.barplot(data=average_latency, x="goodput", y="latency", hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5)
+    sns.barplot(data=average_latency, x="goodput", y="latency", hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=[5, 10, 20])
     ax.xaxis.grid(True)
     ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
     ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
@@ -107,44 +109,27 @@ def latency_barplot(df):
     plt.clf() 
 
 # Multivariate
-def latency_throughput_relation(path_ev, path_cc):
-    df_ev_200 = latency_times(path_ev + '03', 'eu-west-1')
-    df_ev_100 = latency_times(path_ev + '02', 'eu-west-1')
-    df_ev_50 = latency_times(path_ev + '01', 'eu-west-1')
+def latency_throughput_relation(df):
+    _, ax = plt.subplots(figsize=(10, 10))
 
-    df_cc_200 = latency_times(path_cc + '03', 'eu-west-1')
-    df_cc_100 = latency_times(path_cc + '02', 'eu-west-1')
-    df_cc_50 = latency_times(path_cc + '01', 'eu-west-1')
+    estimator_99 = lambda data: np.percentile(data, 99)
+    estimator_95 = lambda data: np.percentile(data, 95)
+    linestyles = [
+        (1, 1),
+        (3, 5, 1, 5), 
+        (5, 5)]
 
-    throughput = [5, 10, 20]
-    df_ev = latency_throughput_df([df_ev_200, df_ev_100, df_ev_50], throughput)
-    df_cc = latency_throughput_df([df_cc_200, df_cc_100, df_cc_50] , throughput)
+    sns.lineplot(data=df, x="goodput", y="latency", hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[0], linestyles[0]],
+                 markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False)
+    sns.lineplot(data=df, x="goodput", y="latency", hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[1], linestyles[1]],
+                 markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False)
+    sns.lineplot(data=df, x="goodput", y="latency", hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[2], linestyles[2]],
+                 markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False)
 
-    max_latency = math.ceil(max(df_ev['p99'].max(), df_cc['p99'].max()))
-    
-    plt.figure(figsize=(10, 15))
-    plt.plot(df_ev['throughput'], df_ev['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Latency')
-    plt.plot(df_cc['throughput'], df_cc['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Latency')
-    plt.plot(df_ev['throughput'], df_ev['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Latency')
-    plt.plot(df_cc['throughput'], df_cc['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Latency')
-    plt.grid(True)
-    plt.legend()
-    plt.yticks(range(0, max_latency, 5))
-
-    plt.xlabel('Throughput (writes/s)')
-    plt.ylabel('Latency (ms)')
-
-    plt.title('Latency for different throughput values')
-    plt.savefig(PATH + '/results/plots/latency_with_throughput.png', dpi=300)
+    ax.xaxis.grid(True)
+    ax.set_xlabel(ax.get_xlabel().capitalize(), labelpad=10)
+    ax.set_ylabel(ax.get_ylabel().capitalize(), labelpad=10)
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, [label.capitalize() for label in labels], loc="lower right")
+    plt.savefig(RESULT_PATH + '/latency_with_throughput.png', dpi=300)
     plt.clf()
-    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
-
-def latency_throughput_df(dfs, throughput):  
-    df_result = pd.DataFrame()
-    for i in range(len(dfs)):
-        df_result = df_result.append({
-            'throughput': throughput[i], 
-            'mean': dfs[i]['latency'].mean(), 
-            'p99': dfs[i]['latency'].quantile(q=0.99)}, 
-            ignore_index=True)
-    return df_result
