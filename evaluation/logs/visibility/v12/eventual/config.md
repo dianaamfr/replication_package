@@ -49,5 +49,5 @@ docker container cp constantWriteGenerator:/logs/ ./logs
 docker container cp busyReadGenerator:/logs/ .
 
 # Copy logs
-scp -i "per-reference-architecture.pem" -r ubuntu@ec2-54-74-244-104.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
-scp -i "per-reference-architecture-us.pem" -r ubuntu@ec2-3-80-126-0.compute-1.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "per-reference-architecture.pem" -r ubuntu@<read-eu-DNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "per-reference-architecture-us.pem" -r ubuntu@<read-us-DNS>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
