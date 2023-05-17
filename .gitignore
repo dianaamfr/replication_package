@@ -28,3 +28,4 @@ target
 logs/*.json
 evaluation/__pycache__
 eventual/logs/*.json
+evaluation/visualization/__pycache__
