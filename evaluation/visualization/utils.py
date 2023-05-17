@@ -1,12 +1,13 @@
 import pandas as pd
 import os
 
-PATH = os.path.dirname(os.path.abspath(__file__))
+PATH = os.path.dirname(os.path.abspath(__file__)) + '/../'
 CC_DIR = '/causal'
 EC_DIR = '/eventual'
 LOCAL_REGION = 'eu-west-1'
 REMOTE_REGION = 'us-east-1'
 DELAYS = [50, 100, 200]
+GOODPUTS = [str(1000//delay) for delay in DELAYS][::-1]
 PERCENTILES = [50, 70, 95, 99]
 PERCENTILES_FLOAT = [p/100 for p in PERCENTILES]
 

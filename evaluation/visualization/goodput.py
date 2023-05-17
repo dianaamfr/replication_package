@@ -2,8 +2,8 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import  PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS
-from utils import get_data
+from .utils import  PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS
+from .utils import get_data
 
 PAYLOAD_BYTES = 12
 EC_LATENCY_PATH = PATH + '/logs/goodput' + EC_DIR + '/d_'
@@ -15,18 +15,18 @@ def goodput_evaluation():
     dfs = []
 
     for delay in DELAYS:
-        df_ev_goodput = get_goodput_times(EC_LATENCY_PATH, delay)
+        df_ec_goodput = get_goodput_times(EC_LATENCY_PATH, delay)
         df_cc_goodput = get_goodput_times(CC_LATENCY_PATH, delay)
 
         # Latency distribution table
-        goodput_distribution_table(df_ev_goodput, df_cc_goodput, delay)
+        goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay)
 
-        df_ev_goodput['consistency'] = 'EC'
-        df_ev_goodput['latency'] = "{:.0f}".format(delay)
+        df_ec_goodput['consistency'] = 'EC'
+        df_ec_goodput['latency'] = "{:.0f}".format(delay)
         df_cc_goodput['consistency'] = 'CC'
         df_cc_goodput['latency'] = "{:.0f}".format(delay)
 
-        dfs.append(df_ev_goodput)
+        dfs.append(df_ec_goodput)
         dfs.append(df_cc_goodput)
 
     df = pd.concat(dfs).reset_index(drop=True)
@@ -52,13 +52,13 @@ def get_goodput_times(path, delay):
 
     return df_result
 
-def goodput_distribution_table(df_ev_goodput, df_cc_goodput, delay):
-    df_ev_stats = df_ev_goodput.mean().to_frame().transpose().round(2)
+def goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay):
+    df_ec_stats = df_ec_goodput.mean().to_frame().transpose().round(2)
     df_cc_stats = df_cc_goodput.mean().to_frame().transpose().round(2)
-    df_ev_stats.index = ['EC']
+    df_ec_stats.index = ['EC']
     df_cc_stats.index = ['CC']
 
-    df_result = pd.concat([df_ev_stats, df_cc_stats])
+    df_result = pd.concat([df_ec_stats, df_cc_stats])
     df_result['consistency'] = df_result.index
     df_result = df_result.reset_index(drop=True)
 
