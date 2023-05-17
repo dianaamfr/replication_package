@@ -25,7 +25,7 @@ public class ConstantWriteGenerator {
     private final CountDownLatch countDown;
     private final ArrayDeque<Log> logs;
     private long payload;
-    private int counter;
+    private int keyCounter;
 
     private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> " +
             "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
@@ -41,7 +41,7 @@ public class ConstantWriteGenerator {
         this.countDown = new CountDownLatch(totalWrites);
         this.logs = new ArrayDeque<>(this.totalWrites * 2);
         this.payload = Utils.PAYLOAD_START_LONG;
-        this.counter = 0;
+        this.keyCounter = 0;
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -107,10 +107,10 @@ public class ConstantWriteGenerator {
 
         @Override
         public void run() {
-            String key = keys.get(counter % keys.size());
+            String key = keys.get(keyCounter);
             int partitionId = Utils.getKeyPartitionId(key);
 
-            if (counter < totalWrites) {
+            if (keyCounter < totalWrites) {
                 ByteString value = Utils.byteStringFromString(String.valueOf(payload));
 
                 long t1 = System.currentTimeMillis();
@@ -118,6 +118,7 @@ public class ConstantWriteGenerator {
                 try {
                     writeResponse = client.requestWrite(key, value);
                 } catch (Exception e) {
+                    keyCounter = incrementKeyCounter();
                     Utils.printException(e);
                     return;
                 }
@@ -126,10 +127,14 @@ public class ConstantWriteGenerator {
                 logs.add(new WriteRequestLog(partitionId, writeResponse.getWriteTimestamp(), t1));
                 logs.add(new WriteResponseLog(partitionId, writeResponse.getWriteTimestamp(), t2));
 
-                counter++;
+                keyCounter = incrementKeyCounter();
                 payload++;
                 countDown.countDown();
             }
         }
+    }
+
+    private int incrementKeyCounter() {
+        return (this.keyCounter + 1) % this.keys.size();
     }
 }
