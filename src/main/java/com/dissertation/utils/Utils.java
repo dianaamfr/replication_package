@@ -24,8 +24,8 @@ public class Utils {
     public static final String TIMESTAMP_SEPARATOR = "-";
     public static final String TIMESTAMP_FORMAT = "%020d%s%020d";
     public static final String MIN_TIMESTAMP = String.format(TIMESTAMP_FORMAT, 0, TIMESTAMP_SEPARATOR, 0);
-    public static final int PULL_DELAY = 6000;
-    public static final int PUSH_DELAY = 6000;
+    public static final int PULL_DELAY = 5000;
+    public static final int PUSH_DELAY = 5000;
     public static final int CLOCK_DELAY = 20000;
     public static final int CHECKPOINT_FREQUENCY = 3;
 
