@@ -17,16 +17,19 @@ public class BusyWriteGenerator {
     private CountDownLatch startSignal;
     private AtomicLong payload;
 
-    private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <keysPerPartition:Int> <clients:Int>";
+    private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+            "<keysPerPartition:Int> <clients:Int>";
 
-    public BusyWriteGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, int keysPerPartition, int clients) {
+    public BusyWriteGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses,
+            int keysPerPartition, int clients) {
         this.executor = executor;
         this.startSignal = new CountDownLatch(1);
         this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
 
         List<String> keys = Utils.generateKeys(writeAddresses, keysPerPartition);
         this.init(clients, keysPerPartition, keys, readAddress, writeAddresses);
-    
+
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
                 executor.shutdownNow();
@@ -62,8 +65,8 @@ public class BusyWriteGenerator {
 
             ExecutorService executor = Executors.newFixedThreadPool(clients);
 
-
-            BusyWriteGenerator writer = new BusyWriteGenerator(executor, readAddress, writeAddresses, keysPerPartition, clients);
+            BusyWriteGenerator writer = new BusyWriteGenerator(executor, readAddress, writeAddresses, keysPerPartition,
+                    clients);
             writer.run();
         } catch (NumberFormatException e) {
             System.err.println(USAGE);
@@ -71,8 +74,9 @@ public class BusyWriteGenerator {
         }
     }
 
-    private void init(int clients, int keysPerPartition, List<String> keys, Address readAddress, List<Address> writeAddresses) {
-        for(int i = 0; i < clients; i++) {
+    private void init(int clients, int keysPerPartition, List<String> keys, Address readAddress,
+            List<Address> writeAddresses) {
+        for (int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             int startIndex = i % keys.size();
             this.executor.submit(new WriteGeneratorRequest(client, keys, startIndex));
@@ -109,7 +113,7 @@ public class BusyWriteGenerator {
             while ((requestPayload = payload.getAndIncrement()) < Utils.PAYLOAD_END_LONG) {
                 key = keys.get((int) (count % keys.size()));
                 value = Utils.byteStringFromString(String.valueOf(requestPayload));
-                
+
                 try {
                     this.client.requestWrite(key, value);
                 } catch (Exception e) {
