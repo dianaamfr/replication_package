@@ -12,16 +12,19 @@ PERCENTILES = [50, 70, 95, 99]
 PERCENTILES_FLOAT = [p/100 for p in PERCENTILES]
 LINESTYLES = [
     (1, 1),
-    (3, 5, 1, 5), 
+    (3, 5, 1, 5),
     (5, 5)]
 COLORS = ["#006f73", "#da4d30"]
 MARKERS = ['X', 'o']
 
+
 def get_data(path, file):
     return pd.read_json(path + '/' + file + '.json')
 
+
 def get_diff(df, from_row, to_row):
     return df[to_row] - df[from_row]
+
 
 def df_describe(df, attr):
     return pd.DataFrame({
