@@ -1,8 +1,9 @@
 import pandas as pd
 import seaborn as sns
-import math
+import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
-from .utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, GOODPUTS
+import numpy as np
+from .utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, GOODPUTS, LINESTYLES, COLORS, MARKERS
 from .utils import get_data, get_diff, df_describe
 
 EC_LATENCY_PATH = PATH + '/logs/visibility' + EC_DIR + '/d_'
@@ -23,17 +24,23 @@ def visibility_evaluation():
     
     df = pd.concat(dfs).reset_index(drop=True)
     df_cc = pd.concat(dfs[1::2]).reset_index(drop=True)
+
     # Boxplot with the time it takes for a write to be visible to a read
     visibility_boxplot(df, False)
+
+    # Boxplot with the time it takes to respond to a write
+    write_response_boxplot(df, False)
 
     # Boxplot with the time it takes for a write to be stable
     stable_time_boxplot(df_cc)
 
-    # Distribution of the visibility times (comparison between eu and west for eventual and causal)
-    # visibility_histogram(df_ec_diff_eu, df_cc_diff_eu, df_ec_diff_us, df_cc_diff_us)
+    visibility_barplot(df)
+    visibility_barplot(df, 'symlog')
 
-    # Distribution of the visibility times of each phase
-    # visibility_histogram_cc(df_cc_diff_eu, df_cc_diff_us)
+    # TODO: plot showing the response time, push time, pull time, stable time and visibility time of each write
+
+    visibility_throughput_relation(df)
+
 
 def get_ec_visibility_times(delay):
     write_client_df = get_data(EC_LATENCY_PATH + str(delay), 'writeclient-' + LOCAL_REGION)
@@ -73,12 +80,12 @@ def get_ec_visibility_times(delay):
         
     pd_result_eu = get_time_diff_ec(pd_result_eu.tail(100)).reset_index(drop=True)
     pd_result_eu['consistency'] = 'EC'
-    pd_result_eu['goodput'] = "{:.0f}".format(1000/delay)
+    pd_result_eu['goodput'] = 1000//delay
     pd_result_eu['region'] = LOCAL_REGION
     
     pd_result_us = get_time_diff_ec(pd_result_us.tail(100)).reset_index(drop=True)
     pd_result_us['consistency'] = 'EC'
-    pd_result_us['goodput'] = "{:.0f}".format(1000/delay)
+    pd_result_us['goodput'] = 1000//delay
     pd_result_us['region'] = REMOTE_REGION
 
     return pd_result_eu.reset_index(drop=True), pd_result_us.reset_index(drop=True)
@@ -152,12 +159,12 @@ def get_cc_visibility_times(delay):
     
     pd_result_eu = get_time_diff_cc(pd_result_eu.tail(100)).reset_index(drop=True)
     pd_result_eu['consistency'] = 'CC'
-    pd_result_eu['goodput'] = "{:.0f}".format(1000/delay)
+    pd_result_eu['goodput'] = 1000//delay
     pd_result_eu['region'] = LOCAL_REGION
     
     pd_result_us = get_time_diff_cc(pd_result_us.tail(100)).reset_index(drop=True)
     pd_result_us['consistency'] = 'CC'
-    pd_result_us['goodput'] = "{:.0f}".format(1000/delay)
+    pd_result_us['goodput'] = 1000//delay
     pd_result_us['region'] = REMOTE_REGION
 
     return pd_result_eu.reset_index(drop=True), pd_result_us.reset_index(drop=True)
@@ -227,137 +234,58 @@ def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, del
 
 def visibility_boxplot(df, outliers=True):
     g = sns.FacetGrid(df, col="region", height=20, aspect=0.8, margin_titles=True)
-    g.map(sns.boxplot, "goodput", "read_time", "consistency", order=GOODPUTS, showfliers=outliers, hue_order=['EC', 'CC'])
+    g.map(sns.boxplot, "goodput", "read_time", "consistency", order=GOODPUTS, showfliers=outliers, hue_order=['EC', 'CC'], palette=COLORS)
     g.add_legend()
-    g.set_axis_labels("Goodput (writes/s)", "Read Visibility (ms)")
-  
+    g.set_axis_labels("Goodput (writes/s)", "Visibility (ms)")
+
     plt.savefig(RESULT_PATH + '/visibility_boxplot.png', dpi=300)
+    plt.clf()
+
+def write_response_boxplot(df, outliers=True):
+    g = sns.FacetGrid(df, col="region", height=20, aspect=0.8, margin_titles=True)
+    g.map(sns.boxplot, "goodput", "response_time", "consistency", order=GOODPUTS, showfliers=outliers, hue_order=['EC', 'CC'], palette=COLORS)
+    g.add_legend()
+    g.set_axis_labels("Goodput (writes/s)", "Write Response Time (ms)")
+
+    plt.savefig(RESULT_PATH + '/write_response_boxplot.png', dpi=300)
     plt.clf()
 
 def stable_time_boxplot(df):
     g = sns.FacetGrid(df, col="region", height=20, aspect=0.8, margin_titles=True)
-    g.map(sns.boxplot, "goodput", "stable_time", order=GOODPUTS, showfliers=False)
+    g.map(sns.boxplot, "goodput", "stable_time", order=GOODPUTS, showfliers=False, palette=COLORS)
     g.add_legend()
     g.set_axis_labels("Goodput (writes/s)", "Stable Time (ms)")
   
     plt.savefig(RESULT_PATH + '/stable_time_boxplot.png', dpi=300)
     plt.clf()
 
-def visibility_histogram(df_ec_eu, df_cc_eu, df_ec_us, df_cc_us):
-    fig, axs = plt.subplots(2, 2, figsize=(10, 15))
 
-    sns.histplot(data=df_ec_eu, x="read_time", kde=True, color="skyblue", ax=axs[0, 0])
-    axs[0,0].set_title('Eventually Consistent EU')
-    axs[0,0].set_xlabel('Read Time')
-    
-    sns.histplot(data=df_ec_us, x="read_time", kde=True, color="olive", ax=axs[0, 1])
-    axs[0,1].set_title('Eventually Consistent US')
-    axs[0,1].set_xlabel('Read Time')
-    
-    sns.histplot(data=df_cc_eu, x="read_time", kde=True, color="gold", ax=axs[1, 0])
-    axs[1,0].set_title('Causally Consistent EU')
-    axs[1,0].set_xlabel('Read Time')
+def visibility_barplot(df, scale='linear'):
+    grouped_data = df.groupby(["goodput", "consistency", "region"])["read_time"]
+    average_visibility = grouped_data.mean().reset_index()
 
-    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="teal", ax=axs[1, 1])
-    axs[1,1].set_title('Causally Consistent US')
-    axs[1,1].set_xlabel('Read Time')
+    g = sns.FacetGrid(average_visibility, col="region", height=8, aspect=1, margin_titles=True)
+    g.map(sns.barplot, "goodput", "read_time", "consistency", order=GOODPUTS, hue_order=['EC', 'CC'], palette=COLORS)
+    g.set(yscale=scale)
+    g.set_axis_labels("Goodput (writes/s)", "Visibility (ms)")
+    plt.savefig(RESULT_PATH + '/visibility_barplot_' + scale + '.png', dpi=300)
+    plt.clf() 
 
-    plt.suptitle('Visibility Distribution')
-    plt.savefig(PATH + '/results/plots/visibility_histogram.png', dpi=300)
+def visibility_throughput_relation(df):
+    g = sns.FacetGrid(df, col="region", height=8, aspect=1, margin_titles=True)
+    estimator_99 = lambda data: np.percentile(data, 99)
+    estimator_95 = lambda data: np.percentile(data, 95)
+
+    for ax, (_, subdata) in zip(g.axes.flat, df.groupby('region')):
+        sns.lineplot(data=subdata, x="goodput", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[0], LINESTYLES[0]],
+                    markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        sns.lineplot(data=subdata, x="goodput", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[1], LINESTYLES[1]],
+                    markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        sns.lineplot(data=subdata, x="goodput", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[2], LINESTYLES[2]],
+                    markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
+
+    g.set_axis_labels("Goodput (writes/s)", "Visibility (ms)")
+    plt.subplots_adjust(left=0.1, hspace=0.1, wspace=0.1)
+    plt.savefig(RESULT_PATH + '/visibility_with_throughput.png', dpi=300)
     plt.clf()
-    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
-
-def visibility_histogram_cc(df_cc_eu, df_cc_us):
-    fig, axs = plt.subplots(3, 2, figsize=(20, 10))
-
-    sns.histplot(data=df_cc_eu, x="response_time", kde=True, color="skyblue", ax=axs[0, 0])
-    axs[0,0].set_xlabel('Response Time')
-
-    sns.histplot(data=df_cc_eu, x="push_time", kde=True, color="olive", ax=axs[0,1])
-    axs[0,1].set_xlabel('Push Time')
-
-    sns.histplot(data=df_cc_eu, x="pull_time", kde=True, color="gold", ax=axs[1, 0])
-    axs[1,0].set_xlabel('Push Time')
-
-    sns.histplot(data=df_cc_eu, x="store_time", kde=True, color="teal", ax=axs[1, 1])
-    axs[1,1].set_xlabel('Store Time')
-
-    sns.histplot(data=df_cc_eu, x="stable_time", kde=True, color="magenta", ax=axs[2, 0])
-    axs[2,0].set_xlabel('Stable Time')
-
-    sns.histplot(data=df_cc_us, x="read_time", kde=True, color="red", ax=axs[2, 1])
-    axs[2,1].set_xlabel('Read Time')
-
-    plt.suptitle('Causally Consistent Write & Latency Visibility')
-    plt.savefig(PATH + '/results/plots/visibility_cc_histogram.png', dpi=300)
-    plt.clf()
-    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
-
-def visibility_throughput_relation(path_ev, path_cc):
-    df_ec_eu_200, df_ec_us_200 = ev_visibility_times(path_ev + '03')
-    df_cc_eu_200, df_cc_us_200 = cc_visibility_times(path_cc + '03')
-    
-    df_ec_eu_100, df_ec_us_100 = ev_visibility_times(path_ev + '02')
-    df_cc_eu_100, df_cc_us_100 = cc_visibility_times(path_cc + '02')
-    
-    df_ec_eu_50, df_ec_us_50 = ev_visibility_times(path_ev + '01')
-    df_cc_eu_50, df_cc_us_50 = cc_visibility_times(path_cc + '01')
-
-    throughput = [5, 10, 20]
-    dfs_ev_eu = [df_ec_eu_200, df_ec_eu_100, df_ec_eu_50]
-    dfs_ev_us = [df_ec_us_200, df_ec_us_100, df_ec_us_50]
-    dfs_cc_eu = [df_cc_eu_200, df_cc_eu_100, df_cc_eu_50]
-    dfs_cc_us = [df_cc_us_200, df_cc_us_100, df_cc_us_50]
-
-    for i in range(0, len(throughput)):
-        dfs_ev_eu[i] = get_time_diff_ev(dfs_ev_eu[i])
-        dfs_ev_us[i] = get_time_diff_ev(dfs_ev_us[i])
-        dfs_cc_eu[i] = get_time_diff_ev(dfs_cc_eu[i])
-        dfs_cc_us[i] = get_time_diff_ev(dfs_cc_us[i])
-
-    df_ec_eu = throughput_latency_df(dfs_ev_eu, throughput)
-    df_ec_us = throughput_latency_df(dfs_ev_us, throughput)
-    df_cc_eu = throughput_latency_df(dfs_cc_eu, throughput)
-    df_cc_us = throughput_latency_df(dfs_cc_us, throughput)
-
-    max_latency_eu = math.ceil(max(df_ec_eu['p99'].max(), df_cc_eu['p99'].max()))
-    max_latency_us = math.ceil(max(df_ec_us['p99'].max(), df_cc_us['p99'].max()))
-    
-    fig, axs = plt.subplots(1, 2, figsize=(20, 12))
-
-    axs[0].plot(df_ec_eu['throughput'], df_ec_eu['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Visibility')
-    axs[0].plot(df_cc_eu['throughput'], df_cc_eu['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Visibility')
-    axs[0].plot(df_ec_eu['throughput'], df_ec_eu['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Visibility')
-    axs[0].plot(df_cc_eu['throughput'], df_cc_eu['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Visibility')
-    axs[0].grid(True)
-    axs[0].legend()
-    axs[0].set_xlabel('Throughput (writes/s)')
-    axs[0].set_ylabel('Visibility (ms)')
-    axs[0].set_yticks(range(0, max_latency_eu + 1, 1000))
-    axs[0].set_title('EU Visibility vs Throughput')
-
-    axs[1].plot(df_ec_us['throughput'], df_ec_us['mean'], markersize=8, marker='s', linestyle='-', color='teal', label='EV Average Visibility')
-    axs[1].plot(df_cc_us['throughput'], df_cc_us['mean'], markersize=8, marker='o', linestyle='-', color='olive', label='CC Average Visibility')
-    axs[1].plot(df_ec_us['throughput'], df_ec_us['p99'], markersize=5, marker='s', linestyle='--', color='teal', label='EV 99th Percentile Visibility')
-    axs[1].plot(df_cc_us['throughput'], df_cc_us['p99'], markersize=5, marker='o', linestyle='--', color='olive', label='CC 99th Percentile Visibility')
-    axs[1].grid(True)
-    axs[1].legend()
-    axs[1].set_xlabel('Throughput (writes/s)')
-    axs[1].set_ylabel('Visibility (ms)')
-    axs[1].set_yticks(range(0, max_latency_us + 1, 1000))
-    axs[1].set_title('US Visibility vs Throughput')
-
-    plt.suptitle('Visibility for different throughput values')
-    plt.savefig(PATH + '/results/plots/visibility_with_throughput.png', dpi=300)
-    plt.clf()
-    plt.rcParams['figure.figsize'] = plt.rcParamsDefault['figure.figsize']
-
-def throughput_latency_df(dfs, throughput):  
-    df_result = pd.DataFrame()
-    for i in range(len(dfs)):
-        df_result = df_result.append({
-            'throughput': throughput[i], 
-            'mean': dfs[i]['read_time'].mean(), 
-            'p99': dfs[i]['read_time'].quantile(q=0.99)}, 
-            ignore_index=True)
-    return df_result

@@ -2,7 +2,7 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-from .utils import  PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS
+from .utils import  PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, LINESTYLES, MARKERS
 from .utils import get_data
 
 PAYLOAD_BYTES = 12
@@ -22,9 +22,9 @@ def goodput_evaluation():
         goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay)
 
         df_ec_goodput['consistency'] = 'EC'
-        df_ec_goodput['latency'] = "{:.0f}".format(delay)
+        df_ec_goodput['latency'] = delay
         df_cc_goodput['consistency'] = 'CC'
-        df_cc_goodput['latency'] = "{:.0f}".format(delay)
+        df_cc_goodput['latency'] = delay
 
         dfs.append(df_ec_goodput)
         dfs.append(df_cc_goodput)
@@ -75,7 +75,7 @@ def goodput_average_barplot(df, goodput_var, ylabel):
     grouped_data = df.groupby(["latency", "consistency"])[goodput_var]
     average_goodput = grouped_data.mean().round(2).reset_index()
 
-    sns.barplot(data=average_goodput, x="latency", y=goodput_var, hue="consistency", width=0.8, edgecolor="#2a2a2a", linewidth=1.5, order=['50', '100', '200'], alpha=0.8)
+    sns.barplot(data=average_goodput, x="latency", y=goodput_var, hue="consistency", width=0.8, linewidth=1.5, order=DELAYS)
     ax.xaxis.grid(True)
     ax.set_xlabel(ax.get_xlabel().capitalize() + " (ms)", labelpad=10)
     ax.set_ylabel(ylabel, labelpad=10)
@@ -89,21 +89,18 @@ def goodput_latency_relation(df, goodput_var, ylabel):
 
     estimator_99 = lambda data: np.percentile(data, 99)
     estimator_95 = lambda data: np.percentile(data, 95)
-    linestyles = [
-        (1, 1),
-        (3, 5, 1, 5), 
-        (5, 5)]
 
-    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[0], linestyles[0]],
-                 markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False)
-    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[1], linestyles[1]],
-                 markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False)
-    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[linestyles[2], linestyles[2]],
-                 markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False)
+    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[0], LINESTYLES[0]],
+                 markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w')
+    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[1], LINESTYLES[1]],
+                 markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w')
+    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[2], LINESTYLES[2]],
+                 markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w')
     
     ax.xaxis.grid(True)
     ax.set_xlabel(ax.get_xlabel().capitalize() + " (ms)", labelpad=10)
     ax.set_ylabel(ylabel, labelpad=10)
+    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize() for label in labels], loc="lower right")
     plt.savefig(RESULT_PATH + '/' + goodput_var + '_with_latency.png', dpi=300)
