@@ -80,7 +80,7 @@ public class ConstantReadGenerator {
         @Override
         public void run() {
             if (countDown.getCount() > 0) {
-                String key = keys.get(keyCounter % keys.size());
+                String key = keys.get(keyCounter);
                 S3ReadResponse response = client.read(key);
                 endTime = System.currentTimeMillis();
 
