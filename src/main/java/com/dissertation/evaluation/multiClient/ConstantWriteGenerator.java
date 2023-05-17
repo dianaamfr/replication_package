@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.dissertation.evaluation.logs.Log;
 import com.dissertation.evaluation.logs.WriteRequestLog;
@@ -23,9 +22,11 @@ public class ConstantWriteGenerator {
     private List<CountDownLatch> countdowns;
     private CountDownLatch startSignal;
     private List<ArrayDeque<Log>> logs;
-    private AtomicLong payload;
+    private final ByteString payload;
     
-    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <writesPerClient:Int> <keysPerPartition:String> <clients:Int>";
+    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> " +
+        "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " + 
+        "<delay:Int> <writesPerClient:Int> <keysPerPartition:String> <clients:Int>";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int writesPerClient, int keysPerPartition, int clients) {
@@ -34,7 +35,7 @@ public class ConstantWriteGenerator {
         this.startSignal = new CountDownLatch(1);
         this.countdowns = new ArrayList<>();
         this.logs = new ArrayList<>();
-        this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
+        this.payload = Utils.byteStringFromString(String.valueOf(Utils.PAYLOAD_START_LONG));
 
         List<String> keys = Utils.generateKeys(writeAddresses, keysPerPartition);
         this.init(clients, writesPerClient, keys, readAddress, writeAddresses);
@@ -115,11 +116,11 @@ public class ConstantWriteGenerator {
     }
     
     private class WriteGeneratorRequest implements Runnable {
-        private Client client;
-        private CountDownLatch countDown;
-        private List<String> keys;
-        private ArrayDeque<Log> logs;
-        private int startIndex;
+        private final Client client;
+        private final CountDownLatch countDown;
+        private final List<String> keys;
+        private final ArrayDeque<Log> logs;
+        private final int startIndex;
 
         public WriteGeneratorRequest(Client client, CountDownLatch countDown, List<String> keys, ArrayDeque<Log> logs, int startIndex) {
             this.client = client;
@@ -141,14 +142,12 @@ public class ConstantWriteGenerator {
             int count = (int) this.countDown.getCount();
             if (count > 0) {
                 String key = this.keys.get((count + this.startIndex) % this.keys.size());
-                long valuePayload = payload.getAndIncrement();
-                ByteString value = Utils.byteStringFromString(String.valueOf(valuePayload));
                 int partitionId = Utils.getKeyPartitionId(key);
 
                 long t1 = System.currentTimeMillis();
                 WriteResponse writeResponse;
                 try {
-                    writeResponse = client.requestWrite(key, value);
+                    writeResponse = client.requestWrite(key, payload);
                 } catch (Exception e) {
                     Utils.printException(e);
                     return;

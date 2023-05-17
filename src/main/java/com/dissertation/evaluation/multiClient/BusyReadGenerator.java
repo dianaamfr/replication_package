@@ -20,20 +20,20 @@ import com.dissertation.utils.Utils;
 
 public class BusyReadGenerator {
     private ExecutorService executor;
-    private final long endMarker;
     private final List<ArrayDeque<Log>> logs;
+    private final int readTime;
     private final int readSetsSize;
     private final CountDownLatch startSignal;
-    private final CountDownLatch countDown;
 
-    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <expectedWrites:Int> <keysPerRead:Int> <keysPerPartition:String> <clients:Int>";
+    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> " + 
+        "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " + 
+        "<readTime:Int> <keysPerRead:Int> <keysPerPartition:String> <clients:Int>";
 
-    public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, long endMarker, int keysPerRead, int keysPerPartition, int clients) {
+    public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, int readTime, int keysPerRead, int keysPerPartition, int clients) {
         this.executor = executor;
-        this.endMarker = endMarker;
+        this.readTime = readTime;
         this.logs = new ArrayList<>();
         this.startSignal = new CountDownLatch(1);
-        this.countDown = new CountDownLatch(1);
         List<Set<String>> readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
         this.readSetsSize = readSets.size();
         this.init(clients, readSets, readAddress, writeAddresses);
@@ -62,15 +62,14 @@ public class BusyReadGenerator {
                 return;
             }
 
-            long expectedWrites = Long.parseLong(args[addressesEndIndex]);
-            long endMarker = Utils.PAYLOAD_START_LONG + expectedWrites - 1;
+            int readTime = Integer.parseInt(args[addressesEndIndex]);
             int keysPerRead = Integer.parseInt(args[addressesEndIndex + 1]);
             int keysPerPartition = Integer.parseInt(args[addressesEndIndex + 2]);
             int clients = Integer.parseInt(args[addressesEndIndex + 3]);
 
             ExecutorService executor = Executors.newFixedThreadPool(clients);
 
-            BusyReadGenerator reader = new BusyReadGenerator(executor, readAddress, writeAddresses, endMarker, keysPerRead, keysPerPartition, clients);
+            BusyReadGenerator reader = new BusyReadGenerator(executor, readAddress, writeAddresses, readTime, keysPerRead, keysPerPartition, clients);
             reader.run();
         } catch (Exception e) {
             e.printStackTrace();
@@ -123,7 +122,6 @@ public class BusyReadGenerator {
             String valueStr;
             long valueLong;
             boolean newPayload = false;
-            boolean exit = false;
 
             try {
                 startSignal.await();
@@ -132,7 +130,8 @@ public class BusyReadGenerator {
                 return;
             }
 
-            while (countDown.getCount() > 0) {
+            long startTime = System.currentTimeMillis();
+            while (System.currentTimeMillis() - startTime < readTime) {
                 Set<String> requestKeys = readSets.get((this.startIndex + this.keyCounter) % readSetsSize);
                 t1 = System.currentTimeMillis();
                 try {
@@ -156,9 +155,6 @@ public class BusyReadGenerator {
                             this.lastPayload = valueLong;
                             newPayload = true;
                         }
-                        if (valueLong == endMarker) {
-                            exit = true;
-                        }
                     } catch (NumberFormatException e) {
                         continue;
                     }
@@ -169,13 +165,8 @@ public class BusyReadGenerator {
                     this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
                     this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
                 }
-
-                if (exit) {
-                    this.client.shutdown();
-                    countDown.countDown();
-                    break;
-                }
             }
+            this.client.shutdown();
         }
     }
 
