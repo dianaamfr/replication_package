@@ -19,24 +19,24 @@ import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
 
 public class BusyReadGenerator {
-    private ExecutorService executor;
-    private final List<ArrayDeque<Log>> logs;
+    private final ExecutorService executor;
     private final int readTime;
-    private final int readSetsSize;
+    private final List<ArrayDeque<Log>> logs;
     private final CountDownLatch startSignal;
+    private final List<Set<String>> readSets;
 
-    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> " + 
-        "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " + 
-        "<readTime:Int> <keysPerRead:Int> <keysPerPartition:String> <clients:Int>";
+    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+            "<readTime:Int> <keysPerRead:Int> <keysPerPartition:String> <clients:Int>";
 
-    public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, int readTime, int keysPerRead, int keysPerPartition, int clients) {
+    public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, int readTime,
+            int keysPerRead, int keysPerPartition, int clients) {
         this.executor = executor;
         this.readTime = readTime;
         this.logs = new ArrayList<>();
         this.startSignal = new CountDownLatch(1);
-        List<Set<String>> readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
-        this.readSetsSize = readSets.size();
-        this.init(clients, readSets, readAddress, writeAddresses);
+        this.readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
+        this.init(clients, readAddress, writeAddresses);
     }
 
     public static void main(String[] args) {
@@ -67,9 +67,15 @@ public class BusyReadGenerator {
             int keysPerPartition = Integer.parseInt(args[addressesEndIndex + 2]);
             int clients = Integer.parseInt(args[addressesEndIndex + 3]);
 
+            if ((keysPerPartition * regionPartitions) % keysPerRead != 0) {
+                System.err.println("The number of keys must be divisible by the keys per read.");
+                return;
+            }
+
             ExecutorService executor = Executors.newFixedThreadPool(clients);
 
-            BusyReadGenerator reader = new BusyReadGenerator(executor, readAddress, writeAddresses, readTime, keysPerRead, keysPerPartition, clients);
+            BusyReadGenerator reader = new BusyReadGenerator(executor, readAddress, writeAddresses, readTime,
+                    keysPerRead, keysPerPartition, clients);
             reader.run();
         } catch (Exception e) {
             e.printStackTrace();
@@ -77,13 +83,13 @@ public class BusyReadGenerator {
         }
     }
 
-    private void init(int clients, List<Set<String>> keys, Address readAddress, List<Address> writeAddresses) {
-        for(int i = 0; i < clients; i++) {
+    private void init(int clients, Address readAddress, List<Address> writeAddresses) {
+        for (int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
-            int startIndex = i % keys.size();
+            int startIndex = i % this.readSets.size();
             this.logs.add(logs);
-            this.executor.submit(new ReadGeneratorRequest(client, keys, logs, startIndex));
+            this.executor.submit(new ReadGeneratorRequest(client, logs, startIndex));
         }
     }
 
@@ -100,22 +106,18 @@ public class BusyReadGenerator {
 
     private class ReadGeneratorRequest implements Runnable {
         private final Client client;
-        private final List<Set<String>> readSets;
         private final ArrayDeque<Log> logs;
-        private final int startIndex;
         private long lastPayload;
         private int keyCounter;
 
-        public ReadGeneratorRequest(Client client, List<Set<String>> keys, ArrayDeque<Log> logs, int startIndex) {
+        public ReadGeneratorRequest(Client client, ArrayDeque<Log> logs, int startIndex) {
             this.client = client;
-            this.readSets = keys;
             this.logs = logs;
-            this.startIndex = startIndex;
             this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
-            this.keyCounter = 0;
+            this.keyCounter = startIndex;
         }
-        
-        @Override    
+
+        @Override
         public void run() {
             ROTResponse rotResponse;
             long t1, t2;
@@ -132,7 +134,7 @@ public class BusyReadGenerator {
 
             long startTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - startTime < readTime) {
-                Set<String> requestKeys = readSets.get((this.startIndex + this.keyCounter) % readSetsSize);
+                Set<String> requestKeys = readSets.get(this.keyCounter);
                 t1 = System.currentTimeMillis();
                 try {
                     rotResponse = this.client.requestROT(requestKeys);
@@ -143,7 +145,7 @@ public class BusyReadGenerator {
                     continue;
                 }
 
-                for (KeyVersion keyVersion: rotResponse.getVersionsMap().values()) {
+                for (KeyVersion keyVersion : rotResponse.getVersionsMap().values()) {
                     valueStr = Utils.stringFromByteString(keyVersion.getValue());
                     if (valueStr.isBlank()) {
                         continue;
@@ -165,12 +167,14 @@ public class BusyReadGenerator {
                     this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
                     this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
                 }
+
+                this.keyCounter = incrementKeyCounter(this.keyCounter);
             }
             this.client.shutdown();
         }
     }
 
     private int incrementKeyCounter(int keyCounter) {
-        return (keyCounter + 1) % this.readSetsSize;
+        return (keyCounter + 1) % this.readSets.size();
     }
 }

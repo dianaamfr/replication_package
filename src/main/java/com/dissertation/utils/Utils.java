@@ -121,9 +121,9 @@ public class Utils {
 
     public static List<String> generateKeys(List<Address> writeAddresses, int keysPerPartition) {
         List<String> keys = Arrays.asList(new String[writeAddresses.size() * keysPerPartition]);
-        for (int i = 0; i < writeAddresses.size(); i++) { // 0 a 2
+        for (int i = 0; i < writeAddresses.size(); i++) { 
             int count = 0;
-            for (int j = 0; j < 26; j++) { // 0 a 25
+            for (int j = 0; j < 26; j++) {
                 String key = String.valueOf((char)(j + 1 + 64));
                 if(Utils.getKeyPartitionId(key) == writeAddresses.get(i).getPartitionId()) {
                     keys.set(i + count * writeAddresses.size(), key);

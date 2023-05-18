@@ -13,9 +13,10 @@ import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
 public class BusyWriteGenerator {
-    private ExecutorService executor;
-    private CountDownLatch startSignal;
-    private AtomicLong payload;
+    private final ExecutorService executor;
+    private final CountDownLatch startSignal;
+    private final AtomicLong payload;
+    private final List<String> keys;
 
     private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> " +
             "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
@@ -27,8 +28,8 @@ public class BusyWriteGenerator {
         this.startSignal = new CountDownLatch(1);
         this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
 
-        List<String> keys = Utils.generateKeys(writeAddresses, keysPerPartition);
-        this.init(clients, keysPerPartition, keys, readAddress, writeAddresses);
+        this.keys = Utils.generateKeys(writeAddresses, keysPerPartition);
+        this.init(clients, keysPerPartition, readAddress, writeAddresses);
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
@@ -74,12 +75,12 @@ public class BusyWriteGenerator {
         }
     }
 
-    private void init(int clients, int keysPerPartition, List<String> keys, Address readAddress,
+    private void init(int clients, int keysPerPartition, Address readAddress,
             List<Address> writeAddresses) {
         for (int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
-            int startIndex = i % keys.size();
-            this.executor.submit(new WriteGeneratorRequest(client, keys, startIndex));
+            int startIndex = i % this.keys.size();
+            this.executor.submit(new WriteGeneratorRequest(client, startIndex));
         }
     }
 
@@ -89,18 +90,17 @@ public class BusyWriteGenerator {
 
     private class WriteGeneratorRequest implements Runnable {
         private final Client client;
-        private final List<String> keys;
+        private int keyCounter;
 
-        public WriteGeneratorRequest(Client client, List<String> keys, int startIndex) {
+        public WriteGeneratorRequest(Client client, int startIndex) {
             this.client = client;
-            this.keys = keys;
+            this.keyCounter = startIndex;
         }
 
         @Override
         public void run() {
             String key;
             ByteString value;
-            long count = 0;
 
             try {
                 startSignal.await();
@@ -111,17 +111,22 @@ public class BusyWriteGenerator {
 
             long requestPayload;
             while ((requestPayload = payload.getAndIncrement()) < Utils.PAYLOAD_END_LONG) {
-                key = keys.get((int) (count % keys.size()));
+                key = keys.get(keyCounter);
                 value = Utils.byteStringFromString(String.valueOf(requestPayload));
 
                 try {
                     this.client.requestWrite(key, value);
                 } catch (Exception e) {
+                    this.keyCounter = incrementKeyCounter(keyCounter);
                     Utils.printException(e);
                     continue;
                 }
-                count++;
+                this.keyCounter = incrementKeyCounter(keyCounter);
             }
         }
+    }
+
+    private int incrementKeyCounter(int keyCounter) {
+        return (keyCounter + 1) % this.keys.size();
     }
 }
