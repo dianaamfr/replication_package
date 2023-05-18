@@ -56,20 +56,19 @@
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh v12.0.0-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
-
 ---
 # Get Logs
 ### Reader EU-WEST-1
-docker container cp readNode:/logs/ ./logs
-docker container cp busyReadGenerator:/logs/ ./logs
-docker container cp constantWriteGenerator:/logs/ ./logs
+docker container cp readNode:/logs/ .
+docker container cp busyReadGenerator:/logs/ .
+docker container cp constantWriteGenerator:/logs/ .
 
 ### Write Nodes EU-WEST-1
-docker container cp writeNode:/logs/ ./logs
+docker container cp writeNode:/logs/ .
 
 ### Reader US-EAST-1
-docker container cp readNode:/logs/ ./logs
-docker container cp busyReadGenerator:/logs/ ./logs
+docker container cp readNode:/logs/ .
+docker container cp busyReadGenerator:/logs/ .
 
 ## Copy logs
 

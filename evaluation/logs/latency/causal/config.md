@@ -47,7 +47,7 @@
 ---
 # Get Logs
 ### Reader EU-WEST-1
-docker container cp busyReadGenerator:/logs/ ./logs
+docker container cp busyReadGenerator:/logs/ .
 
 ## Copy logs
 scp -i "reference-architecture.pem" -r ubuntu@<read-eu-DNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
