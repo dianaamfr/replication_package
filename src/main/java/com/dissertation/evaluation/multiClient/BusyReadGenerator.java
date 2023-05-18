@@ -98,7 +98,7 @@ public class BusyReadGenerator {
         try {
             this.executor.shutdown();
             this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
-            Utils.logsToFile(this.logs);
+            Utils.logsToFile(this.logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

@@ -89,12 +89,12 @@ public class Utils {
         return String.format(Utils.S3_PARTITION_FORMAT, partitionId, region);
     }
 
-    public static void logsToFile(List<ArrayDeque<Log>> logsList) {
+    public static void logsToFile(List<ArrayDeque<Log>> logsList, String file) {
         ArrayDeque<Log> totalLogs = new ArrayDeque<>();
         for(ArrayDeque<Log> logs : logsList) {
             totalLogs.addAll(logs);
         }
-        Utils.logToFile(totalLogs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
+        Utils.logToFile(totalLogs, file);
     }
 
     public static void logToFile(ArrayDeque<Log> logs, String file) {

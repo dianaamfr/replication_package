@@ -113,7 +113,7 @@ public class ConstantWriteGenerator {
             }
             this.scheduler.shutdown();
             this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
-            Utils.logsToFile(this.logs);
+            Utils.logsToFile(this.logs, String.format("%s-%s", Utils.WRITE_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
