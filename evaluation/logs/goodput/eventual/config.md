@@ -7,8 +7,8 @@
 - 3 iterations
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 50 20000 a
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v3.0.0 1 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v3.0.0 1 50 20000 a
 
 ---
 ## Test 2
@@ -18,8 +18,8 @@
 - 3 iterations
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 100 20000 a
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v3.0.0 1 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v3.0.0 1 100 20000 a
 
 ---
 ## Test 3
@@ -29,5 +29,5 @@
 - 3 iterations
 
 ### EU-WEST-1
-**Busy Write Generator**: ./evBusyWriteGenerator.sh v2.0.0 1 a
-**Constant Read Generator**: ./evConstantReadGenerator.sh v2.0.0 1 200 20000 a
+**Busy Write Generator**: ./evBusyWriteGenerator.sh v3.0.0 1 a
+**Constant Read Generator**: ./evConstantReadGenerator.sh v3.0.0 1 200 20000 a

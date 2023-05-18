@@ -4,7 +4,7 @@
 **Visibility**: docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation:v13.0.0-visibility --build-arg visibility_logs=true --build-arg goodput_logs=false --push .
 
 **Eventual**:
-docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation-eventual:v2.0.0 --push .
+docker buildx build --platform linux/amd64,linux/arm64 -t dianaamfreitas/dissertation-eventual:v3.0.0 --push .
 
 # Docker clean
 **On every machine**

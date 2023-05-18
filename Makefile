@@ -107,14 +107,6 @@ writesPerClient = 100
 multiReadTime = 20000
 readClients = 19
 
-# 0.95 readers, 0.05 writers
-# 5 to 95 (100)
-# 30 to 570 (600)
-# 60 to 1140 (1200)
-# 90 to 1710 (1800)
-# 120 to 2280 (2400)
-# 150 to 2850 (3000)
-
 # Multi client read and write generators to measure latency with constant throughput 
 multiBusyRead:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyReadGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
