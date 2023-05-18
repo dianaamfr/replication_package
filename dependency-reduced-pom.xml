@@ -195,6 +195,22 @@
               </transformers>
             </configuration>
           </execution>
+          <execution>
+            <id>multi-constant-read-generator</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <finalName>multiConstantReadGenerator</finalName>
+              <transformers>
+                <transformer />
+                <transformer>
+                  <mainClass>com.dissertation.evaluation.multiClient.ConstantReadGenerator</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
         </executions>
         <configuration>
           <transformers>

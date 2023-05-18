@@ -66,20 +66,24 @@ public class BusyWriteGenerator {
         String key;
         ByteString value;
         long payload = Utils.PAYLOAD_START_LONG;
-        long count = 0;
+        int keyCounter = 0;
 
         while (payload < Utils.PAYLOAD_END_LONG) {
-            key = keys.get((int) (count % keys.size()));
+            key = keys.get(keyCounter);
             value = Utils.byteStringFromString(String.valueOf(payload));
             try {
                 this.client.requestWrite(key, value);
             } catch (Exception e) {
+                keyCounter = incrementKeyCounter(keyCounter);
                 Utils.printException(e);
                 continue;
             }
-            count++;
+            keyCounter = incrementKeyCounter(keyCounter);
             payload++;
         }
     }
 
+    private int incrementKeyCounter(int keyCounter) {
+        return (keyCounter + 1) % this.keys.size();
+    }
 }

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicIntegerArray;
 
 import com.dissertation.evaluation.logs.Log;
 import com.dissertation.evaluation.logs.WriteRequestLog;
@@ -18,26 +18,30 @@ import com.dissertation.utils.Utils;
 import com.google.protobuf.ByteString;
 
 public class ConstantWriteGenerator {
-    private ScheduledThreadPoolExecutor scheduler;
+    private final ScheduledThreadPoolExecutor scheduler;
     private final long delay;
-    private List<CountDownLatch> countdowns;
-    private CountDownLatch startSignal;
-    private List<ArrayDeque<Log>> logs;
-    private AtomicLong payload;
-    
-    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> <readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ <delay:Int> <writesPerClient:Int> <keysPerPartition:String> <clients:Int>";
+    private final List<CountDownLatch> countdowns;
+    private final CountDownLatch startSignal;
+    private final List<ArrayDeque<Log>> logs;
+    private final ByteString payload;
+    private final List<String> keys;
+    private final AtomicIntegerArray keyCounters;
+
+    private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> " +
+            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+            "<delay:Int> <writesPerClient:Int> <keysPerPartition:String> <clients:Int>";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int writesPerClient, int keysPerPartition, int clients) {
-        this.delay = delay;
         this.scheduler = scheduler;
-        this.startSignal = new CountDownLatch(1);
+        this.delay = delay;
         this.countdowns = new ArrayList<>();
+        this.startSignal = new CountDownLatch(1);
         this.logs = new ArrayList<>();
-        this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
-
-        List<String> keys = Utils.generateKeys(writeAddresses, keysPerPartition);
-        this.init(clients, writesPerClient, keys, readAddress, writeAddresses);
+        this.payload = Utils.byteStringFromString(String.valueOf(Utils.PAYLOAD_START_LONG));
+        this.keys = Utils.generateKeys(writeAddresses, keysPerPartition);
+        this.keyCounters = new AtomicIntegerArray(clients);
+        this.init(clients, writesPerClient, readAddress, writeAddresses);
     }
 
     public static void main(String[] args) {
@@ -68,12 +72,12 @@ public class ConstantWriteGenerator {
             int keysPerPartition = Integer.parseInt(args[addressesEndIndex + 2]);
             int clients = Integer.parseInt(args[addressesEndIndex + 3]);
 
-            if(writesPerClient % regionPartitions != 0) {
+            if (writesPerClient % regionPartitions != 0) {
                 System.err.println("Writes per client must be a multiple of region partitions");
                 return;
             }
 
-            if(keysPerPartition * regionPartitions > 26) {
+            if (keysPerPartition * regionPartitions > 26) {
                 System.err.println("The total number of keys must be less than 26");
                 return;
             }
@@ -88,22 +92,23 @@ public class ConstantWriteGenerator {
         }
     }
 
-    private void init(int clients, int writesPerClient, List<String> keys, Address readAddress, List<Address> writeAddresses) {
-        for(int i = 0; i < clients; i++) {
+    private void init(int clients, int writesPerClient, Address readAddress, List<Address> writeAddresses) {
+        for (int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
-            int startIndex = i % keys.size();
+            this.keyCounters.set(i, i % this.keys.size());
             CountDownLatch countdown = new CountDownLatch(writesPerClient);
             this.countdowns.add(countdown);
             this.logs.add(logs);
-            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(client, countdown, keys, logs, startIndex), 0, this.delay, TimeUnit.MILLISECONDS);
+            this.scheduler.scheduleWithFixedDelay(new WriteGeneratorRequest(client, countdown, logs, i), 0, this.delay,
+                    TimeUnit.MILLISECONDS);
         }
     }
 
     public void run() {
         this.startSignal.countDown();
         try {
-            for(CountDownLatch countDown : this.countdowns) {
+            for (CountDownLatch countDown : this.countdowns) {
                 countDown.await();
             }
             this.scheduler.shutdown();
@@ -113,20 +118,18 @@ public class ConstantWriteGenerator {
             e.printStackTrace();
         }
     }
-    
-    private class WriteGeneratorRequest implements Runnable {
-        private Client client;
-        private CountDownLatch countDown;
-        private List<String> keys;
-        private ArrayDeque<Log> logs;
-        private int startIndex;
 
-        public WriteGeneratorRequest(Client client, CountDownLatch countDown, List<String> keys, ArrayDeque<Log> logs, int startIndex) {
+    private class WriteGeneratorRequest implements Runnable {
+        private final Client client;
+        private final CountDownLatch countDown;
+        private final ArrayDeque<Log> logs;
+        private final int index;
+
+        public WriteGeneratorRequest(Client client, CountDownLatch countDown, ArrayDeque<Log> logs, int index) {
             this.client = client;
             this.countDown = countDown;
-            this.keys = keys;
             this.logs = logs;
-            this.startIndex = startIndex;
+            this.index = index;
         }
 
         @Override
@@ -137,19 +140,17 @@ public class ConstantWriteGenerator {
                 System.err.println("Interrupted while waiting for start signal");
                 return;
             }
-            
-            int count = (int) this.countDown.getCount();
-            if (count > 0) {
-                String key = this.keys.get((count + this.startIndex) % this.keys.size());
-                long valuePayload = payload.getAndIncrement();
-                ByteString value = Utils.byteStringFromString(String.valueOf(valuePayload));
+
+            if (this.countDown.getCount() > 0) {
+                String key = keys.get(keyCounters.get(this.index));
                 int partitionId = Utils.getKeyPartitionId(key);
 
                 long t1 = System.currentTimeMillis();
                 WriteResponse writeResponse;
                 try {
-                    writeResponse = client.requestWrite(key, value);
+                    writeResponse = client.requestWrite(key, payload);
                 } catch (Exception e) {
+                    incrementKeyCounter(this.index);
                     Utils.printException(e);
                     return;
                 }
@@ -159,7 +160,12 @@ public class ConstantWriteGenerator {
                 this.logs.add(new WriteResponseLog(partitionId, writeResponse.getWriteTimestamp(), t2));
 
                 this.countDown.countDown();
+                incrementKeyCounter(this.index);
             }
         }
+    }
+
+    private void incrementKeyCounter(int index) {
+        this.keyCounters.set(index, (this.keyCounters.get(index) + 1) % this.keys.size());
     }
 }

@@ -74,6 +74,11 @@ public class BusyReadGenerator {
                 keys.add(args[i]);
             }
 
+            if(keys.size() % keysPerRead != 0) {
+                System.err.println("The number of keys must be divisible by the keys per read.");
+                return;
+            }
+
             BusyReadGenerator reader = new BusyReadGenerator(readAddress, writeAddresses, endMarker, keysPerRead, keys);
             reader.run();
         } catch (Exception e) {
@@ -91,7 +96,7 @@ public class BusyReadGenerator {
         boolean exit = false;
 
         while (true) {
-            Set<String> requestKeys = readSets.get(this.keyCounter % readSets.size());
+            Set<String> requestKeys = readSets.get(this.keyCounter);
             t1 = System.currentTimeMillis();
             try {
                 rotResponse = this.client.requestROT(requestKeys);
@@ -132,6 +137,8 @@ public class BusyReadGenerator {
                 this.client.shutdown();
                 break;
             }
+
+            this.keyCounter = this.incrementKeyCounter();
         }
     }
 

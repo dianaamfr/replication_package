@@ -105,7 +105,7 @@ public class ConstantReadGenerator {
         @Override
         public void run() {
             if (countDown.getCount() > 0) {
-                Set<String> requestKeys = readSets.get(keyCounter % readSets.size());
+                Set<String> requestKeys = readSets.get(keyCounter);
 
                 ROTResponse rotResponse;
                 try {

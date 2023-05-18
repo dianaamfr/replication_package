@@ -41,14 +41,17 @@ public class BusyWriteGenerator {
     public void run() {
         String key;
         long payload = Utils.PAYLOAD_START_LONG;
-        long count = 0;
+        int keyCounter = 0;
 
         while (payload < Utils.PAYLOAD_END_LONG) {
-            key = keys.get((int) (count % keys.size()));
+            key = keys.get(keyCounter);
             this.client.write(key, String.valueOf(payload));
-            count++;
+            keyCounter = incrementKeyCounter(keyCounter);
             payload++;
         }
     }
 
+    private int incrementKeyCounter(int keyCounter) {
+        return (keyCounter + 1) % this.keys.size();
+    }
 }

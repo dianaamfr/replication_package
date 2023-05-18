@@ -49,7 +49,7 @@ public class BusyReadGenerator {
         try {
             long expectedWrites = Long.parseLong(args[0]);
             long endMarker = Utils.PAYLOAD_START_LONG + expectedWrites - 1;
-            for (int i = 0; i < args.length; i++) {
+            for (int i = 1; i < args.length; i++) {
                 keys.add(args[i]);
             }
 
@@ -68,7 +68,7 @@ public class BusyReadGenerator {
         long valueLong;
 
         while (true) {
-            String key = keys.get(this.keyCounter % keys.size());
+            String key = keys.get(this.keyCounter);
             t1 = System.currentTimeMillis();
             response = this.client.read(key);
             t2 = System.currentTimeMillis();
