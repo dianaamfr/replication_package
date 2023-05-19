@@ -64,7 +64,6 @@ public class ConstantReadGenerator {
     }
 
     public static void main(String[] args) {
-        ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(1);
         int regionPartitions = 0;
         Address readAddress;
         List<Address> writeAddresses = new ArrayList<>();
@@ -92,6 +91,7 @@ public class ConstantReadGenerator {
             int keysPerRead = Integer.parseInt(args[addressesEndIndex + 2]);
             int keysPerPartition = Integer.parseInt(args[addressesEndIndex + 3]);
             int clients = Integer.parseInt(args[addressesEndIndex + 4]);
+            ScheduledThreadPoolExecutor scheduler = new ScheduledThreadPoolExecutor(clients);
 
             if ((keysPerPartition * regionPartitions) % keysPerRead != 0) {
                 System.err.println(USAGE);
