@@ -3,8 +3,8 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import numpy as np
-from .utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, GOODPUTS, LINESTYLES, COLORS, MARKERS
-from .utils import get_data, get_diff, df_describe
+from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, GOODPUTS, LINESTYLES, COLORS, MARKERS
+from visualization.utils import get_data, get_diff, df_describe
 
 EC_LATENCY_PATH = PATH + '/logs/visibility' + EC_DIR + '/d_'
 CC_LATENCY_PATH = PATH + '/logs/visibility' + CC_DIR + '/d_'

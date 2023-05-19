@@ -7,7 +7,8 @@ sns.set(font_scale=1.5)
 sns.set_style("whitegrid", {'grid.linestyle': '--'})
 sns.set_palette(visualization.COLORS)
 
-visualization.latency_evaluation()
-visualization.goodput_evaluation()
-visualization.visibility_evaluation()
-    
+visualization.single_client.latency_evaluation()
+visualization.single_client.goodput_evaluation()
+visualization.single_client.visibility_evaluation()
+
+visualization.multi_client.latency_evaluation()
