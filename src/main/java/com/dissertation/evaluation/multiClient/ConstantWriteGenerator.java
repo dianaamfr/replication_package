@@ -25,7 +25,7 @@ public class ConstantWriteGenerator {
     private final List<ArrayDeque<Log>> logs;
     private final ByteString payload;
     private final List<String> keys;
-    private final AtomicIntegerArray keyCounters;
+    private AtomicIntegerArray keyCounters;
 
     private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> " +
             "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
@@ -95,7 +95,7 @@ public class ConstantWriteGenerator {
     private void init(int clients, int writesPerClient, Address readAddress, List<Address> writeAddresses) {
         for (int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
-            ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
+            ArrayDeque<Log> logs = new ArrayDeque<>(writesPerClient * 2);
             this.keyCounters.set(i, i % this.keys.size());
             CountDownLatch countdown = new CountDownLatch(writesPerClient);
             this.countdowns.add(countdown);
@@ -144,7 +144,6 @@ public class ConstantWriteGenerator {
             if (this.countDown.getCount() > 0) {
                 String key = keys.get(keyCounters.get(this.index));
                 int partitionId = Utils.getKeyPartitionId(key);
-
                 long t1 = System.currentTimeMillis();
                 WriteResponse writeResponse;
                 try {

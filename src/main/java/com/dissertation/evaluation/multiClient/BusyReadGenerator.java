@@ -2,6 +2,7 @@ package com.dissertation.evaluation.multiClient;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -12,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 import com.dissertation.evaluation.logs.Log;
 import com.dissertation.evaluation.logs.ROTRequestLog;
 import com.dissertation.evaluation.logs.ROTResponseLog;
-import com.dissertation.referencearchitecture.KeyVersion;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
@@ -22,6 +22,7 @@ public class BusyReadGenerator {
     private final ExecutorService executor;
     private final int readTime;
     private final List<ArrayDeque<Log>> logs;
+    private final List<CountDownLatch> countdowns;
     private final CountDownLatch startSignal;
     private final List<Set<String>> readSets;
 
@@ -34,6 +35,7 @@ public class BusyReadGenerator {
         this.executor = executor;
         this.readTime = readTime;
         this.logs = new ArrayList<>();
+        this.countdowns = new ArrayList<>();
         this.startSignal = new CountDownLatch(1);
         this.readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
         this.init(clients, readAddress, writeAddresses);
@@ -88,14 +90,19 @@ public class BusyReadGenerator {
             Client client = new Client(readAddress, writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
             int startIndex = i % this.readSets.size();
+            CountDownLatch countdown = new CountDownLatch(1);
+            this.countdowns.add(countdown);
             this.logs.add(logs);
-            this.executor.submit(new ReadGeneratorRequest(client, logs, startIndex));
+            this.executor.submit(new ReadGeneratorRequest(client, countdown, logs, startIndex));
         }
     }
 
     public void run() {
         this.startSignal.countDown();
         try {
+            for (CountDownLatch countDown : this.countdowns) {
+                countDown.await();
+            }
             this.executor.shutdown();
             this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
             Utils.logsToFile(this.logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
@@ -106,14 +113,16 @@ public class BusyReadGenerator {
 
     private class ReadGeneratorRequest implements Runnable {
         private final Client client;
+        private final CountDownLatch countdown;
         private final ArrayDeque<Log> logs;
-        private long lastPayload;
+        private final List<String> lastStableTimes;
         private int keyCounter;
 
-        public ReadGeneratorRequest(Client client, ArrayDeque<Log> logs, int startIndex) {
+        public ReadGeneratorRequest(Client client, CountDownLatch countdown, ArrayDeque<Log> logs, int startIndex) {
             this.client = client;
+            this.countdown = countdown;
             this.logs = logs;
-            this.lastPayload = Utils.PAYLOAD_START_LONG - 1;
+            this.lastStableTimes = new ArrayList<>(Collections.nCopies(readSets.size(), Utils.MIN_TIMESTAMP));
             this.keyCounter = startIndex;
         }
 
@@ -121,9 +130,6 @@ public class BusyReadGenerator {
         public void run() {
             ROTResponse rotResponse;
             long t1, t2;
-            String valueStr;
-            long valueLong;
-            boolean newPayload = false;
 
             try {
                 startSignal.await();
@@ -145,25 +151,8 @@ public class BusyReadGenerator {
                     continue;
                 }
 
-                for (KeyVersion keyVersion : rotResponse.getVersionsMap().values()) {
-                    valueStr = Utils.stringFromByteString(keyVersion.getValue());
-                    if (valueStr.isBlank()) {
-                        continue;
-                    }
-
-                    try {
-                        valueLong = Long.parseLong(valueStr);
-                        if (valueLong > this.lastPayload) {
-                            this.lastPayload = valueLong;
-                            newPayload = true;
-                        }
-                    } catch (NumberFormatException e) {
-                        continue;
-                    }
-                }
-
-                if (newPayload) {
-                    newPayload = false;
+                if (rotResponse.getStableTime().compareTo(this.lastStableTimes.get(this.keyCounter)) > 0) {
+                    this.lastStableTimes.set(this.keyCounter, rotResponse.getStableTime());
                     this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
                     this.logs.add(new ROTResponseLog(rotResponse.getId(), rotResponse.getStableTime(), t2));
                 }
@@ -171,6 +160,7 @@ public class BusyReadGenerator {
                 this.keyCounter = incrementKeyCounter(this.keyCounter);
             }
             this.client.shutdown();
+            this.countdown.countDown();
         }
     }
 
