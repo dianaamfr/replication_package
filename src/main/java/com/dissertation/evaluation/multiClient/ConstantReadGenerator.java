@@ -1,5 +1,6 @@
 package com.dissertation.evaluation.multiClient;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -8,9 +9,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 import java.util.concurrent.atomic.AtomicLongArray;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BinaryOperator;
 
-import com.dissertation.evaluation.logs.GoodputLog;
-import com.dissertation.referencearchitecture.KeyVersion;
+import com.dissertation.evaluation.logs.LastStableTimeLog;
+import com.dissertation.evaluation.logs.Log;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
@@ -22,10 +25,11 @@ public class ConstantReadGenerator {
     private final int readTime;
     private final CountDownLatch countDown;
     private final CountDownLatch startSignal;
-    private final AtomicLongArray lastPayloads;
-    private final AtomicLongArray endTimes;
-    private final AtomicIntegerArray keyCounters;
+    private AtomicLongArray endTimes;
+    private AtomicIntegerArray keyCounters;
     private final List<Set<String>> readSets;
+    private AtomicReference<String> lastStableTime;
+    private final BinaryOperator<String> maxTime;
     private long startTime;
 
     private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> " +
@@ -40,11 +44,12 @@ public class ConstantReadGenerator {
         this.readTime = readTime;
         this.countDown = new CountDownLatch(clients);
         this.startSignal = new CountDownLatch(1);
-        this.lastPayloads = new AtomicLongArray(clients);
         this.endTimes = new AtomicLongArray(clients);
         this.keyCounters = new AtomicIntegerArray(clients);
         this.readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition),
                 keysPerRead);
+        this.lastStableTime = new AtomicReference<String>(Utils.MIN_TIMESTAMP);
+        this.maxTime = (t1, t2) -> t1.compareTo(t2) > 0 ? t1 : t2;
         this.init(clients, readAddress, writeAddresses);
     }
 
@@ -52,7 +57,6 @@ public class ConstantReadGenerator {
         for (int i = 0; i < clients; i++) {
             Client client = new Client(readAddress, writeAddresses);
             this.keyCounters.set(i, i % this.readSets.size());
-            this.lastPayloads.set(i, 0);
             this.endTimes.set(i, 0);
             this.scheduler.scheduleWithFixedDelay(new ReadGeneratorRequest(client, i), 0, this.delay,
                     TimeUnit.MILLISECONDS);
@@ -109,25 +113,13 @@ public class ConstantReadGenerator {
             this.countDown.await();
             this.scheduler.shutdown();
             this.scheduler.awaitTermination(5000, TimeUnit.MILLISECONDS);
-            this.printGoodputLog();
+
+            ArrayDeque<Log> logs = new ArrayDeque<>(1);
+            logs.add(new LastStableTimeLog(this.lastStableTime.get(), this.readTime));
+            Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-    }
-
-    private void printGoodputLog() {
-        int index = 0;
-        long lastPayload = Utils.PAYLOAD_START_LONG - 1;
-        for (int i = 0; i < this.lastPayloads.length(); i++) {
-            if (this.lastPayloads.get(i) > lastPayload) {
-                index = i;
-                lastPayload = this.lastPayloads.get(i);
-            }
-        }
-
-        long endTime = this.endTimes.get(index);
-        System.out.println(new GoodputLog(lastPayload > 0 ? lastPayload - Utils.PAYLOAD_START_LONG + 1 : 0,
-                endTime - startTime).toJson().toString());
     }
 
     private class ReadGeneratorRequest implements Runnable {
@@ -159,17 +151,7 @@ public class ConstantReadGenerator {
                     return;
                 }
 
-                for (KeyVersion version : rotResponse.getVersionsMap().values()) {
-                    String valueStr = Utils.stringFromByteString(version.getValue());
-                    if (valueStr.isBlank()) {
-                        continue;
-                    }
-
-                    long valueLong = Long.parseLong(valueStr);
-                    if (valueLong > lastPayloads.get(this.index)) {
-                        lastPayloads.set(this.index, valueLong);
-                    }
-                }
+                lastStableTime.accumulateAndGet(rotResponse.getStableTime(), maxTime);
 
                 if (endTimes.get(this.index) - startTime >= readTime) {
                     countDown.countDown();

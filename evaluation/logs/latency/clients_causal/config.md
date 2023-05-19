@@ -2,8 +2,8 @@
 
 - Write Delay = 50ms
 - Push/Pull Rate = 5ms
-- 2000 writes per client
-- Read for 30s
+- 1000 writes per client
+- Read for 60s
 - 10 keys per partition
 - 1 key per read
 
@@ -11,8 +11,8 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 2000 10 5
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 30000 1 10 95
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 1000 10 5
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 1 10 95
 
 
 ### Writer EU-WEST-1
@@ -22,8 +22,8 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 2000 10 25
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 30000 1 10 475
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 1000 10 25
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 1 10 475
 
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip> 
@@ -32,8 +32,8 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 2000 10 45
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 30000 1 10 855
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 1000 10 45
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 1 10 855
 
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip> 
@@ -42,8 +42,8 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 2000 10 65
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 30000 1 10 1235
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 1000 10 65
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 1 10 1235
 
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip> 
@@ -52,8 +52,8 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 2000 10 85
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 30000 1 10 1615
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 1000 10 85
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 1 10 1615
 
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip> 
@@ -62,8 +62,8 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 2000 10 105
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 30000 1 10 1995
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 1000 10 105
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 1 10 1995
 
 ### Writer EU-WEST-1
 **Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip> 

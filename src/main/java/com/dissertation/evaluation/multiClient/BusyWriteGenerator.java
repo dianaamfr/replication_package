@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
@@ -15,7 +14,7 @@ import com.google.protobuf.ByteString;
 public class BusyWriteGenerator {
     private final ExecutorService executor;
     private final CountDownLatch startSignal;
-    private final AtomicLong payload;
+    private final ByteString payload;
     private final List<String> keys;
 
     private static final String USAGE = "Usage: BusyWriteGenerator <regionPartitions:Int> " +
@@ -26,8 +25,7 @@ public class BusyWriteGenerator {
             int keysPerPartition, int clients) {
         this.executor = executor;
         this.startSignal = new CountDownLatch(1);
-        this.payload = new AtomicLong(Utils.PAYLOAD_START_LONG);
-
+        this.payload = Utils.byteStringFromString(String.valueOf(Utils.PAYLOAD_START_LONG));
         this.keys = Utils.generateKeys(writeAddresses, keysPerPartition);
         this.init(clients, keysPerPartition, readAddress, writeAddresses);
 
@@ -100,7 +98,6 @@ public class BusyWriteGenerator {
         @Override
         public void run() {
             String key;
-            ByteString value;
 
             try {
                 startSignal.await();
@@ -109,19 +106,16 @@ public class BusyWriteGenerator {
                 return;
             }
 
-            long requestPayload;
-            while ((requestPayload = payload.getAndIncrement()) < Utils.PAYLOAD_END_LONG) {
-                key = keys.get(keyCounter);
-                value = Utils.byteStringFromString(String.valueOf(requestPayload));
-
+            while (true) {
+                key = keys.get(this.keyCounter);
                 try {
-                    this.client.requestWrite(key, value);
+                    this.client.requestWrite(key, payload);
                 } catch (Exception e) {
-                    this.keyCounter = incrementKeyCounter(keyCounter);
+                    this.keyCounter = incrementKeyCounter(this.keyCounter);
                     Utils.printException(e);
                     continue;
                 }
-                this.keyCounter = incrementKeyCounter(keyCounter);
+                this.keyCounter = incrementKeyCounter(this.keyCounter);
             }
         }
     }

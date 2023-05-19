@@ -56,4 +56,12 @@ public class ReaderStorage extends Storage {
             return v;
         });
     }
+
+    public int getTotalVersions() {
+        int size = 0;
+        for (String key : this.keyVersions.keySet()) {
+            size += this.keyVersions.get(key).getVersionChain(Utils.MIN_TIMESTAMP, this.stableTime).size();
+        }
+        return size;
+    }
 }

@@ -15,7 +15,9 @@ public abstract class Log {
         LOG_PULL,
         LOG_PUSH,
         STORE_VERSION,
-        GOODPUT
+        GOODPUT,
+        LAST_STABLE_TIME,
+        STABLE_TIME_VERSIONS,
     }
 
     protected Log(LogType logType, long time) {
