@@ -3,11 +3,11 @@ import seaborn as sns
 import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import numpy as np
-from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, GOODPUTS, LINESTYLES, COLORS, MARKERS
+from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, LINESTYLES, COLORS, MARKERS
 from visualization.utils import get_data, get_diff, df_describe
 
-EC_LATENCY_PATH = PATH + '/logs/visibility' + EC_DIR + '/d_'
-CC_LATENCY_PATH = PATH + '/logs/visibility' + CC_DIR + '/d_'
+EC_VISIBILITY_PATH = PATH + '/logs/visibility' + EC_DIR + '/d_'
+CC_VISIBILITY_PATH = PATH + '/logs/visibility' + CC_DIR + '/d_'
 RESULT_PATH = PATH + '/results/visibility'
 
 
@@ -38,15 +38,16 @@ def visibility_evaluation():
     # TODO: plot showing the response time, push time, pull time, stable time and visibility time of each write
 
     visibility_throughput_relation(df)
+    visibility_throughput_relation_errorbar(df)
 
 
 def get_ec_visibility_times(delay):
     write_client_df = get_data(
-        EC_LATENCY_PATH + str(delay), 'writeclient-' + LOCAL_REGION)
+        EC_VISIBILITY_PATH + str(delay), 'writeclient-' + LOCAL_REGION)
     read_client_eu = get_data(
-        EC_LATENCY_PATH + str(delay), 'readclient-' + LOCAL_REGION)
+        EC_VISIBILITY_PATH + str(delay), 'readclient-' + LOCAL_REGION)
     read_client_us = get_data(
-        EC_LATENCY_PATH + str(delay), 'readclient-' + REMOTE_REGION)
+        EC_VISIBILITY_PATH + str(delay), 'readclient-' + REMOTE_REGION)
 
     pd_result_eu = pd.DataFrame()
     pd_result_us = pd.DataFrame()
@@ -82,13 +83,13 @@ def get_ec_visibility_times(delay):
     pd_result_eu = get_time_diff_ec(
         pd_result_eu.tail(100)).reset_index(drop=True)
     pd_result_eu['consistency'] = 'EC'
-    pd_result_eu['goodput'] = 1000//delay
+    pd_result_eu['delay'] = delay
     pd_result_eu['region'] = LOCAL_REGION
 
     pd_result_us = get_time_diff_ec(
         pd_result_us.tail(100)).reset_index(drop=True)
     pd_result_us['consistency'] = 'EC'
-    pd_result_us['goodput'] = 1000//delay
+    pd_result_us['delay'] = delay
     pd_result_us['region'] = REMOTE_REGION
 
     return pd_result_eu.reset_index(drop=True), pd_result_us.reset_index(drop=True)
@@ -96,17 +97,17 @@ def get_ec_visibility_times(delay):
 
 def get_cc_visibility_times(delay):
     write_client_df = get_data(
-        CC_LATENCY_PATH + str(delay), 'writeclient-' + LOCAL_REGION)
-    write_node_df = get_data(CC_LATENCY_PATH + str(delay), 'writenode-1')
-    pusher_df = get_data(CC_LATENCY_PATH + str(delay), 'writenode-1-s3')
-    puller_eu_df = get_data(CC_LATENCY_PATH + str(delay),
+        CC_VISIBILITY_PATH + str(delay), 'writeclient-' + LOCAL_REGION)
+    write_node_df = get_data(CC_VISIBILITY_PATH + str(delay), 'writenode-1')
+    pusher_df = get_data(CC_VISIBILITY_PATH + str(delay), 'writenode-1-s3')
+    puller_eu_df = get_data(CC_VISIBILITY_PATH + str(delay),
                             'readnode-' + LOCAL_REGION + '-s3')
-    puller_us_df = get_data(CC_LATENCY_PATH + str(delay),
+    puller_us_df = get_data(CC_VISIBILITY_PATH + str(delay),
                             'readnode-' + REMOTE_REGION + '-s3')
     read_client_eu = get_data(
-        CC_LATENCY_PATH + str(delay), 'readclient-' + LOCAL_REGION)
+        CC_VISIBILITY_PATH + str(delay), 'readclient-' + LOCAL_REGION)
     read_client_us = get_data(
-        CC_LATENCY_PATH + str(delay), 'readclient-' + REMOTE_REGION)
+        CC_VISIBILITY_PATH + str(delay), 'readclient-' + REMOTE_REGION)
 
     pd_result_eu = pd.DataFrame()
     pd_result_us = pd.DataFrame()
@@ -175,13 +176,13 @@ def get_cc_visibility_times(delay):
     pd_result_eu = get_time_diff_cc(
         pd_result_eu.tail(100)).reset_index(drop=True)
     pd_result_eu['consistency'] = 'CC'
-    pd_result_eu['goodput'] = 1000//delay
+    pd_result_eu['delay'] = delay
     pd_result_eu['region'] = LOCAL_REGION
 
     pd_result_us = get_time_diff_cc(
         pd_result_us.tail(100)).reset_index(drop=True)
     pd_result_us['consistency'] = 'CC'
-    pd_result_us['goodput'] = 1000//delay
+    pd_result_us['delay'] = delay
     pd_result_us['region'] = REMOTE_REGION
 
     return pd_result_eu.reset_index(drop=True), pd_result_us.reset_index(drop=True)
@@ -246,7 +247,7 @@ def visibility_distribution_tables(dfs, delay):
         df_ec_stats = df_describe(dfs[i*2], 'read_time')
         df_cc_stats = df_describe(dfs[i*2 + 1], 'read_time')
         visibility_distribution_table(
-            df_ec_stats, df_cc_stats, titles[i] + ' (' + str(1000//delay) + ' writes/s)', files[i], delay)
+            df_ec_stats, df_cc_stats, titles[i] + ' (' + str(delay) + ' Inter-Write Delay (ms))', files[i], delay)
 
 
 def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, delay):
@@ -273,71 +274,107 @@ def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, del
 
 
 def visibility_boxplot(df, outliers=True):
-    g = sns.FacetGrid(df, col="region", height=20,
+    g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=10,
                       aspect=0.8, margin_titles=True)
-    g.map(sns.boxplot, "goodput", "read_time", "consistency", order=GOODPUTS,
+    g.map(sns.boxplot, "delay", "read_time", "consistency", order=DELAYS,
           showfliers=outliers, hue_order=['EC', 'CC'], palette=COLORS)
     g.add_legend()
-    g.set_axis_labels("Goodput (writes/s)", "Visibility (ms)")
+    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
+    g.axes[0][0].set_title("Local Region (EU)")
+    g.axes[0][1].set_title("Remote Region (US)")
 
     plt.savefig(RESULT_PATH + '/visibility_boxplot.png', dpi=300)
     plt.clf()
 
 
 def write_response_boxplot(df, outliers=True):
-    g = sns.FacetGrid(df, col="region", height=20,
+    g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=10,
                       aspect=0.8, margin_titles=True)
-    g.map(sns.boxplot, "goodput", "response_time", "consistency", order=GOODPUTS,
+    g.map(sns.boxplot, "delay", "response_time", "consistency", order=DELAYS,
           showfliers=outliers, hue_order=['EC', 'CC'], palette=COLORS)
     g.add_legend()
-    g.set_axis_labels("Goodput (writes/s)", "Write Response Time (ms)")
+    g.set_axis_labels("Inter-Write Delay (ms)", "Write Response Time (ms)")
+    g.axes[0][0].set_title("Local Region (EU)")
+    g.axes[0][1].set_title("Remote Region (US)")
 
     plt.savefig(RESULT_PATH + '/write_response_boxplot.png', dpi=300)
     plt.clf()
 
 
 def stable_time_boxplot(df):
-    g = sns.FacetGrid(df, col="region", height=20,
-                      aspect=0.8, margin_titles=True)
-    g.map(sns.boxplot, "goodput", "stable_time",
-          order=GOODPUTS, showfliers=False, palette=COLORS)
+    g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=10,
+                      aspect=1, margin_titles=True)
+    g.map(sns.boxplot, "delay", "stable_time",
+          order=DELAYS, showfliers=False, palette=COLORS)
     g.add_legend()
-    g.set_axis_labels("Goodput (writes/s)", "Stable Time (ms)")
+    g.set_axis_labels("Inter-Write Delay (ms)", "Stable Time (ms)")
+    g.axes[0][0].set_title("Local Region (EU)")
+    g.axes[0][1].set_title("Remote Region (US)")
 
     plt.savefig(RESULT_PATH + '/stable_time_boxplot.png', dpi=300)
     plt.clf()
 
 
 def visibility_barplot(df, scale='linear'):
-    grouped_data = df.groupby(["goodput", "consistency", "region"])[
+    grouped_data = df.groupby(["delay", "consistency", "region"])[
         "read_time"]
     average_visibility = grouped_data.mean().reset_index()
 
     g = sns.FacetGrid(average_visibility, col="region",
-                      height=8, aspect=1, margin_titles=True)
-    g.map(sns.barplot, "goodput", "read_time", "consistency",
-          order=GOODPUTS, hue_order=['EC', 'CC'], palette=COLORS)
-    g.set(yscale=scale)
-    g.set_axis_labels("Goodput (writes/s)", "Visibility (ms)")
+                      height=9, aspect=1.5, margin_titles=True)
+    g.map(sns.barplot, "delay", "read_time", "consistency",
+          order=DELAYS, hue_order=['EC', 'CC'], palette=COLORS, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+    g.set(yscale=scale)    
+    g.add_legend()  
+    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
+    g.axes[0][0].set_title("Local Region (EU)", pad=30)
+    g.axes[0][1].set_title("Remote Region (US)", pad=30)
+
+    # Add y-values on top of each bar
+    for ax in g.axes.flat:
+        for p in ax.patches:
+            ax.annotate(format(p.get_height(), '.2f'),
+                        (p.get_x() + p.get_width() / 2., p.get_height()),
+                        ha='center', va='center', xytext=(0, 10),
+                        textcoords='offset points')
+
     plt.savefig(RESULT_PATH + '/visibility_barplot_' + scale + '.png', dpi=300)
     plt.clf()
 
 
 def visibility_throughput_relation(df):
-    g = sns.FacetGrid(df, col="region", height=8, aspect=1, margin_titles=True)
+    g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=8, aspect=1, margin_titles=True)
     def estimator_99(data): return np.percentile(data, 99)
     def estimator_95(data): return np.percentile(data, 95)
 
     for ax, (_, subdata) in zip(g.axes.flat, df.groupby('region')):
-        sns.lineplot(data=subdata, x="goodput", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[0], LINESTYLES[0]],
-                     markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
-        sns.lineplot(data=subdata, x="goodput", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[1], LINESTYLES[1]],
-                     markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
-        sns.lineplot(data=subdata, x="goodput", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[2], LINESTYLES[2]],
-                     markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        sns.lineplot(data=subdata, x="delay", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[0], LINESTYLES[0]],
+                     markersize=6, estimator=estimator_99, errorbar=None, linewidth=3, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        sns.lineplot(data=subdata, x="delay", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[1], LINESTYLES[1]],
+                     markersize=8, estimator=estimator_95, errorbar=None, linewidth=3, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        sns.lineplot(data=subdata, x="delay", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[2], LINESTYLES[2]],
+                     markersize=10, estimator=np.mean, errorbar=None, linewidth=3, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
+        ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
+        
+    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
+    g.axes[0][0].set_title("Local Region (EU)")
+    g.axes[0][1].set_title("Remote Region (US)")
+    
+    plt.subplots_adjust(left=0.1, hspace=0.3, wspace=0.1)
+    plt.savefig(RESULT_PATH + '/visibility_with_throughput.png', dpi=300)
+    plt.clf()
+
+def visibility_throughput_relation_errorbar(df):
+    g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=8, aspect=1, margin_titles=True)
+
+    for ax, (_, subdata) in zip(g.axes.flat, df.groupby('region')):
+        sns.lineplot(data=subdata, x="delay", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[2], LINESTYLES[2]],
+                     markersize=10, estimator=np.mean, linewidth=3, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
         ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
 
-    g.set_axis_labels("Goodput (writes/s)", "Visibility (ms)")
-    plt.subplots_adjust(left=0.1, hspace=0.1, wspace=0.1)
-    plt.savefig(RESULT_PATH + '/visibility_with_throughput.png', dpi=300)
+    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
+    g.axes[0][0].set_title("Local Region (EU)")
+    g.axes[0][1].set_title("Remote Region (US)")
+    plt.subplots_adjust(left=0.1, hspace=0.3, wspace=0.1)
+    plt.savefig(RESULT_PATH + '/visibility_with_throughput_errorbar.png', dpi=300)
     plt.clf()
