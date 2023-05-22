@@ -33,8 +33,6 @@ def latency_evaluation():
     latency_boxplot(df, outliers=False, interval=5, fig_size=(7, 10))
     latency_boxplot(df, outliers=True, interval=10, fig_size=(8, 15))
 
-    # latency_histogram(df)
-
     latency_average_barplot(df)
 
     latency_throughput_relation(df)
@@ -81,20 +79,12 @@ def latency_boxplot(df, outliers=False, interval=5, fig_size=(10, 10)):
                 hue="consistency", hue_order=['EC','CC'], showfliers=outliers, order=DELAYS)
     plt.gca().xaxis.grid(True)
     plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(base=interval))
-    plt.xlabel("Inter-Write Delay (writes/s)", labelpad=10)
+    plt.xlabel("Inter-Write Delay (ms)", labelpad=10)
     plt.ylabel("Read Latency (ms)", labelpad=10)
     handles, labels = plt.gca().get_legend_handles_labels()
     plt.legend(handles, [label.capitalize() for label in labels], loc="upper right")
     plt.savefig(RESULT_PATH + '/latency_boxplot' + ('_outliers' if outliers else '') + '.png', dpi=300)
     plt.clf()
-
-# def latency_histogram(df):
-#     g = sns.FacetGrid(df, row="delay", hue="consistency", height=10, aspect=4, margin_titles=True)
-#     g.map(sns.histplot, "latency", kde=True)
-#     g.set(yscale='symlog')
-#     g.add_legend()
-#     plt.savefig(RESULT_PATH + '/latency_histogram.png', dpi=300)
-#     plt.clf()
 
 
 def latency_average_barplot(df):
@@ -105,7 +95,7 @@ def latency_average_barplot(df):
     sns.barplot(data=average_latency, x="delay", y="latency",
                 hue="consistency", hue_order = ['EC','CC'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
     ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (writes/s)", labelpad=10)
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
     ax.set_ylabel("Read Latency (ms)", labelpad=10)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize()
@@ -132,7 +122,7 @@ def latency_throughput_relation(df):
                  markeredgecolor='w', hue_order=['EC','CC'])
 
     ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (writes/s)", labelpad=10)
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
     ax.set_ylabel("Read Latency (ms)", labelpad=10)
     ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
     ax.legend(loc="upper right", labels=['EC P99', 'CC P99', 'EC P95', 'CC P95', 'EC Avg', 'CC Avg'])
@@ -146,7 +136,7 @@ def latency_throughput_relation_errorbar(df):
                  markersize=10, linewidth=2, markeredgewidth=1, markeredgecolor='w', hue_order=['EC','CC'])
 
     ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (writes/s)", labelpad=10)
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
     ax.set_ylabel("Average Read Latency (ms)", labelpad=10)
     ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
     handles, labels = ax.get_legend_handles_labels()

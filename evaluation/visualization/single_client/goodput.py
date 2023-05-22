@@ -6,8 +6,8 @@ from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, LINE
 from visualization.utils import get_data
 
 PAYLOAD_BYTES = 12
-EC_LATENCY_PATH = PATH + '/logs/goodput' + EC_DIR + '/d_'
-CC_LATENCY_PATH = PATH + '/logs/goodput' + CC_DIR + '/d_'
+EC_GOODPUT_PATH = PATH + '/logs/goodput' + EC_DIR + '/d_'
+CC_GOODPUT_PATH = PATH + '/logs/goodput' + CC_DIR + '/d_'
 
 RESULT_PATH = PATH + '/results/goodput'
 
@@ -16,15 +16,15 @@ def goodput_evaluation():
     dfs = []
 
     for delay in DELAYS:
-        df_ec_goodput = get_goodput_times(EC_LATENCY_PATH, delay)
-        df_cc_goodput = get_goodput_times(CC_LATENCY_PATH, delay)
+        df_ec_goodput = get_goodput_times(EC_GOODPUT_PATH, delay)
+        df_cc_goodput = get_goodput_times(CC_GOODPUT_PATH, delay)
 
         goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay)
 
         df_ec_goodput['consistency'] = 'EC'
-        df_ec_goodput['latency'] = delay
+        df_ec_goodput['delay'] = delay
         df_cc_goodput['consistency'] = 'CC'
-        df_cc_goodput['latency'] = delay
+        df_cc_goodput['delay'] = delay
 
         dfs.append(df_ec_goodput)
         dfs.append(df_cc_goodput)
@@ -77,14 +77,14 @@ def goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay):
 
 
 def goodput_average_barplot(df, goodput_var, ylabel):
-    _, ax = plt.subplots(figsize=(10, 10))
-    grouped_data = df.groupby(["latency", "consistency"])[goodput_var]
+    _, ax = plt.subplots(figsize=(7, 6))
+    grouped_data = df.groupby(["delay", "consistency"])[goodput_var]
     average_goodput = grouped_data.mean().round(2).reset_index()
 
-    sns.barplot(data=average_goodput, x="latency", y=goodput_var,
-                hue="consistency", width=0.8, linewidth=1.5, order=DELAYS)
+    sns.barplot(data=average_goodput, x="delay", y=goodput_var,
+                hue="consistency", hue_order = ['EC','CC'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
     ax.xaxis.grid(True)
-    ax.set_xlabel(ax.get_xlabel().capitalize() + " (ms)", labelpad=10)
+    ax.set_xlabel("Inter-Read Delay (ms)", labelpad=10)
     ax.set_ylabel(ylabel, labelpad=10)
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize()
@@ -94,24 +94,25 @@ def goodput_average_barplot(df, goodput_var, ylabel):
 
 
 def goodput_latency_relation(df, goodput_var, ylabel):
-    _, ax = plt.subplots(figsize=(10, 10))
+    _, ax = plt.subplots(figsize=(7, 6))
 
     def estimator_99(data): return np.percentile(data, 99)
     def estimator_95(data): return np.percentile(data, 95)
 
-    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[0], LINESTYLES[0]],
-                 markersize=6, estimator=estimator_99, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w')
-    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[1], LINESTYLES[1]],
-                 markersize=8, estimator=estimator_95, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w')
-    sns.lineplot(data=df, x="latency", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[2], LINESTYLES[2]],
-                 markersize=10, estimator=np.mean, errorbar=None, linewidth=2, legend=False, markeredgewidth=1, markeredgecolor='w')
+    sns.lineplot(data=df, x="delay", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[0], LINESTYLES[0]],
+                 markersize=6, estimator=estimator_99, errorbar=None, linewidth=3, markeredgewidth=1, markeredgecolor='w', hue_order=['EC','CC'])
+    sns.lineplot(data=df, x="delay", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[1], LINESTYLES[1]],
+                 markersize=8, estimator=estimator_95, errorbar=None, linewidth=3, markeredgewidth=1, markeredgecolor='w', hue_order=['EC','CC'])
+    sns.lineplot(data=df, x="delay", y=goodput_var, hue="consistency", style="consistency", markers=['s', 'o'], dashes=[LINESTYLES[2], LINESTYLES[2]],
+                 markersize=10, estimator=np.mean, errorbar=None, linewidth=3, markeredgewidth=1, markeredgecolor='w', hue_order=['EC','CC'])
 
     ax.xaxis.grid(True)
-    ax.set_xlabel(ax.get_xlabel().capitalize() + " (ms)", labelpad=10)
+    ax.set_xlabel("Inter-Read Delay (ms)", labelpad=10)
     ax.set_ylabel(ylabel, labelpad=10)
     ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize()
               for label in labels], loc="lower right")
+    ax.legend(loc="upper right", labels=['EC P99', 'CC P99', 'EC P95', 'CC P95', 'EC Avg', 'CC Avg'])
     plt.savefig(RESULT_PATH + '/' + goodput_var + '_with_latency.png', dpi=300)
     plt.clf()
