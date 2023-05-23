@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from visualization.utils import PATH, CC_CLIENTS_DIR, LOCAL_REGION, CLIENTS, CLIENTS_GOODPUTS
+from visualization.utils import PATH, CC_CLIENTS_DIR, LOCAL_REGION, CLIENTS
 from visualization.utils import get_data, df_describe
 
 CC_LATENCY_PATH = PATH + '/logs/latency' + CC_CLIENTS_DIR + '/c_'
@@ -12,7 +12,6 @@ def latency_evaluation():
     dfs = []
     for i, clients_number in enumerate(CLIENTS):
         df = get_latency_times(clients_number)
-        df['goodput'] = CLIENTS_GOODPUTS[i]
         df['clients'] = clients_number
         dfs.append(df)
 
@@ -31,7 +30,7 @@ def get_latency_times(clients_number):
 
 
 def latency_distribution_table(df):
-    df_result = df.groupby('clients', 'goodput').apply(df_describe, 'latency').round(2).reset_index()
+    df_result = df.groupby('clients').apply(df_describe, 'latency').round(2).reset_index(drop=True)
 
     plt.table(cellText=df_result.values, colLabels=df_result.columns,
               cellLoc='center', loc='center')
@@ -40,4 +39,5 @@ def latency_distribution_table(df):
                  ha='center', va='bottom', fontsize=10)
     plt.savefig(RESULT_PATH + '/clients_latency_table.png', dpi=300, bbox_inches='tight')
     plt.clf()
+    plt.close()
 
