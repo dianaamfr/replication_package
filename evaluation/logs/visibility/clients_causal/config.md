@@ -1,102 +1,96 @@
 # Visibility Tests - CC prototype
-
 - Write Delay = 50ms
 - Push/Pull Rate = 5ms
 - 500 writes per client
 - Read for 120s
-- 10 keys per partition
-- 1 key per read
+- 20 keys per partition 
+- 2 keys per read
 
-## Test 1 - 100 clients (95 R, 5 W)
-
-### Reader EU-WEST-1
-**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 50 500 10 5
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 120000 1 10 95
-
-### Reader US-EAST-1
-**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 184.73.140.115 8080 3.252.53.121 1 120000 1 10 95
-
-### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 54.75.176.69 8080 184.73.140.115  
-
-## Test 2 - 200 clients (190 R, 10 W)
+## Test 1 - 1 read client
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 50 500 10 10
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 120000 1 10 190
+
+### Client EU-WEST-1
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 500 20 1
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 120000 2 20 1
 
 ### Reader US-EAST-1
 **Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 184.73.140.115 8080 3.252.53.121 1 120000 1 10 190
+
+### Client EU-EAST-1
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 120000 2 20 1
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 54.75.176.69 8080 184.73.140.115  
+**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>  
+
+## Test 2 - 2 read clients
+
+### Reader EU-WEST-1
+**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
+
+### Client EU-WEST-1
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 500 20 1
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 120000 2 20 2
+
+### Reader US-EAST-1
+**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
+
+### Client EU-EAST-1
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 120000 2 20 2
+
+### Writer EU-WEST-1
+**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>  
 
 ## Test 3 - 300 clients (285 R, 15 W)
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 50 500 10 15
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 120000 1 10 285
+
+### Client EU-WEST-1
+**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 500 20 1
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 120000 2 20 3
 
 ### Reader US-EAST-1
 **Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 184.73.140.115 8080 3.252.53.121 1 120000 1 10 285
+
+### Client EU-EAST-1
+**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 <read-us-ip> 8080 <write-ip> 1 120000 2 20 3
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 54.75.176.69 8080 184.73.140.115  
+**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>  
 
-## Test 4 - 400 clients (380 R, 20 W)
+## Test 4 - 6
+2 client processes both using the setting in tests 1 to 3
 
-### Reader EU-WEST-1
-**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 50 500 10 20
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 120000 1 10 380
-
-### Reader US-EAST-1
-**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 184.73.140.115 8080 3.252.53.121 1 120000 1 10 380
-
-### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 54.75.176.69 8080 184.73.140.115  
-
-
-
-## Test 5 -  500 clients (475 R, 25 W)
-
-### Reader EU-WEST-1
-**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./multiConstantWriteGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 50 500 10 25
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 54.75.176.69 8080 3.252.53.121 1 120000 1 10 475
-
-### Reader US-EAST-1
-**Read Node**: ./readNode.sh v13.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-visibility 1 1 8080 184.73.140.115 8080 3.252.53.121 1 120000 1 10 475
-
-### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v13.0.0-visibility 1 8080 1 8080 54.75.176.69 8080 184.73.140.115  
-
+## Test 7
+Test the same but with a total of 1, 2, 5 and 10 partitions and a total of 20 keys (20, 10, 4 and 2 per partition)
 ---
 # Get Logs
 ### Reader EU-WEST-1
 docker container cp readNode:/logs/ .
+
+### Client EU-WEST-1
 docker container cp multiBusyReadGenerator:/logs/ .
 docker container cp multiConstantWriteGenerator:/logs/ .
 
-### Write Nodes EU-WEST-1
+### Write Node EU-WEST-1
 docker container cp writeNode:/logs/ .
 
 ### Reader US-EAST-1
 docker container cp readNode:/logs/ .
+
+### Client US-EAST-1
 docker container cp multiBusyReadGenerator:/logs/ .
 
 ## Copy logs
 
-scp -i "reference-architecture.pem" -r ubuntu@ec2-54-75-176-69.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<read-eu-DNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
 
-scp -i "reference-architecture.pem" -r ubuntu@ec2-3-252-53-121.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<read-us-DNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
 
-scp -i "reference-architecture-us.pem" -r ubuntu@ec2-184-73-140-115.compute-1.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<client-eu-DNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+
+scp -i "reference-architecture.pem" -r ubuntu@<client-us-DNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+
+scp -i "reference-architecture-us.pem" -r ubuntu@<write-DNS>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
