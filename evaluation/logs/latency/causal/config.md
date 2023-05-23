@@ -8,11 +8,11 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-latency 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 50 11000 a
-**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 11000 1 a
+**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 54.154.44.101 8080 52.212.153.48 1 50 11000 a
+**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 54.154.44.101 8080 52.212.153.48 1 11000 1 a
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
+**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 54.154.44.101 8080 <read-us-ip>
 
 ---
 ## Test 2
@@ -23,11 +23,11 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-latency 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 100 5500 a
-**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 5500 1 a
+**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 54.154.44.101 8080 52.212.153.48 1 100 5500 a
+**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 54.154.44.101 8080 52.212.153.48 1 5500 1 a
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
+**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 54.154.44.101 8080 <read-us-ip>
 
 ---
 ## Test 3
@@ -38,11 +38,11 @@
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-latency 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 100 1100 a
-**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 1100 1 a
+**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 54.154.44.101 8080 52.212.153.48 1 100 1100 a
+**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 54.154.44.101 8080 52.212.153.48 1 1100 1 a
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
+**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 54.154.44.101 8080 <read-us-ip>
 
 ---
 # Get Logs
