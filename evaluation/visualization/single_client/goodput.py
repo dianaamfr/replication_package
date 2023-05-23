@@ -74,6 +74,7 @@ def goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay):
     plt.savefig(RESULT_PATH + '/goodput_table_' + str(delay) +
                 '.png', dpi=300, bbox_inches='tight')
     plt.clf()
+    plt.close()
 
 
 def goodput_average_barplot(df, goodput_var, ylabel):
@@ -91,6 +92,7 @@ def goodput_average_barplot(df, goodput_var, ylabel):
               for label in labels], loc="upper right")
     plt.savefig(RESULT_PATH + '/' + goodput_var + '_barplot.png', dpi=300)
     plt.clf()
+    plt.close()
 
 
 def goodput_latency_relation(df, goodput_var, ylabel):
@@ -116,3 +118,4 @@ def goodput_latency_relation(df, goodput_var, ylabel):
     ax.legend(loc="upper right", labels=['EC P99', 'CC P99', 'EC P95', 'CC P95', 'EC Avg', 'CC Avg'])
     plt.savefig(RESULT_PATH + '/' + goodput_var + '_with_latency.png', dpi=300)
     plt.clf()
+    plt.close()

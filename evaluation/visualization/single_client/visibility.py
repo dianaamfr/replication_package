@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, LINESTYLES, COLORS, MARKERS
 from visualization.utils import get_data, get_diff, df_describe
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning)
 
 EC_VISIBILITY_PATH = PATH + '/logs/visibility' + EC_DIR + '/d_'
 CC_VISIBILITY_PATH = PATH + '/logs/visibility' + CC_DIR + '/d_'
@@ -33,7 +36,6 @@ def visibility_evaluation():
     stable_time_boxplot(df_cc)
 
     visibility_barplot(df)
-    visibility_barplot(df, 'symlog')
 
     # TODO: plot showing the response time, push time, pull time, stable time and visibility time of each write
 
@@ -271,6 +273,7 @@ def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, del
     plt.savefig(RESULT_PATH + '/' + filename + '_' +
                 str(delay) + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
+    plt.close()
 
 
 def visibility_boxplot(df, outliers=True):
@@ -278,13 +281,16 @@ def visibility_boxplot(df, outliers=True):
                       aspect=0.8, margin_titles=True)
     g.map(sns.boxplot, "delay", "read_time", "consistency", order=DELAYS,
           showfliers=outliers, hue_order=['EC', 'CC'], palette=COLORS)
+    g.set(yscale='log')
     g.add_legend()
     g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
     g.axes[0][0].set_title("Local Region (EU)")
     g.axes[0][1].set_title("Remote Region (US)")
+    g.set(ylim=(1, get_log_y_lim(df['read_time'])))
 
     plt.savefig(RESULT_PATH + '/visibility_boxplot.png', dpi=300)
     plt.clf()
+    plt.close()
 
 
 def write_response_boxplot(df, outliers=True):
@@ -292,6 +298,7 @@ def write_response_boxplot(df, outliers=True):
                       aspect=0.8, margin_titles=True)
     g.map(sns.boxplot, "delay", "response_time", "consistency", order=DELAYS,
           showfliers=outliers, hue_order=['EC', 'CC'], palette=COLORS)
+    g.set(yscale='log')
     g.add_legend()
     g.set_axis_labels("Inter-Write Delay (ms)", "Write Response Time (ms)")
     g.axes[0][0].set_title("Local Region (EU)")
@@ -299,6 +306,7 @@ def write_response_boxplot(df, outliers=True):
 
     plt.savefig(RESULT_PATH + '/write_response_boxplot.png', dpi=300)
     plt.clf()
+    plt.close()
 
 
 def stable_time_boxplot(df):
@@ -313,9 +321,10 @@ def stable_time_boxplot(df):
 
     plt.savefig(RESULT_PATH + '/stable_time_boxplot.png', dpi=300)
     plt.clf()
+    plt.close()
 
 
-def visibility_barplot(df, scale='linear'):
+def visibility_barplot(df):
     grouped_data = df.groupby(["delay", "consistency", "region"])[
         "read_time"]
     average_visibility = grouped_data.mean().reset_index()
@@ -324,11 +333,11 @@ def visibility_barplot(df, scale='linear'):
                       height=9, aspect=1.5, margin_titles=True)
     g.map(sns.barplot, "delay", "read_time", "consistency",
           order=DELAYS, hue_order=['EC', 'CC'], palette=COLORS, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
-    g.set(yscale=scale)    
+    g.set(yscale='log')    
     g.add_legend()  
     g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
-    g.axes[0][0].set_title("Local Region (EU)", pad=30)
-    g.axes[0][1].set_title("Remote Region (US)", pad=30)
+    g.axes[0][0].set_title("Local Region (EU)", pad=20)
+    g.axes[0][1].set_title("Remote Region (US)", pad=20)
 
     # Add y-values on top of each bar
     for ax in g.axes.flat:
@@ -338,8 +347,9 @@ def visibility_barplot(df, scale='linear'):
                         ha='center', va='center', xytext=(0, 10),
                         textcoords='offset points')
 
-    plt.savefig(RESULT_PATH + '/visibility_barplot_' + scale + '.png', dpi=300)
+    plt.savefig(RESULT_PATH + '/visibility_barplot.png', dpi=300)
     plt.clf()
+    plt.close()
 
 
 def visibility_throughput_relation(df):
@@ -359,10 +369,12 @@ def visibility_throughput_relation(df):
     g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
     g.axes[0][0].set_title("Local Region (EU)")
     g.axes[0][1].set_title("Remote Region (US)")
+    g.set(yscale='log')
     
     plt.subplots_adjust(left=0.1, hspace=0.3, wspace=0.1)
     plt.savefig(RESULT_PATH + '/visibility_with_throughput.png', dpi=300)
     plt.clf()
+    plt.close()
 
 def visibility_throughput_relation_errorbar(df):
     g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=8, aspect=1, margin_titles=True)
@@ -375,6 +387,13 @@ def visibility_throughput_relation_errorbar(df):
     g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
     g.axes[0][0].set_title("Local Region (EU)")
     g.axes[0][1].set_title("Remote Region (US)")
+    g.set(yscale='log')
     plt.subplots_adjust(left=0.1, hspace=0.3, wspace=0.1)
     plt.savefig(RESULT_PATH + '/visibility_with_throughput_errorbar.png', dpi=300)
     plt.clf()
+    plt.close()
+
+def get_log_y_lim(df):
+    max_y = np.max(df)
+    order_of_magnitude = np.floor(np.log10(max_y))
+    return 10 ** (order_of_magnitude + 1)

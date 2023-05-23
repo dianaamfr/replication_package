@@ -71,6 +71,7 @@ def latency_distribution_table(df_ec_latency, df_cc_latency, delay):
     plt.savefig(RESULT_PATH + '/latency_table_' + str(delay) +
                 '.png', dpi=300, bbox_inches='tight')
     plt.clf()
+    plt.close()
 
 
 def latency_boxplot(df, outliers=False, interval=5, fig_size=(10, 10)):
@@ -85,6 +86,7 @@ def latency_boxplot(df, outliers=False, interval=5, fig_size=(10, 10)):
     plt.legend(handles, [label.capitalize() for label in labels], loc="upper right")
     plt.savefig(RESULT_PATH + '/latency_boxplot' + ('_outliers' if outliers else '') + '.png', dpi=300)
     plt.clf()
+    plt.close()
 
 
 def latency_average_barplot(df):
@@ -102,6 +104,7 @@ def latency_average_barplot(df):
               for label in labels], loc="lower right")
     plt.savefig(RESULT_PATH + '/latency_barplot.png', dpi=300)
     plt.clf()
+    plt.close()
 
 # Multivariate
 
@@ -128,6 +131,7 @@ def latency_throughput_relation(df):
     ax.legend(loc="upper right", labels=['EC P99', 'CC P99', 'EC P95', 'CC P95', 'EC Avg', 'CC Avg'])
     plt.savefig(RESULT_PATH + '/latency_with_throughput.png', dpi=300)
     plt.clf()
+    plt.close()
 
 def latency_throughput_relation_errorbar(df):
     _, ax = plt.subplots(figsize=(8, 8))
@@ -144,3 +148,4 @@ def latency_throughput_relation_errorbar(df):
               for label in labels], loc="lower right")
     plt.savefig(RESULT_PATH + '/latency_with_throughput_errorbar.png', dpi=300)
     plt.clf()
+    plt.close() 
