@@ -8,10 +8,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicLongArray;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BinaryOperator;
 
+import com.dissertation.evaluation.logs.LastROTLog;
 import com.dissertation.evaluation.logs.LastStableTimeLog;
 import com.dissertation.evaluation.logs.Log;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -27,9 +29,10 @@ public class ConstantReadGenerator {
     private final CountDownLatch startSignal;
     private AtomicLongArray endTimes;
     private AtomicIntegerArray keyCounters;
+    private AtomicLong maxRotId;
     private final List<Set<String>> readSets;
     private AtomicReference<String> lastStableTime;
-    private final BinaryOperator<String> maxTime;
+    private final BinaryOperator<String> maxStableTime;
     private long startTime;
 
     private static final String USAGE = "Usage: ConstantReadGenerator <regionPartitions:Int> " +
@@ -46,10 +49,11 @@ public class ConstantReadGenerator {
         this.startSignal = new CountDownLatch(1);
         this.endTimes = new AtomicLongArray(clients);
         this.keyCounters = new AtomicIntegerArray(clients);
+        this.maxRotId = new AtomicLong(0);
         this.readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition),
                 keysPerRead);
         this.lastStableTime = new AtomicReference<String>(Utils.MIN_TIMESTAMP);
-        this.maxTime = (t1, t2) -> t1.compareTo(t2) > 0 ? t1 : t2;
+        this.maxStableTime = (t1, t2) -> t1.compareTo(t2) > 0 ? t1 : t2;
         this.init(clients, readAddress, writeAddresses);
     }
 
@@ -116,6 +120,7 @@ public class ConstantReadGenerator {
 
             ArrayDeque<Log> logs = new ArrayDeque<>(1);
             logs.add(new LastStableTimeLog(this.lastStableTime.get(), this.readTime));
+            logs.add(new LastROTLog(this.maxRotId.get()));
             Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -151,7 +156,8 @@ public class ConstantReadGenerator {
                     return;
                 }
 
-                lastStableTime.accumulateAndGet(rotResponse.getStableTime(), maxTime);
+                maxRotId.accumulateAndGet(rotResponse.getId(), Long::max);
+                lastStableTime.accumulateAndGet(rotResponse.getStableTime(), maxStableTime);
 
                 if (endTimes.get(this.index) - startTime >= readTime) {
                     countDown.countDown();

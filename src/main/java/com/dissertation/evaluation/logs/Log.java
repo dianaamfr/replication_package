@@ -18,6 +18,7 @@ public abstract class Log {
         GOODPUT,
         LAST_STABLE_TIME,
         STABLE_TIME_VERSIONS,
+        LAST_ROT,
     }
 
     protected Log(LogType logType, long time) {
