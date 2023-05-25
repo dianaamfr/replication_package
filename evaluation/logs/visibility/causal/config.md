@@ -1,10 +1,11 @@
 # Visibility Tests - CC prototype
-
-## Test 1
 - Push/Pull Rate = 5ms
-- Write Delay = 50ms
 - 110 writes
 - 1 key per read
+- t4g.small / ubuntu / arm
+
+## Test 1
+- Write Delay = 50ms
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-visibility 1 8080 1
@@ -20,10 +21,7 @@
 
 ---
 ## Test 2
-- Push/Pull Rate = 5ms
 - Write Delay = 100ms
-- 110 writes
-- 1 key per read
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-visibility 1 8080 1
@@ -39,10 +37,7 @@
 
 ---
 ## Test 3
-- Push/Pull Rate = 5ms
 - Write Delay = 500ms
-- 110 writes
-- 1 key per read
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v12.0.0-visibility 1 8080 1
