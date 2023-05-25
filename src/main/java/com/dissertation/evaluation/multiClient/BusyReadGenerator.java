@@ -31,7 +31,7 @@ public class BusyReadGenerator {
 
     private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> " +
             "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
-            "<readTime:Int> <keysPerRead:Int> <keysPerPartition:String> <clients:Int>";
+            "<readTime:Int> <keysPerRead:Int> <keysPerPartition:Int> <clients:Int>";
 
     public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, int readTime,
             int keysPerRead, int keysPerPartition, int clients) {

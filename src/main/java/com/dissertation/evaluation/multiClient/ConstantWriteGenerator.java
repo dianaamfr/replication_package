@@ -29,7 +29,7 @@ public class ConstantWriteGenerator {
 
     private static final String USAGE = "Usage: ConstantWriteGenerator <regionPartitions:Int> " +
             "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
-            "<delay:Int> <writesPerClient:Int> <keysPerPartition:String> <clients:Int>";
+            "<delay:Int> <writesPerClient:Int> <keysPerPartition:Int> <clients:Int>";
 
     public ConstantWriteGenerator(ScheduledThreadPoolExecutor scheduler, Address readAddress,
             List<Address> writeAddresses, long delay, int writesPerClient, int keysPerPartition, int clients) {
