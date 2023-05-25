@@ -14,7 +14,7 @@ LINESTYLES = [
     (1, 1),
     (3, 5, 1, 5),
     (5, 5)]
-COLORS = ["#006f73", "#da4d30"]
+COLORS = ["#006f73", "#da4d30", "#ff7b00"]
 MARKERS = ['X', 'o']
 
 
