@@ -34,6 +34,7 @@ public class Utils {
     public static final String S3_CLOCK_PREFIX = "Clock/";
     private static final String BUCKET_SUFFIX = System.getProperty("bucketSuffix");
     public static final String S3_CLOCK_BUCKET = "clock" + BUCKET_SUFFIX;
+    public static final String S3_CLOCK_REGION = System.getProperty("clockRegion");
     public static final String S3_PARTITION_FORMAT = "p%d-%s" + BUCKET_SUFFIX;
 
     public static final String LOG_STATE = "state";

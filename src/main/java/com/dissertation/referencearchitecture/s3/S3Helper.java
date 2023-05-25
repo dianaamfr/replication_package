@@ -23,9 +23,15 @@ import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class S3Helper {
     private final S3Client s3Client;
+    private final S3Client clockS3Client;
 
     public S3Helper(Region region) throws URISyntaxException {
         this.s3Client = s3Client(region);
+        if (Utils.S3_CLOCK_REGION == null || Utils.S3_CLOCK_REGION.isEmpty()) {
+            this.clockS3Client = this.s3Client;
+        } else {
+            this.clockS3Client = s3Client(Region.of(Utils.S3_CLOCK_REGION));
+        }
     }
 
     private static S3Client s3Client(Region region) throws URISyntaxException {
@@ -43,7 +49,7 @@ public class S3Helper {
 
     public boolean persistLog(String bucketName, String timestamp, String logJson) {
         try {
-            createObject(bucketName, Utils.S3_LOG_PREFIX, timestamp, RequestBody.fromString(logJson));
+            createObject(bucketName, Utils.S3_LOG_PREFIX, timestamp, RequestBody.fromString(logJson), this.s3Client);
         } catch (Exception e) {
             System.err.println("Persist log failed: " + e.toString());
             return false;
@@ -53,7 +59,7 @@ public class S3Helper {
 
     public boolean persistClock(String timestamp) {
         try {
-            createObject(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, RequestBody.empty());
+            createObject(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, RequestBody.empty(), this.clockS3Client);
         } catch (Exception e) {
             System.err.println("Persist clock failed: " + e.toString());
             return false;
@@ -65,7 +71,7 @@ public class S3Helper {
         List<S3Object> objects;
 
         try {
-            objects = getObjectsAfter(bucketName, Utils.S3_LOG_PREFIX, timestamp);
+            objects = getObjectsAfter(bucketName, Utils.S3_LOG_PREFIX, timestamp, this.s3Client);
 
             if (objects.isEmpty()) {
                 return new S3ReadResponse();
@@ -73,7 +79,7 @@ public class S3Helper {
 
             S3Object last = objects.get(objects.size() - 1);
             if (last.key().compareTo(timestamp) > 0) {
-                return getObject(bucketName, last.key());
+                return getObject(bucketName, last.key(), this.s3Client);
             }
 
             return new S3ReadResponse();
@@ -87,7 +93,7 @@ public class S3Helper {
         List<S3Object> objects;
 
         try {
-            objects = getObjectsAfter(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp);
+            objects = getObjectsAfter(Utils.S3_CLOCK_BUCKET, Utils.S3_CLOCK_PREFIX, timestamp, this.clockS3Client);
 
             if (objects.isEmpty()) {
                 return new S3ReadResponse();
@@ -104,7 +110,7 @@ public class S3Helper {
         }
     }
 
-    private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key) {
+    private List<S3Object> getObjectsAfter(String bucketName, String prefix, String key, S3Client client) {
         ListObjectsV2Request listObjects = ListObjectsV2Request
                 .builder()
                 .prefix(prefix)
@@ -112,27 +118,27 @@ public class S3Helper {
                 .bucket(bucketName)
                 .build();
 
-        ListObjectsV2Response res = this.s3Client.listObjectsV2(listObjects);
+        ListObjectsV2Response res = client.listObjectsV2(listObjects);
         return res.contents();
     }
 
-    private void createObject(String bucketName, String prefix, String key, RequestBody body) {
+    private void createObject(String bucketName, String prefix, String key, RequestBody body, S3Client client) {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
                 .bucket(bucketName)
                 .key(prefix + key)
                 .build();
 
-        this.s3Client.putObject(objectRequest, body);
+        client.putObject(objectRequest, body);
     }
 
-    private S3ReadResponse getObject(String bucketName, String key) {
+    private S3ReadResponse getObject(String bucketName, String key, S3Client client) {
         GetObjectRequest getObject = GetObjectRequest
                 .builder()
                 .bucket(bucketName)
                 .key(key)
                 .build();
 
-        ResponseBytes<GetObjectResponse> objectBytes = this.s3Client.getObjectAsBytes(getObject);
+        ResponseBytes<GetObjectResponse> objectBytes = client.getObjectAsBytes(getObject);
         String recvTimestamp = key.split(Utils.S3_LOG_PREFIX)[1];
         return new S3ReadResponse(recvTimestamp, objectBytes.asUtf8String());
     }
