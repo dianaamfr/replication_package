@@ -90,11 +90,15 @@ public class Utils {
     }
 
     public static void logsToFile(List<ArrayDeque<Log>> logsList, String file) {
-        ArrayDeque<Log> totalLogs = new ArrayDeque<>();
-        for(ArrayDeque<Log> logs : logsList) {
-            totalLogs.addAll(logs);
+        Utils.logToFile(mergeLogs(logsList), file);
+    }
+
+    public static ArrayDeque<Log> mergeLogs(List<ArrayDeque<Log>> logsList) {
+        ArrayDeque<Log> mergedLogs = new ArrayDeque<>();
+        for (ArrayDeque<Log> logs : logsList) {
+            mergedLogs.addAll(logs);
         }
-        Utils.logToFile(totalLogs, file);
+        return mergedLogs;
     }
 
     public static void logToFile(ArrayDeque<Log> logs, String file) {
