@@ -5,11 +5,13 @@
 - Read for 60s
 - 12 keys per partition
 - 2 keys per read
-- <!-- TODO: specify client machine -->
-- <!-- TODO: specify server machine -->
+- a1.2xlarge clients ()
+- c6g.8xlarge ()
+- t4.gsmall servers
+- Until we get 99th percentile above 50
 
 ## Test
-<!-- TODO: replace <R> an <W> placeholders with the number of read and write clients -->
+<!-- Replace <R> an <W> placeholders with the number of read and write clients -->
 
 ### Reader EU-WEST-1
 **Read Node**: ./readNode.sh v13.0.0-latency 1 8080 1
@@ -19,6 +21,12 @@
 **Busy Read Generator**: ./multiBusyReadGenerator.sh v13.0.0-latency 1 1 8080 <read-eu-ip> 8080 <write-ip> 1 60000 2 12 <R>
 
 ### Writer EU-WEST-1
-**Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip> 
+**Write Node**: ./writeNode.sh v13.0.0-latency 1 8080 1 8080 <read-eu-ip> 8080 <read-us-ip>
 
 <!-- TODO: spread write nodes across both regions and repeat one of the tests for 1, 2, 3, 4, 6 partitions  -->
+
+## Copy Logs
+docker container cp multiBusyReadGenerator:/logs/ .
+scp -i "reference-architecture.pem" -r ubuntu@ec2-54-217-167-172.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+
+

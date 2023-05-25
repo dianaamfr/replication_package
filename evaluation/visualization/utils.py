@@ -8,7 +8,6 @@ EC_DIR = '/eventual'
 LOCAL_REGION = 'eu-west-1'
 REMOTE_REGION = 'us-east-1'
 DELAYS = [50, 100, 200]
-CLIENTS = [num for num in range(100, 501, 100)]
 PERCENTILES = [50, 70, 95, 99]
 PERCENTILES_FLOAT = [p/100 for p in PERCENTILES]
 LINESTYLES = [
