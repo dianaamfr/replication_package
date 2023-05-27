@@ -40,7 +40,6 @@ def visibility_evaluation():
     # TODO: plot showing the response time, push time, pull time, stable time and visibility time of each write
 
     visibility_throughput_relation(df)
-    visibility_throughput_relation_errorbar(df)
 
 
 def get_ec_visibility_times(delay):
@@ -373,23 +372,6 @@ def visibility_throughput_relation(df):
     
     plt.subplots_adjust(left=0.1, hspace=0.3, wspace=0.1)
     plt.savefig(RESULT_PATH + '/visibility_with_throughput.png', dpi=300)
-    plt.clf()
-    plt.close()
-
-def visibility_throughput_relation_errorbar(df):
-    g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=8, aspect=1, margin_titles=True)
-
-    for ax, (_, subdata) in zip(g.axes.flat, df.groupby('region')):
-        sns.lineplot(data=subdata, x="delay", y="read_time", hue="consistency", style="consistency", markers=MARKERS, dashes=[LINESTYLES[2], LINESTYLES[2]],
-                     markersize=10, estimator=np.mean, linewidth=3, legend=False, markeredgewidth=1, markeredgecolor='w', ax=ax, palette=COLORS)
-        ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
-
-    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
-    g.axes[0][0].set_title("Local Region (EU)")
-    g.axes[0][1].set_title("Remote Region (US)")
-    g.set(yscale='log')
-    plt.subplots_adjust(left=0.1, hspace=0.3, wspace=0.1)
-    plt.savefig(RESULT_PATH + '/visibility_with_throughput_errorbar.png', dpi=300)
     plt.clf()
     plt.close()
 

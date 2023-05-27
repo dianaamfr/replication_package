@@ -36,7 +36,6 @@ def latency_evaluation():
     latency_average_barplot(df)
 
     latency_throughput_relation(df)
-    latency_throughput_relation_errorbar(df)
 
 
 # Univariate
@@ -132,20 +131,3 @@ def latency_throughput_relation(df):
     plt.savefig(RESULT_PATH + '/latency_with_throughput.png', dpi=300)
     plt.clf()
     plt.close()
-
-def latency_throughput_relation_errorbar(df):
-    _, ax = plt.subplots(figsize=(8, 8))
-
-    sns.lineplot(data=df, x="delay", y="latency", hue="consistency", style="consistency", markers=MARKERS,
-                 markersize=10, linewidth=2, markeredgewidth=1, markeredgecolor='w', hue_order=['EC','CC'])
-
-    ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
-    ax.set_ylabel("Average Read Latency (ms)", labelpad=10)
-    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
-    handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, [label.capitalize()
-              for label in labels], loc="lower right")
-    plt.savefig(RESULT_PATH + '/latency_with_throughput_errorbar.png', dpi=300)
-    plt.clf()
-    plt.close() 

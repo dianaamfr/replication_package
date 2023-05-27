@@ -3,7 +3,6 @@ import os
 
 PATH = os.path.dirname(os.path.abspath(__file__)) + '/../'
 CC_DIR = '/causal'
-CC_CLIENTS_DIR = '/clients_causal'
 EC_DIR = '/eventual'
 LOCAL_REGION = 'eu-west-1'
 REMOTE_REGION = 'us-east-1'

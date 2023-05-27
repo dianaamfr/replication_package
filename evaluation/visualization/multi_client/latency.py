@@ -3,29 +3,33 @@ import re
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
-from visualization.utils import PATH, CC_CLIENTS_DIR, LOCAL_REGION
+from visualization.utils import PATH, LOCAL_REGION, MARKERS, COLORS
 from visualization.utils import get_data, df_describe
+import math
 
-CC_LATENCY_PATH = PATH + '/logs/latency' + CC_CLIENTS_DIR
+CC_LATENCY_PATH = PATH + '/logs/scale/latency_visibility'
 
 RESULT_PATH = PATH + '/results/latency'
 pattern = r"r(\d+)_w(\d+)"
 
-def latency_evaluation(dir):
-    path = CC_LATENCY_PATH + '/' + dir
-    test_names = [name for name in os.listdir(path) if os.path.isdir(os.path.join(path, name))]
+def latency_evaluation():
+    latency_with_clients('32cores_12keys')
+    latency_with_clients('32cores_8keys')
+    latency_with_partitions('32cores_8keys', 'r5_w10')
+
+def latency_with_clients(subdir):
+    dir = os.path.join(CC_LATENCY_PATH, 'p1', subdir)
+    test_names = [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))]
     dfs = []
     read_throughput = []
     for test_name in test_names:
-        df = get_latency_times(path + '/' + test_name)
+        file_path = os.path.join(dir, test_name)
+        df = get_latency_times(file_path)
         dfs.append(df)
-        read_throughput.append(get_read_throughput(path + '/' + test_name))
+        read_throughput.append(get_read_throughput(file_path))
 
-    latency_distribution_table(test_names, dfs, read_throughput)
-    read_latency_throughput(dfs, read_throughput)
-    read_latency_throughput_errorbar(dfs, read_throughput)
+    latency_distribution(test_names, dfs, read_throughput, subdir)
 
 def get_read_throughput(path):
     df = get_data(path, 'readclient-' + LOCAL_REGION)
@@ -43,7 +47,7 @@ def get_latency_times(path):
     return df_result.sort_values('id').reset_index(drop=True)
 
 
-def latency_distribution_table(test_names, dfs, read_throughput):
+def latency_distribution(test_names, dfs, read_throughput, filename):
     df_results = []
     for i, df in enumerate(dfs):
         df_stats = df_describe(df, 'latency').round(2)
@@ -58,65 +62,62 @@ def latency_distribution_table(test_names, dfs, read_throughput):
 
     df_result = pd.concat(df_results, ignore_index=True).sort_values(by=['read_clients', 'write_clients'])
 
+    # Table
     plt.figure(figsize=(18, 3))
     plt.table(cellText=df_result.values, colLabels=df_result.columns,
               cellLoc='center', loc='center')
     plt.axis('off')
     plt.annotate('Latency (ms)', (0.5, 0.9), xycoords='axes fraction',
                  ha='center', va='bottom', fontsize=10)
-    plt.savefig(RESULT_PATH + '/clients_latency_table.png', dpi=300, bbox_inches='tight')
+    plt.savefig(RESULT_PATH + '/clients_latency_table_' + filename + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
-def read_latency_throughput(dfs, read_throughput):
-    _, ax = plt.subplots(figsize=(8, 5))
-    def estimator_99(data): return np.percentile(data, 99)
-    def estimator_95(data): return np.percentile(data, 95)
 
-    df_results = []
-    for i, df in enumerate(dfs):
-        df_result = df.copy()
-        df_result['read_throughput'] = read_throughput[i]
-        df_results.append(df_result)
+    # Scatterplot
+    _, ax = plt.subplots(figsize=(6, 5))
+    
+    x_coords = []
+    y_mean_coords = []
+    for(_, row) in df_result.iterrows():
+        x_coords.append(row['read_throughput'])
+        y_mean_coords.append(row['mean'])
 
-    df_result = pd.concat(df_results, ignore_index=True)
-    print(df_result.info())
-
-    sns.lineplot(data=df_result, x="read_throughput", y='latency', marker='X', markersize=10, estimator=estimator_99, errorbar=None, linewidth=3, 
-                 markeredgewidth=1, markeredgecolor='w')
-    sns.lineplot(data=df_result, x="read_throughput", y='latency', marker='v', markersize=10, estimator=estimator_95, errorbar=None, linewidth=3, 
-                 markeredgewidth=1, markeredgecolor='w')
-    sns.lineplot(data=df_result, x="read_throughput", y='latency', marker='o', markersize=10, errorbar=None, linewidth=3, 
-                 markeredgewidth=1, markeredgecolor='w')
+    # Average Read Latency
+    plt.plot(x_coords, y_mean_coords, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=COLORS[0], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
-    ax.set_ylabel("Read Latency (ms)", labelpad=5)
-    ax.set_xlabel("Read Throughput (1000 x ROT/s)", labelpad=5)
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: '{0:g}'.format(x / 1000)))
-    ax.legend(loc="upper left", labels=['P99', 'P95', 'Avg',])
-    plt.savefig(RESULT_PATH + '/' + 'read_latency_throughput.png', dpi=300, bbox_inches='tight')
+    ax.set_xlabel(" (1000 x ROT/s)", labelpad=10)
+    ax.set_ylabel("Average Read Latency (ms)", labelpad=10)
+    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
+    plt.yticks(range(0, math.ceil(max(y_mean_coords)) + 2, 1))
+
+    plt.savefig(RESULT_PATH + '/clients_latency_plot__avg_' + filename + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
-def read_latency_throughput_errorbar(dfs, read_throughput):
-    _, ax = plt.subplots(figsize=(8, 5))
+def latency_with_partitions(subdir, test_name):
+    dfs = []
+    partition_dirs = [name for name in os.listdir(CC_LATENCY_PATH) if os.path.isdir(os.path.join(CC_LATENCY_PATH, name))]
+    for partition_dir in partition_dirs:
+        file_path = os.path.join(CC_LATENCY_PATH, partition_dir , subdir, test_name)
+        df = get_latency_times(file_path)
+        df['partitions'] = re.findall(r"p(\d+)", partition_dir)[0]
+        dfs.append(df)
 
-    df_results = []
-    for i, df in enumerate(dfs):
-        df_result = df.copy()
-        df_result['read_throughput'] = read_throughput[i]
-        df_results.append(df_result)
+    df_result = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+    
+    _, ax = plt.subplots(figsize=(10, 8))
+    grouped_data = df_result.groupby(["partitions"])["latency"]
+    average_latency = grouped_data.mean().reset_index()
 
-    df_result = pd.concat(df_results, ignore_index=True)
-    print(df_result.info())
-
-    sns.lineplot(data=df_result, x="read_throughput", y='latency', marker='o', markersize=10, linewidth=3, 
-                 markeredgewidth=1, markeredgecolor='w')
-
+    sns.barplot(data=average_latency, x="partitions", y="latency", width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
     ax.xaxis.grid(True)
+    ax.set_xlabel("Partitions", labelpad=5)
     ax.set_ylabel("Read Latency (ms)", labelpad=5)
-    ax.set_xlabel("Read Throughput (1000 x ROT/s)", labelpad=5)
-    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: '{0:g}'.format(x / 1000)))
-    plt.savefig(RESULT_PATH + '/' + 'read_latency_throughput_errorbar.png', dpi=300, bbox_inches='tight')
+    plt.yticks(range(0, math.ceil(max(average_latency['latency'])) + 2, 1))
+
+    plt.savefig(RESULT_PATH + '/latency_with_partitions_' + subdir + '.png', dpi=300)
     plt.clf()
     plt.close()
+    
