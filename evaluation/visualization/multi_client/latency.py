@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from visualization.utils import PATH, LOCAL_REGION, MARKERS, COLORS
 from visualization.utils import get_data, df_describe
 import math
@@ -89,7 +90,8 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
     ax.xaxis.grid(True)
     ax.set_xlabel(" (1000 x ROT/s)", labelpad=10)
     ax.set_ylabel("Average Read Latency (ms)", labelpad=10)
-    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
+    ax.xaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:.0f}'.format(x/1000)))
+    plt.xticks(range(0, math.ceil(max(x_coords)) + 2000, 2000))
     plt.yticks(range(0, math.ceil(max(y_mean_coords)) + 2, 1))
 
     plt.savefig(RESULT_PATH + '/clients_latency_plot__avg_' + filename + '.png', dpi=300, bbox_inches='tight')
@@ -107,7 +109,7 @@ def latency_with_partitions(subdir, test_name):
 
     df_result = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
     
-    _, ax = plt.subplots(figsize=(10, 8))
+    _, ax = plt.subplots(figsize=(5, 3))
     grouped_data = df_result.groupby(["partitions"])["latency"]
     average_latency = grouped_data.mean().reset_index()
 
