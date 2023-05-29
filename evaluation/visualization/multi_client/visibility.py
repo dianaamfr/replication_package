@@ -8,7 +8,7 @@ from visualization.utils import get_data, get_diff, df_describe
 import numpy as np
 import math
 
-CC_LATENCY_PATH = PATH + '/logs/scale/latency_visibility'
+CC_VISIBILITY_PATH = PATH + '/logs/scale/latency_visibility'
 
 RESULT_PATH = PATH + '/results/visibility'
 MAX_REQUESTS = 500
@@ -19,7 +19,7 @@ def visibility_evaluation():
     visibility_with_partitions('32cores_8keys', 'r5_w10')
 
 def visibility_with_clients(subdir):
-    dir = os.path.join(CC_LATENCY_PATH, 'p1', subdir)
+    dir = os.path.join(CC_VISIBILITY_PATH, 'p1', subdir)
     test_names = [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))]
     dfs = []
 
@@ -64,10 +64,10 @@ def visibility_with_clients(subdir):
 
 def visibility_with_partitions(subdir, test_name):
     dfs = []
-    partition_dirs = [name for name in os.listdir(CC_LATENCY_PATH) if os.path.isdir(os.path.join(CC_LATENCY_PATH, name))]
+    partition_dirs = [name for name in os.listdir(CC_VISIBILITY_PATH) if os.path.isdir(os.path.join(CC_VISIBILITY_PATH, name))]
     for partition_dir in partition_dirs:
         partitions = int(re.findall(r"p(\d+)", partition_dir)[0])
-        file_path = os.path.join(CC_LATENCY_PATH, partition_dir , subdir, test_name)
+        file_path = os.path.join(CC_VISIBILITY_PATH, partition_dir , subdir, test_name)
         df_eu, df_us = get_visibility_times(file_path)
         df_eu['partitions'] = partitions
         df_us['partitions'] = partitions

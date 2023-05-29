@@ -11,6 +11,7 @@ PERCENTILES = [50, 70, 95, 99]
 PERCENTILES_FLOAT = [p/100 for p in PERCENTILES]
 COLORS = ["#006f73", "#da4d30", "#ff7b00"]
 MARKERS = ['X', 'o']
+PAYLOAD_BYTES = 12
 
 
 def get_data(path, file):

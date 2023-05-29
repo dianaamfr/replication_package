@@ -2,15 +2,13 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, COLORS, MARKERS
+from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, COLORS, MARKERS, PAYLOAD_BYTES
 from visualization.utils import get_data
 
-PAYLOAD_BYTES = 12
 EC_GOODPUT_PATH = PATH + '/logs/goodput' + EC_DIR + '/d_'
 CC_GOODPUT_PATH = PATH + '/logs/goodput' + CC_DIR + '/d_'
 
 RESULT_PATH = PATH + '/results/goodput'
-
 
 def goodput_evaluation():
     dfs = []

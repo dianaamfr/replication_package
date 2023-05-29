@@ -11,6 +11,6 @@ sns.set_palette(visualization.COLORS)
 # visualization.single_client.visibility_evaluation()
 
 #visualization.multi_client.latency_evaluation()
-# visualization.multi_client.goodput_evaluation()
-visualization.multi_client.visibility_evaluation()
+visualization.multi_client.goodput_evaluation()
+#visualization.multi_client.visibility_evaluation()
     
