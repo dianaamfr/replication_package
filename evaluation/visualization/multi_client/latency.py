@@ -17,7 +17,9 @@ pattern = r"r(\d+)_w(\d+)"
 def latency_evaluation():
     latency_with_clients('32cores_12keys')
     latency_with_clients('32cores_8keys')
+    reads_with_clients_barplot('32cores_8keys')
     latency_with_partitions('32cores_8keys', 'r5_w10')
+
 
 def latency_with_clients(subdir):
     dir = os.path.join(CC_LATENCY_PATH, 'p1', subdir)
@@ -32,9 +34,50 @@ def latency_with_clients(subdir):
 
     latency_distribution(test_names, dfs, read_throughput, subdir)
 
+
+def reads_with_clients_barplot(subdir):
+    dir = os.path.join(CC_LATENCY_PATH, 'p1', subdir)
+    test_names = [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))]
+    dfs = []
+    for test_name in test_names:
+        file_path = os.path.join(dir, test_name)
+        df = get_latency_times(file_path)
+        (r, w) = re.findall(pattern, test_name)[0]
+        df['read_clients'] = int(r)
+        df['write_clients'] = int(w)
+        read_throughput = get_read_throughput(file_path)
+        write_throughput = 20 * int(w)
+        df['read_throughput'] = read_throughput
+        df['read_percentage'] = (read_throughput / (read_throughput + write_throughput)).round(3) * 100
+        df['rw'] = r + ':' + w
+        dfs.append(df)
+
+    df_result = pd.concat(dfs, ignore_index=True).sort_values(by=['read_clients', 'write_clients'])
+    df_avg = df_result.groupby(['read_clients', 'write_clients']).mean().round(2).reset_index()
+    read_percentage = list(df_avg['read_percentage'])
+    
+    # Read Latency with Read Percentage
+    _, ax = plt.subplots(figsize=(5, 5))
+    sns.barplot(x='rw', y='latency', data=df_result, ax=ax, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+    ax.xaxis.grid(True)
+    ax.set_xlabel("Readers : Writers", labelpad=5)
+    ax.set_ylabel('Average Latency (ms)', labelpad=5)
+
+    ax2 = ax.twiny()
+    ax2.set_xlim(ax.get_xlim())
+    ax2.set_xticks(np.arange(len(read_percentage)))
+    ax2.set_xlabel("Read %", labelpad=5)
+    ax2.set_xticklabels(read_percentage)
+
+    plt.savefig(RESULT_PATH + '/' + 'latency_with_clients_barplot.png', dpi=300)
+    plt.clf()
+    plt.close()
+
+
 def get_read_throughput(path):
     df = get_data(path, 'readclient-' + LOCAL_REGION)
     return (df.loc[df['logType'] == 'LAST_ROT', 'totalReads'].values[0] / 60).round(2)
+
 
 def get_latency_times(path):
     df = get_data(path, 'readclient-' + LOCAL_REGION)
@@ -74,7 +117,6 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
     plt.clf()
     plt.close()
 
-
     # Scatterplot
     _, ax = plt.subplots(figsize=(6, 5))
     
@@ -98,6 +140,7 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
     plt.clf()
     plt.close()
 
+
 def latency_with_partitions(subdir, test_name):
     dfs = []
     partition_dirs = [name for name in os.listdir(CC_LATENCY_PATH) if os.path.isdir(os.path.join(CC_LATENCY_PATH, name))]
@@ -109,17 +152,14 @@ def latency_with_partitions(subdir, test_name):
 
     df_result = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
     
-    _, ax = plt.subplots(figsize=(5, 3))
-    grouped_data = df_result.groupby(["partitions"])["latency"]
-    average_latency = grouped_data.mean().reset_index()
-
-    sns.barplot(data=average_latency, x="partitions", y="latency", width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+    _, ax = plt.subplots(figsize=(5, 6))
+    sns.boxplot(data=df_result, x="partitions", y="latency", showfliers=True)
     ax.xaxis.grid(True)
     ax.set_xlabel("Partitions", labelpad=5)
     ax.set_ylabel("Read Latency (ms)", labelpad=5)
-    plt.yticks(range(0, math.ceil(max(average_latency['latency'])) + 2, 1))
-
+    ax.set_yticks(range(0, math.ceil(df_result['latency'].max()) + 2, 2))
+  
     plt.savefig(RESULT_PATH + '/latency_with_partitions_' + subdir + '.png', dpi=300)
     plt.clf()
     plt.close()
-    
+

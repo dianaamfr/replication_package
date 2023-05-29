@@ -55,7 +55,7 @@ def get_ec_visibility_times(delay):
         # Get response time
         response_time = client_response['time']
 
-        # Get the time when the version was first read in each read client
+        # Get the time when the version was first available for read in each read client
         read_time_eu = get_read_time_ec(read_client_eu, client_response['id'])
         read_time_us = get_read_time_ec(read_client_us, client_response['id'])
 
@@ -134,7 +134,7 @@ def get_cc_visibility_times(delay):
         stable_time_us = get_stable_time(
             puller_us_df, client_response['version'])
 
-        # Get the time when the version was first read in each read client
+        # Get the time when the version was first available for read in each read client
         read_time_eu = get_read_time_cc(
             read_client_eu, client_response['version'])
         read_time_us = get_read_time_cc(
@@ -305,6 +305,7 @@ def write_response_barplot(df):
     plt.savefig(RESULT_PATH + '/write_response_barplot.png', dpi=300)
     plt.clf()
     plt.close()
+
 
 def visibility_with_write_delay(df):
     g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=5, aspect=1, margin_titles=True)
