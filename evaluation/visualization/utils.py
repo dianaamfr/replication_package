@@ -9,10 +9,6 @@ REMOTE_REGION = 'us-east-1'
 DELAYS = [50, 100, 200]
 PERCENTILES = [50, 70, 95, 99]
 PERCENTILES_FLOAT = [p/100 for p in PERCENTILES]
-LINESTYLES = [
-    (1, 1),
-    (3, 5, 1, 5),
-    (5, 5)]
 COLORS = ["#006f73", "#da4d30", "#ff7b00"]
 MARKERS = ['X', 'o']
 

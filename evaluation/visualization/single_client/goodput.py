@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from visualization.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, COLORS, MARKERS
 from visualization.utils import get_data
-import math
 
 PAYLOAD_BYTES = 12
 EC_GOODPUT_PATH = PATH + '/logs/goodput' + EC_DIR + '/d_'
