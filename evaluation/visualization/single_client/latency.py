@@ -109,7 +109,6 @@ def latency_average_barplot(df):
 
 
 def latency_with_write_delay(df):
-    _, ax = plt.subplots(figsize=(8, 4))
     df_ec_mean = df[df['consistency'] == 'EC'].groupby('delay').mean().sort_index().reset_index()
     df_cc_mean = df[df['consistency'] == 'CC'].groupby('delay').mean().sort_index().reset_index()
 
@@ -125,6 +124,8 @@ def latency_with_write_delay(df):
         y_coords_cc_99.append(df_cc_99[df_cc_99['delay'] == delay]['percentile_99'].values[0])
 
     # Average Read Latency
+    _, ax = plt.subplots(figsize=(8, 4))
+
     plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=COLORS[0], markeredgewidth=1, markeredgecolor='w')
     plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=COLORS[1], markeredgewidth=1, markeredgecolor='w')
 
