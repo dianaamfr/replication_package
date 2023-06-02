@@ -9,7 +9,7 @@ REMOTE_REGION = 'us-east-1'
 DELAYS = [50, 100, 200]
 PERCENTILES = [50, 70, 95, 99]
 PERCENTILES_FLOAT = [p/100 for p in PERCENTILES]
-COLORS = ["#006f73", "#da4d30", "#ff7b00"]
+COLORS = ["#0a5c6c", "#008985", "#26b47f", "#93da63"]
 MARKERS = ['X', 'o']
 PAYLOAD_BYTES = 12
 

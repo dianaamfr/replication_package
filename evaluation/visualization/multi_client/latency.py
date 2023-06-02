@@ -162,4 +162,3 @@ def latency_with_partitions(subdir, test_name):
     plt.savefig(RESULT_PATH + '/latency_with_partitions_' + subdir + '.png', dpi=300)
     plt.clf()
     plt.close()
-
