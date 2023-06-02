@@ -136,7 +136,7 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
     plt.xticks(range(0, math.ceil(max(x_coords)) + 2000, 2000))
     plt.yticks(range(0, math.ceil(max(y_mean_coords)) + 2, 1))
 
-    plt.savefig(RESULT_PATH + '/clients_latency_plot__avg_' + filename + '.png', dpi=300, bbox_inches='tight')
+    plt.savefig(RESULT_PATH + '/clients_latency_plot_avg_' + filename + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 

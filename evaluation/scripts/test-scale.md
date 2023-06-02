@@ -1,6 +1,4 @@
 
-docker rm -f $(docker ps -a -q)
-
 (Delay = 50ms, Push/Pull Rate = 5ms, 1000 writes per client, Read for 60s in EU and 90s in US, 8 keys per partition, 2 keys per read)
 - c6g.8xlarge clients
 - t4.gsmall servers
@@ -88,6 +86,33 @@ docker rm -f $(docker ps -a -q)
 
 ---
 
+## Scale Read Nodes - Latency
+- 8 keys total, 1 partition
+- 10 fixed writers making 500 writes at a constant rate with 50ms between requests
+- R 1, 5, 10, 15, 20, 25
+- Repeat for 1, 2, 3 and 4 read nodes
+- 2 keys read at a time during 30 seconds
+
+### EU-WEST-1
+**Read Node**: ./readNode.sh v14.0.0-latency 1 8080 1
+**Write Node**:
+    **1**: ./writeNode.sh v14.0.0-latency 1 8080 1 8080 <read-eu-ip1>
+    **2**: ./writeNode.sh v14.0.0-latency 1 8080 1 8080 <read-eu-ip1> 8080 <read-eu-ip2>
+    **3**: ./writeNode.sh v14.0.0-latency 1 8080 1 8080 <read-eu-ip1> 8080 <read-eu-ip2> 8080 <read-eu-ip3>
+    **4**: ./writeNode.sh v14.0.0-latency 1 8080 1 8080 <read-eu-ip1> 8080 <read-eu-ip2> 8080 <read-eu-ip3> 8080 <read-eu-ip4>
+
+**Read Client**: 
+    **1**: ./multiBusyReadGenerator.sh v14.0.0-latency 1 1 1 8080 <read-eu-ip1> 8080 <write-ip> 1 30000 2 8 1
+    **2**: ./multiBusyReadGenerator.sh v14.0.0-latency 1 2 1 8080 <read-eu-ip1> 8080 <read-eu-ip2> 8080 <write-ip> 1 30000 2 8 1
+    **3**: ./multiBusyReadGenerator.sh v14.0.0-latency 1 3 1 8080 <read-eu-ip1> 8080 <read-eu-ip2> 8080 <read-eu-ip3> 8080 <write-ip> 1 30000 2 8 1
+    **4**: ./multiBusyReadGenerator.sh v14.0.0-latency 1 4 1 8080 <read-eu-ip1> 8080 <read-eu-ip2> 8080 <read-eu-ip3> 8080 <read-eu-ip4> 8080 <write-ip> 1 30000 2 8 1
+
+<!-- Read ip does not matter for write client -->
+**Write Client**: ./multiConstantWriteGenerator.sh v14.0.0-latency 1 1 8080 <read-eu-ip1> 8080 <write-ip> 1 50 500 8 10
+
+**Read Client**: docker container cp multiBusyReadGenerator:/logs/ .
+**Read Client**: scp -i "reference-architecture.pem" -r ubuntu@<read-client-dns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+
 ## Scale out (3DCS + 3partitions) 
 24 keys, 2 partitions, 3 regions, replication factor of 2
 
@@ -145,14 +170,14 @@ docker rm -f $(docker ps -a -q)
 # Copy logs
 ## Latency and visibility
 ### EU
-**Read Node**: scp -i "per-reference-architecture.pem" -r ubuntu@<read-eu-ip>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
-**Write Node**: scp -i "per-reference-architecture.pem" -r ubuntu@<write-eu-ip>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
-**Read Client**: scp -i "per-reference-architecture.pem" -r ubuntu@<read-client-eu-ip>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+**Read Node**: scp -i "reference-architecture.pem" -r ubuntu@<read-eu-ip>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+**Write Node**: scp -i "reference-architecture.pem" -r ubuntu@<write-eu-ip>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+**Read Client**: scp -i "reference-architecture.pem" -r ubuntu@<read-client-eu-ip>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
 
 ### US
-**Read Node**: scp -i "per-reference-architecture-us.pem" -r ubuntu@<read-eu-ip>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
-**Read Client**: scp -i "per-reference-architecture-us.pem" -r ubuntu@<read-client-us-ip>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
-**Write Client**: scp -i "per-reference-architecture-us.pem" -r ubuntu@<write-client-us-ip>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
+**Read Node**: scp -i "reference-architecture-us.pem" -r ubuntu@<read-eu-ip>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
+**Read Client**: scp -i "reference-architecture-us.pem" -r ubuntu@ec2-23-22-140-216.compute-1.amazonaws.com:~/logs ./logs-ref-arch
+**Write Client**: scp -i "reference-architecture-us.pem" -r ubuntu@<write-client-us-ip>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
 
 ## Goodput
 **Read Node**: scp -i "reference-architecture.pem" -r ubuntu@<read-eu-dns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
