@@ -100,16 +100,18 @@ singleBusyWrite:
 ######## Multi Client Load Generators ########
 ##############################################
 
+regionReadNodes = 2
+
 writeClients = 1
 keysPerPartition = 10
 writesPerClient = 100
 
 multiReadTime = 20000
-readClients = 19
+readClients = 1
 
 # Multi client read and write generators to measure latency with constant throughput 
 multiBusyRead:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyReadGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
+	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyReadGenerator.jar $(regionReadNodes) $(regionPartitions) $(readAddress) $(readAddress) $(writeAddresses) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
 
 multiConstantWrite:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(writesPerClient) $(keysPerPartition) $(writeClients)

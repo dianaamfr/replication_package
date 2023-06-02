@@ -29,11 +29,11 @@ public class BusyReadGenerator {
     private final List<Set<String>> readSets;
     private final AtomicLong maxRotId;
 
-    private static final String USAGE = "Usage: BusyReadGenerator <regionPartitions:Int> " +
-            "<readPort:Int> <readIp:String> (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
+    private static final String USAGE = "Usage: BusyReadGenerator <regionReadNodes>:Int> <regionPartitions:Int> " +
+            "(<readPort:Int> <readIp:String>)+ (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
             "<readTime:Int> <keysPerRead:Int> <keysPerPartition:Int> <clients:Int>";
 
-    public BusyReadGenerator(ExecutorService executor, Address readAddress, List<Address> writeAddresses, int readTime,
+    public BusyReadGenerator(ExecutorService executor, List<Address> readAddresses, List<Address> writeAddresses, int readTime,
             int keysPerRead, int keysPerPartition, int clients) {
         this.executor = executor;
         this.readTime = readTime;
@@ -42,36 +42,41 @@ public class BusyReadGenerator {
         this.startSignal = new CountDownLatch(1);
         this.readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
         this.maxRotId = new AtomicLong(0);
-        this.init(clients, readAddress, writeAddresses);
+        this.init(clients, readAddresses, writeAddresses);
     }
 
     public static void main(String[] args) {
-        int regionPartitions = 0;
-        Address readAddress;
+        int regionReadNodes, regionPartitions = 0;
+        List<Address> readAddresses = new ArrayList<>();
         List<Address> writeAddresses = new ArrayList<>();
 
-        if (args.length < 10) {
+        if (args.length < 11) {
             System.err.println(USAGE);
             return;
         }
 
         try {
-            regionPartitions = Integer.parseInt(args[0]);
-            readAddress = new Address(Integer.parseInt(args[1]), args[2]);
-            int addressesEndIndex = regionPartitions * 3 + 3;
-            for (int i = 3; i < addressesEndIndex; i += 3) {
+            regionReadNodes = Integer.parseInt(args[0]);
+            regionPartitions = Integer.parseInt(args[1]);
+            int readAddressesEndIndex = regionReadNodes * 2 + 2;
+            for (int i = 2; i < readAddressesEndIndex; i += 2) {
+                readAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1]));
+            }
+
+            int writeAddressesEndIndex = regionPartitions * 3 + readAddressesEndIndex;
+            for (int i = readAddressesEndIndex; i < writeAddressesEndIndex; i += 3) {
                 writeAddresses.add(new Address(Integer.parseInt(args[i]), args[i + 1], Integer.parseInt(args[i + 2])));
             }
 
-            if (args.length < addressesEndIndex + 4) {
+            if (args.length < writeAddressesEndIndex + 4) {
                 System.err.println(USAGE);
                 return;
             }
 
-            int readTime = Integer.parseInt(args[addressesEndIndex]);
-            int keysPerRead = Integer.parseInt(args[addressesEndIndex + 1]);
-            int keysPerPartition = Integer.parseInt(args[addressesEndIndex + 2]);
-            int clients = Integer.parseInt(args[addressesEndIndex + 3]);
+            int readTime = Integer.parseInt(args[writeAddressesEndIndex]);
+            int keysPerRead = Integer.parseInt(args[writeAddressesEndIndex + 1]);
+            int keysPerPartition = Integer.parseInt(args[writeAddressesEndIndex + 2]);
+            int clients = Integer.parseInt(args[writeAddressesEndIndex + 3]);
 
             if ((keysPerPartition * regionPartitions) % keysPerRead != 0) {
                 System.err.println("The number of keys must be divisible by the keys per read.");
@@ -79,8 +84,7 @@ public class BusyReadGenerator {
             }
 
             ExecutorService executor = Executors.newFixedThreadPool(clients);
-
-            BusyReadGenerator reader = new BusyReadGenerator(executor, readAddress, writeAddresses, readTime,
+            BusyReadGenerator reader = new BusyReadGenerator(executor, readAddresses, writeAddresses, readTime,
                     keysPerRead, keysPerPartition, clients);
             reader.run();
         } catch (Exception e) {
@@ -89,9 +93,9 @@ public class BusyReadGenerator {
         }
     }
 
-    private void init(int clients, Address readAddress, List<Address> writeAddresses) {
+    private void init(int clients, List<Address> readAddresses, List<Address> writeAddresses) {
         for (int i = 0; i < clients; i++) {
-            Client client = new Client(readAddress, writeAddresses);
+            Client client = new Client(readAddresses.get(i % readAddresses.size()), writeAddresses);
             ArrayDeque<Log> logs = new ArrayDeque<>(Utils.MAX_LOGS);
             int startIndex = i % this.readSets.size();
             CountDownLatch countdown = new CountDownLatch(1);
