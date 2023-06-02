@@ -120,7 +120,6 @@ public class ConstantReadGenerator {
 
             ArrayDeque<Log> logs = new ArrayDeque<>(1);
             logs.add(new LastStableTimeLog(this.lastStableTime.get(), this.readTime));
-            System.out.println(String.format("ROT count: %d", this.rotCounter.get()));
             logs.add(new ROTCountLog(this.rotCounter.get()));
             Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {

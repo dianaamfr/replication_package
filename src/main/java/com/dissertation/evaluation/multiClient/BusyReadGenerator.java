@@ -115,7 +115,6 @@ public class BusyReadGenerator {
             this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
 
             ArrayDeque<Log> mergedLogs = Utils.mergeLogs(logs);
-            System.out.println("End = " + rotCounter.get());
             mergedLogs.add(new ROTCountLog(rotCounter.get()));
             Utils.logToFile(mergedLogs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
