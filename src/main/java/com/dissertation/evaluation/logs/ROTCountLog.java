@@ -2,11 +2,11 @@ package com.dissertation.evaluation.logs;
 
 import org.json.JSONObject;
 
-public class LastROTLog extends Log {
+public class ROTCountLog extends Log {
     private long lastId;
 
-    public LastROTLog(long lastId) {
-        super(LogType.LAST_ROT);
+    public ROTCountLog(long lastId) {
+        super(LogType.ROT_COUNT);
         this.lastId = lastId;
     }
 

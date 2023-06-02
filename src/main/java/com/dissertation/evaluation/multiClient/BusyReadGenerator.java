@@ -11,8 +11,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.dissertation.evaluation.logs.LastROTLog;
 import com.dissertation.evaluation.logs.Log;
+import com.dissertation.evaluation.logs.ROTCountLog;
 import com.dissertation.evaluation.logs.ROTRequestLog;
 import com.dissertation.evaluation.logs.ROTResponseLog;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -27,7 +27,7 @@ public class BusyReadGenerator {
     private final List<CountDownLatch> countdowns;
     private final CountDownLatch startSignal;
     private final List<Set<String>> readSets;
-    private final AtomicLong maxRotId;
+    private final AtomicLong rotCounter;
 
     private static final String USAGE = "Usage: BusyReadGenerator <regionReadNodes>:Int> <regionPartitions:Int> " +
             "(<readPort:Int> <readIp:String>)+ (<writePort:Int> <writeIp:String> <partition:Int>)+ " +
@@ -41,7 +41,7 @@ public class BusyReadGenerator {
         this.countdowns = new ArrayList<>();
         this.startSignal = new CountDownLatch(1);
         this.readSets = Utils.getReadSets(Utils.generateKeys(writeAddresses, keysPerPartition), keysPerRead);
-        this.maxRotId = new AtomicLong(0);
+        this.rotCounter = new AtomicLong(0);
         this.init(clients, readAddresses, writeAddresses);
     }
 
@@ -115,7 +115,8 @@ public class BusyReadGenerator {
             this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
 
             ArrayDeque<Log> mergedLogs = Utils.mergeLogs(logs);
-            mergedLogs.add(new LastROTLog(maxRotId.get()));
+            System.out.println("End = " + rotCounter.get());
+            mergedLogs.add(new ROTCountLog(rotCounter.get()));
             Utils.logToFile(mergedLogs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -141,7 +142,7 @@ public class BusyReadGenerator {
         public void run() {
             ROTResponse rotResponse;
             long t1, t2;
-            long lastROTId = 0;
+            long clientRotCount = 0;
 
             try {
                 startSignal.await();
@@ -149,6 +150,7 @@ public class BusyReadGenerator {
                 System.err.println("Interrupted while waiting for start signal");
                 return;
             }
+
 
             long startTime = System.currentTimeMillis();
             while (System.currentTimeMillis() - startTime < readTime) {
@@ -163,7 +165,7 @@ public class BusyReadGenerator {
                     continue;
                 }
 
-                lastROTId = rotResponse.getId();
+                clientRotCount++;
                 if (rotResponse.getStableTime().compareTo(this.lastStableTimes.get(this.keyCounter)) > 0) {
                     this.lastStableTimes.set(this.keyCounter, rotResponse.getStableTime());
                     this.logs.add(new ROTRequestLog(rotResponse.getId(), t1));
@@ -174,7 +176,7 @@ public class BusyReadGenerator {
             }
             this.client.shutdown();
             this.countdown.countDown();
-            maxRotId.accumulateAndGet(lastROTId, Long::max);
+            rotCounter.accumulateAndGet(clientRotCount, Long::sum);
         }
     }
 
