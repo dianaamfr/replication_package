@@ -57,7 +57,7 @@ def reads_with_clients_barplot(subdir):
     
     # Read Latency with Read Percentage
     _, ax = plt.subplots(figsize=(5, 5))
-    sns.barplot(x='rw', y='latency', data=df_result, ax=ax, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+    sns.barplot(x='rw', y='latency', data=df_result, ax=ax, width=0.6, linewidth=1, edgecolor='black', alpha=0.9, palette=PALETTE_FULL)
     ax.xaxis.grid(True)
     ax.set_xlabel("Readers : Writers", labelpad=5)
     ax.set_ylabel('Average Latency (ms)', labelpad=5)
@@ -106,7 +106,7 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
     df_result = pd.concat(df_results, ignore_index=True).sort_values(by=['read_clients', 'write_clients'])
 
     # Table
-    plt.figure(figsize=(18, 3))
+    plt.figure(figsize=(10, 3))
     plt.table(cellText=df_result.values, colLabels=df_result.columns,
               cellLoc='center', loc='center')
     plt.axis('off')
@@ -126,7 +126,7 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
         y_mean_coords.append(row['mean'])
 
     # Average Read Latency
-    plt.plot(x_coords, y_mean_coords, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=PALETTE_FULL[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(x_coords, y_mean_coords, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_FULL[0], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
     ax.set_xlabel(" (1000 x ROT/s)", labelpad=10)

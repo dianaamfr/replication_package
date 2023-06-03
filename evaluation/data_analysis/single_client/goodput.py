@@ -107,8 +107,8 @@ def goodput_with_read_delay(df):
 
     _, ax = plt.subplots(figsize=(8, 5))
         
-    plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
-    plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
     ax.set_xlabel("Inter-Read Delay (ms)", labelpad=10)

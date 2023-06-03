@@ -29,6 +29,6 @@ logs/*.json
 eventual/logs/*.json
 
 evaluation/__pycache__
-evaluation/visualization/__pycache__
+evaluation/data_analysis/__pycache__
 evaluation/visualization/single_client/__pycache__
 evaluation/visualization/multi_client/__pycache__

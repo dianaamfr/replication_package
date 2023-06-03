@@ -319,8 +319,8 @@ def visibility_with_write_delay(df):
             y_coords_ec_mean.append(df_ec_mean[df_ec_mean['delay'] == delay]['read_time'].values[0])
             y_coords_cc_mean.append(df_cc_mean[df_cc_mean['delay'] == delay]['read_time'].values[0])
 
-        ax.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
-        ax.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=12, linewidth=3, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
+        ax.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
+        ax.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
         ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
 
         ax.set(yscale='log', ylim=(1, get_log_y_lim(y_coords_cc_mean + y_coords_ec_mean)))

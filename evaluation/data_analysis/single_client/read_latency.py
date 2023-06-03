@@ -121,26 +121,27 @@ def latency_with_write_delay(df):
         y_coords_cc_99.append(df_cc_99[df_cc_99['delay'] == delay]['percentile_99'].values[0])
 
     # Average Read Latency
-    _, ax = plt.subplots(figsize=(8, 4))
+    _, ax = plt.subplots(figsize=(5, 4))
 
-    plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
-    plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
     ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
     ax.set_ylabel("Average Read Latency (ms)", labelpad=10)
     ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
-    plt.yticks(range(0, math.ceil(max(y_coords_cc_mean + y_coords_ec_mean)) + 3, 3))
+    plt.yticks(range(0, math.ceil(max(y_coords_cc_mean + y_coords_ec_mean)) + 5, 5))
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(base=25))
     plt.legend(['EC', 'CC'], loc="upper right")
     plt.savefig(RESULTS_PATH + '/latency_with_write_delay.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
     # 99th Percentile Read Latency
-    _, ax = plt.subplots(figsize=(8, 6))
+    _, ax = plt.subplots(figsize=(6, 4))
 
-    plt.plot(DELAYS, y_coords_ec_99, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
-    plt.plot(DELAYS, y_coords_cc_99, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_ec_99, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_cc_99, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
     ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
