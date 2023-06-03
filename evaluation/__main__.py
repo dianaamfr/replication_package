@@ -1,17 +1,21 @@
 import seaborn as sns
 import matplotlib as plt
-import visualization
+import data_analysis
 
-sns.set(style="whitegrid", font_scale=1, rc={"axes.edgecolor": "black", "axes.linewidth": 1})
-#sns.set(style="whitegrid", font_scale=1.2, rc={"grid.linestyle": (0, (5, 10)), "grid.color": "#555555", "axes.edgecolor": "black", "axes.linewidth": 1.5})
-sns.set_palette(visualization.COLORS)
+sns.set(style="whitegrid", rc={"axes.edgecolor": "black", "axes.linewidth": 1})
 
-# visualization.single_client.latency_evaluation()
-# visualization.single_client.goodput_evaluation()
-# visualization.single_client.visibility_evaluation()
+# Single-client data analysis
+sns.set_palette(data_analysis.PALETTE_SHORT)
 
-# visualization.multi_client.latency_evaluation()
-# visualization.multi_client.goodput_evaluation()
-# visualization.multi_client.visibility_evaluation()
-visualization.multi_client.read_throughout_evaluation()
-    
+data_analysis.single_client.latency_evaluation()
+data_analysis.single_client.goodput_evaluation()
+data_analysis.single_client.visibility_evaluation()
+
+
+# Multi-client data analysis
+sns.set_palette(data_analysis.PALETTE_FULL)
+
+data_analysis.multi_client.latency_evaluation()
+data_analysis.multi_client.read_throughout_evaluation()
+data_analysis.multi_client.goodput_evaluation()
+data_analysis.multi_client.visibility_evaluation()
