@@ -4,10 +4,9 @@ Used to compare the eventually consistent baseline with the causally consistent 
 
 **Environment**:
 - Push/Pull Rate of 5ms
-- t4g.small/ubuntu/arm instances (1 for each compute node)
+- t4g.small/ubuntu/arm instances (1 for each compute node and 1 for each client/load generator)
 - Local region eu-west-1, Remote region us-east-1
 - 1 partition
-- Client processes run on the same instance as the read nodes of their local region
 - Single key ("a") per read
 
 ### Goodput & Write Response Time
@@ -19,10 +18,10 @@ A single client issues write requests in closed loop. A single client issues rea
 - 50/100/200 ms inter-read delay
 
 #### Causal
-**Read Node**: ./readNode.sh v12.0.0-goodput 1 8080 1
-**Busy Write Generator**: ./busyWriteGenerator.sh v12.0.0-goodput 1 1 8080 <readIp> 8080 <writeIp> 1 a
-**Constant Read Generator**: ./constantReadGenerator.sh v12.0.0-goodput 1 1 8080 <readIp> 8080 <writeIp> 1 <delay> 20000 1 a
-**Write Node**: ./writeNode.sh v12.0.0-goodput 1 8080 1 8080 <readIp>
+**Read Node**: ./readNode.sh v14.0.0-goodput 1 8080 1
+**Busy Write Generator**: ./busyWriteGenerator.sh v14.0.0-goodput 1 1 8080 <readIp> 8080 <writeIp> 1 a
+**Constant Read Generator**: ./constantReadGenerator.sh v14.0.0-goodput 1 1 8080 <readIp> 8080 <writeIp> 1 <delay> 20000 1 a
+**Write Node**: ./writeNode.sh v14.0.0-goodput 1 8080 1 8080 <readIp>
 
 #### Eventual
 **Busy Write Generator**: ./evBusyWriteGenerator.sh v3.0.0 1 a
@@ -37,13 +36,13 @@ A single client issues read requests in closed loop. A single client issues writ
 
 **Get Logs**:
 docker container cp busyReadGenerator:/logs/ .
-scp -i "reference-architecture.pem" -r ubuntu@<readEuDns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<readDns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
 
 #### Causal
-**Read Node**: ./readNode.sh v12.0.0-latency 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-latency 1 1 8080 <readIp> 8080 <writeIp> 1 <delay> <writes> a
-**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-latency 1 1 8080 <readIp> 8080 <writeIp> 1 <writes> 1 a
-**Write Node**: ./writeNode.sh v12.0.0-latency 1 8080 1 8080 <readIp>
+**Read Node**: ./readNode.sh v14.0.0-latency 1 8080 1
+**Constant Write Generator**: ./constantWriteGenerator.sh v14.0.0-latency 1 1 8080 <readIp> 8080 <writeIp> 1 <delay> <writes> a
+**Busy Read Generator**: ./busyReadGenerator.sh v14.0.0-latency 1 1 8080 <readIp> 8080 <writeIp> 1 <writes> 1 a
+**Write Node**: ./writeNode.sh v14.0.0-latency 1 8080 1 8080 <readIp>
 
 #### Eventual
 **Constant Write Generator**: ./evConstantWriteGenerator.sh v3.0.0 1 <delay> 110 a
@@ -59,20 +58,27 @@ A single client issues read requests in closed loop. A single client issues writ
 **Get Logs**:
 docker container cp busyReadGenerator:/logs/ .
 docker container cp constantWriteGenerator:/logs/ .
+docker container cp readNode:/logs/ .
+docker container cp writeNode:/logs/ .
+
 scp -i "reference-architecture.pem" -r ubuntu@<readEuDns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<readClientEuDns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<writeDns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture.pem" -r ubuntu@<writeClientDns>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+
 scp -i "reference-architecture-us.pem" -r ubuntu@<readUsDns>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
-scp -i "reference-architecture-us.pem" -r ubuntu@<writeEuDNS>.eu-west-1.compute.amazonaws.com:~/logs ./logs-ref-arch
+scp -i "reference-architecture-us.pem" -r ubuntu@<readUsClientDns>.compute-1.amazonaws.com:~/logs ./logs-ref-arch
 
 #### Causal
 ##### EU-WEST-1 (Local)
-**Read Node**: ./readNode.sh v12.0.0-visibility 1 8080 1
-**Constant Write Generator**: ./constantWriteGenerator.sh v12.0.0-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 <delay> 110 a
-**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 110 1 a
-**Write Node**: ./writeNode.sh v12.0.0-visibility 1 8080 1 8080 <readEuIp> 8080 <readUsIp>
+**Read Node**: ./readNode.sh v14.0.0-visibility 1 8080 1
+**Constant Write Generator**: ./constantWriteGenerator.sh v14.0.0-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 <delay> 110 a
+**Busy Read Generator**: ./busyReadGenerator.sh v14.0.0-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 110 1 a
+**Write Node**: ./writeNode.sh v14.0.0-visibility 1 8080 1 8080 <readEuIp> 8080 <readUsIp>
 
 ##### US-EAST-1 (Remote)
-**Read Node**: ./readNode.sh v12.0.0-visibility 1 8080 1
-**Busy Read Generator**: ./busyReadGenerator.sh v12.0.0-visibility 1 1 8080 <readUsIp> 8080 <writeIp> 1 110 1 a
+**Read Node**: ./readNode.sh v14.0.0-visibility 1 8080 1
+**Busy Read Generator**: ./busyReadGenerator.sh v14.0.0-visibility 1 1 8080 <readUsIp> 8080 <writeIp> 1 110 1 a
 
 #### Eventual
 ##### EU-WEST-1
