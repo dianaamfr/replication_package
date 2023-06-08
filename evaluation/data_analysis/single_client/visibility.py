@@ -122,12 +122,6 @@ def get_cc_visibility_times(delay):
         pull_time_eu = get_pull_time(puller_eu_df, client_response['version'])
         pull_time_us = get_pull_time(puller_us_df, client_response['version'])
 
-        # Get the time when the version was stored in each read node
-        store_time_eu = get_store_time(
-            puller_eu_df, client_response['version'])
-        store_time_us = get_store_time(
-            puller_us_df, client_response['version'])
-
         # Get the time where the version became stable in each read node
         stable_time_eu = get_stable_time(
             puller_eu_df, client_response['version'])
@@ -148,7 +142,6 @@ def get_cc_visibility_times(delay):
             'client_response': response_time,
             'write_node_push': push_time,
             'read_node_pull': pull_time_eu,
-            'read_node_store': store_time_eu,
             'read_node_stable': stable_time_eu,
             'read_client_response': read_time_eu,
         }, ignore_index=True)
@@ -161,7 +154,6 @@ def get_cc_visibility_times(delay):
             'client_response': response_time,
             'write_node_push': push_time,
             'read_node_pull': pull_time_us,
-            'read_node_store': store_time_us,
             'read_node_stable': stable_time_us,
             'read_client_response': read_time_us,
         }, ignore_index=True)
@@ -187,10 +179,6 @@ def get_push_time(df, version):
 
 def get_pull_time(df, version):
     return df[(df['logType'] == 'LOG_PULL') & (df['version'] >= version)].sort_values('version').iloc[0]['time']
-
-
-def get_store_time(df, version):
-    return df[(df['logType'] == 'STORE_VERSION') & (df['version'] == version)].iloc[0]['time']
 
 
 def get_stable_time(df, version):
@@ -222,8 +210,6 @@ def get_time_diff_cc(df_cc):
         df_cc, 'client_request', 'write_node_push')
     df_cc_diff['pull_time'] = get_diff(
         df_cc, 'client_request', 'read_node_pull')
-    df_cc_diff['store_time'] = get_diff(
-        df_cc, 'client_request', 'read_node_store')
     df_cc_diff['stable_time'] = get_diff(
         df_cc, 'client_request', 'read_node_stable')
     df_cc_diff['read_time'] = get_diff(
