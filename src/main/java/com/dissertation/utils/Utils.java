@@ -50,6 +50,7 @@ public class Utils {
     public static final int MAX_LOGS = 300;
     public static final long PAYLOAD_START_LONG = 274877906944L;
     public static final long PAYLOAD_END_LONG = 549755813887L;
+    public static final int WRITE_TIME = 120000;
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";

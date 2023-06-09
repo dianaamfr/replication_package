@@ -139,5 +139,5 @@
     "id": 49720,
     "stableTime": "00000001685714653397-00000000000000001680"
   },
-  { "logType": "ROT_COUNT", "time": 1685714667138, "totalReads": 59442 }
+  { "logType": "THROUGHPUT", "time": 1685714667138, "total": 59442 }
 ]

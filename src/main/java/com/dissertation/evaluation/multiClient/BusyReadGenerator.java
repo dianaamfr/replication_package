@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import com.dissertation.evaluation.logs.Log;
-import com.dissertation.evaluation.logs.ROTCountLog;
+import com.dissertation.evaluation.logs.ThroughputLog;
 import com.dissertation.evaluation.logs.ROTRequestLog;
 import com.dissertation.evaluation.logs.ROTResponseLog;
 import com.dissertation.referencearchitecture.ROTResponse;
@@ -115,7 +115,7 @@ public class BusyReadGenerator {
             this.executor.awaitTermination(5000, TimeUnit.MILLISECONDS);
 
             ArrayDeque<Log> mergedLogs = Utils.mergeLogs(logs);
-            mergedLogs.add(new ROTCountLog(rotCounter.get()));
+            mergedLogs.add(new ThroughputLog(rotCounter.get()));
             Utils.logToFile(mergedLogs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();

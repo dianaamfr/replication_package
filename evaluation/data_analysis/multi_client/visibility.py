@@ -254,4 +254,4 @@ def get_log_y_lim(df):
 
 def get_read_throughput(path):
     df = get_data(path, 'readclient-' + LOCAL_REGION)
-    return (df.loc[df['logType'] == 'LAST_ROT', 'totalReads'].values[0] / 60).round(2)
+    return (df.loc[df['logType'] == 'THROUGHPUT', 'total'].values[0] / 60).round(2)

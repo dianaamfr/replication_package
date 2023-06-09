@@ -4,5 +4,5 @@
     "lastStableTime": "00000001685205419853-00000000000000039486",
     "time": 30000
   },
-  { "logType": "LAST_ROT", "time": 1685205437179, "totalReads": 8595 }
+  { "logType": "THROUGHPUT", "time": 1685205437179, "total": 8595 }
 ]

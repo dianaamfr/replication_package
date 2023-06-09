@@ -15,7 +15,7 @@ import java.util.function.BinaryOperator;
 
 import com.dissertation.evaluation.logs.LastStableTimeLog;
 import com.dissertation.evaluation.logs.Log;
-import com.dissertation.evaluation.logs.ROTCountLog;
+import com.dissertation.evaluation.logs.ThroughputLog;
 import com.dissertation.referencearchitecture.ROTResponse;
 import com.dissertation.referencearchitecture.client.Client;
 import com.dissertation.utils.Address;
@@ -120,7 +120,7 @@ public class ConstantReadGenerator {
 
             ArrayDeque<Log> logs = new ArrayDeque<>(1);
             logs.add(new LastStableTimeLog(this.lastStableTime.get(), this.readTime));
-            logs.add(new ROTCountLog(this.rotCounter.get()));
+            logs.add(new ThroughputLog(this.rotCounter.get()));
             Utils.logToFile(logs, String.format("%s-%s", Utils.READ_CLIENT_ID, Utils.getCurrentRegion().toString()));
         } catch (InterruptedException e) {
             e.printStackTrace();

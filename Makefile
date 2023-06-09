@@ -100,9 +100,9 @@ singleBusyWrite:
 ######## Multi Client Load Generators ########
 ##############################################
 
-regionReadNodes = 2
+regionReadNodes = 1
 
-writeClients = 1
+writeClients = 4
 keysPerPartition = 10
 writesPerClient = 100
 

@@ -44,4 +44,4 @@ def get_node_reads(path):
 
 def get_iteration_reads(path):
     df = get_data(path, 'readclient-' + LOCAL_REGION)
-    return (df.loc[df['logType'] == 'ROT_COUNT', 'totalReads'].values[0] / READ_TIME).round(2)
+    return (df.loc[df['logType'] == 'THROUGHPUT', 'total'].values[0] / READ_TIME).round(2)
