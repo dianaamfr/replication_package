@@ -254,17 +254,19 @@ def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, del
 
 
 def visibility_barplot(df):
-    grouped_data = df.groupby(["delay", "consistency", "region"])[
+    df_result = df.copy()
+    df_result['consistency'] = df_result['consistency'].replace({'EC': 'Eventual', 'CC': 'Causal'})
+    grouped_data = df_result.groupby(["delay", "consistency", "region"])[
         "read_time"]
     average_visibility = grouped_data.mean().reset_index()
 
     g = sns.FacetGrid(average_visibility, col="region",
                       height=5, aspect=1, margin_titles=True)
     g.map(sns.barplot, "delay", "read_time", "consistency",
-          order=DELAYS, hue_order=['EC', 'CC'], palette=PALETTE_SHORT, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+          order=DELAYS, hue_order=['Eventual', 'Causal'], palette=PALETTE_SHORT, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
     g.set(yscale='log', ylim=(1, get_log_y_lim(average_visibility['read_time'])))    
     g.add_legend()  
-    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
+    g.set_axis_labels("Inter-Write Delay (ms)", "Average Staleness (ms)")
     g.axes[0][0].set_title("Local Region (EU)", pad=5)
     g.axes[0][1].set_title("Remote Region (US)", pad=5)
 
@@ -274,19 +276,27 @@ def visibility_barplot(df):
 
 
 def write_response_barplot(df):
-    grouped_data = df.groupby(["delay", "consistency", "region"])[
+    df_result = df.copy()
+    df_result = df_result[df_result["region"] == LOCAL_REGION]
+    df_result['consistency'] = df_result['consistency'].replace({'EC': 'Eventual', 'CC': 'Causal'})
+    _, ax = plt.subplots(figsize=(7, 6))
+    grouped_data = df_result.groupby(["delay", "consistency"])[
         "response_time"]
     average_visibility = grouped_data.mean().reset_index()
 
-    g = sns.FacetGrid(average_visibility, col="region",
-                      height=5, aspect=1, margin_titles=True)
-    g.map(sns.barplot, "delay", "response_time", "consistency",
-          order=DELAYS, hue_order=['EC', 'CC'], palette=PALETTE_SHORT, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
-    g.set(yscale='log', ylim=(1, get_log_y_lim(average_visibility['response_time'])))    
-    g.add_legend()  
-    g.set_axis_labels("Inter-Write Delay (ms)", "Write Latency (ms)")
-    g.axes[0][0].set_title("Local Region (EU)", pad=5)
-    g.axes[0][1].set_title("Remote Region (US)", pad=5)
+    sns.barplot(data=average_visibility, x="delay", y='response_time',
+                hue="consistency", hue_order = ['Eventual','Causal'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
+    ax.xaxis.grid(True)
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
+    ax.set_ylabel('Write Latency (ms)', labelpad=10)
+    plt.yscale('log')
+
+    y_max = get_log_y_lim(average_visibility['response_time'])
+    ax.set_ylim(1, y_max)
+
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, [label.capitalize()
+              for label in labels], loc="upper right")
 
     plt.savefig(RESULT_PATH + '/write_response_barplot.png', dpi=300)
     plt.clf()

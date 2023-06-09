@@ -73,15 +73,17 @@ def goodput_distribution_table(df_ec_goodput, df_cc_goodput, delay):
 
 
 def goodput_average_barplot(df):
-    _, ax = plt.subplots(figsize=(7, 5))
-    grouped_data = df.groupby(["delay", "consistency"])['writes_per_second']
+    df_result = df.copy()
+    df_result['consistency'] = df['consistency'].replace({'EC': 'Eventual', 'CC': 'Causal'})
+    _, ax = plt.subplots(figsize=(7, 6))
+    grouped_data = df_result.groupby(["delay", "consistency"])['writes_per_second']
     average_goodput = grouped_data.mean().round(2).reset_index()
 
     sns.barplot(data=average_goodput, x="delay", y='writes_per_second',
-                hue="consistency", hue_order = ['EC','CC'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
+                hue="consistency", hue_order = ['Eventual','Causal'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
     ax.xaxis.grid(True)
     ax.set_xlabel("Inter-Read Delay (ms)", labelpad=10)
-    ax.set_ylabel('Average Write Goodput (writes/s)', labelpad=10)
+    ax.set_ylabel('Average Goodput (writes/s)', labelpad=10)
     plt.yscale('log')
 
     max_value = average_goodput['writes_per_second'].max()
@@ -91,7 +93,7 @@ def goodput_average_barplot(df):
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize()
               for label in labels], loc="upper right")
-    plt.savefig(RESULTS_PATH + '/' + 'writes_per_second' + '_barplot.png', dpi=300)
+    plt.savefig(RESULTS_PATH + '/writes_per_second_barplot.png', dpi=300)
     plt.clf()
     plt.close()
 
@@ -112,7 +114,7 @@ def goodput_with_read_delay(df):
 
     ax.xaxis.grid(True)
     ax.set_xlabel("Inter-Read Delay (ms)", labelpad=10)
-    ax.set_ylabel("Average Write Goodput (writes/s)", labelpad=10)
+    ax.set_ylabel("Average Goodput (writes/s)", labelpad=10)
     ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
     plt.yscale('log')
 

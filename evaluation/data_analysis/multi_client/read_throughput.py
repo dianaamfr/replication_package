@@ -11,7 +11,7 @@ READ_TIME = 30
 
 def read_throughout_evaluation():
     node_dirs = sorted([name for name in os.listdir(RAW_PATH) if os.path.isdir(os.path.join(RAW_PATH, name))])
-    _, ax = plt.subplots(figsize=(7, 5))
+    _, ax = plt.subplots(figsize=(10, 5))
 
     for i, node_dir in enumerate(node_dirs):
         node_dir = os.path.join(RAW_PATH, node_dir)
@@ -23,7 +23,7 @@ def read_throughout_evaluation():
     
     ax.xaxis.grid(True)
     ax.set_ylabel("Read Throughput (1000 x ROT/s)", labelpad=10)
-    ax.set_xlabel("Read Threads", labelpad=10)
+    ax.set_xlabel("Client Reading Threads", labelpad=10)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: '{:.0f}'.format(y/1000)))
     ax.legend(['1', '2', '3', '4'], loc='upper left', title = 'Read Nodes')
     plt.savefig(RESULTS_PATH + '/read_throughput_nodes.png', dpi=300, bbox_inches='tight')

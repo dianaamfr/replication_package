@@ -134,7 +134,8 @@ Using the command-line interface, you can test the behavior of the baseline loca
     - Write: `W x 3` (writes the value 3 to key x)
 
 ### AWS
-For the evaluation in AWS, we built a Docker image for the prototype and for the baseline, namely `dianaamfreitas/dissertation` and `dianaamfreitas/dissertation-eventual`. The image supports linux/amd64 and linux/arm64 and our test were performed using Ubuntu 22.04 LTS arm64.
+For the evaluation in AWS, we built a Docker image for the prototype and for the baseline, namely `dianaamfreitas/dissertation` and `dianaamfreitas/dissertation-eventual`. The images supports linux/amd64 and linux/arm64 and our tests were performed using Ubuntu 22.04 LTS arm64.
+<!-- TODO: explain the image tags available and their difference -->
 
 #### Causally Consistent Prototype
 1. Create an EC2 instance for each system component (read and write nodes and cli or load generators) setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
@@ -168,12 +169,16 @@ For the evaluation in AWS, we built a Docker image for the prototype and for the
         `./multiConstantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <readTime> <keysPerRead> <keyPerPartition> <readClients>`
 > To replicate the experiments that generated our results, please refer to the `README` of the `evaluation` directory available [here](https://github.com/dianaamfr/Dissertation-Work/tree/evaluation/README.md).
 
+### Eventually Consistent Baseline
+<!-- TODO -->
+
 ## Candidate Reference Architecture
+<!-- TODO: update according to the thesis document and update image too -->
 
 ![Candidate Reference Architecture](images/reference-architecture.png)
 
 **Clock**: 
-Logical clock or Hybrid Logical Clock
+Hybrid Logical Clock
 
 **Assumptions**: 
 - The Eventually consistent Data Store (ECDS) allows writing to a specific region/partition.

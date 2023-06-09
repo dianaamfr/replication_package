@@ -48,11 +48,11 @@ def visibility_with_clients(subdir):
 
     df_result = pd.concat(dfs, ignore_index=True).sort_values(by=['read_clients', 'write_clients']).reset_index(drop=True)
 
-    g = sns.FacetGrid(df_result, col="region", height=5, aspect=1.2, margin_titles=True)
-    g.map(sns.barplot, "rw", "mean", width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+    g = sns.FacetGrid(df_result, col="region", height=4, aspect=2, margin_titles=True)
+    g.map(sns.barplot, "rw", "mean", width=0.6, linewidth=1, edgecolor='black', alpha=0.9, errorbar=None)
     g.add_legend()  
     g.set(yscale="log", yticks=[math.pow(10, i) for i in range(3, 6)])
-    g.set_axis_labels("Readers : Writers (ms)", "Visibility (ms)")
+    g.set_axis_labels("Readers : Writers (ms)", "Average Staleness (ms)")
     g.axes[0][0].set_title("Local Region (EU)", pad=5)
     g.axes[0][1].set_title("Remote Region (US)", pad=5)
 
