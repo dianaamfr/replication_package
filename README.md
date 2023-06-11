@@ -135,7 +135,7 @@ Using the command-line interface, you can test the behavior of the baseline loca
 
 ### AWS
 For the evaluation in AWS, we built a Docker image for the prototype and for the baseline, namely `dianaamfreitas/dissertation` and `dianaamfreitas/dissertation-eventual`. The images supports linux/amd64 and linux/arm64 and our tests were performed using Ubuntu 22.04 LTS arm64.
-<!-- TODO: explain the image tags available and their difference -->
+To test goodput we used the image with tag `v14.0.0-goodput`. To test visibility we used the image with tag `v14.0.0-visibility` and for other metrics we used `v14.0.0`. All these have checkpointing and log pruning disabled. For the prototype's full version (with checkpointing and pruning) use version `v14.0.0-checkpointing`.
 
 #### Causally Consistent Prototype
 1. Create an EC2 instance for each system component (read and write nodes and cli or load generators) setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
