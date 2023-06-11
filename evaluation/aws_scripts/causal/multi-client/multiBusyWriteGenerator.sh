@@ -1,6 +1,6 @@
 if [ $# -lt 10 ]
 then
-  echo "Usage: multiBusyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <keysPerPartition> <writeClients>"
+  echo "Usage: multiBusyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <keysPerPartition> <writeClients> <writeTime>?"
   exit 1
 fi
 

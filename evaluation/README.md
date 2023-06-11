@@ -236,3 +236,30 @@ scp -i "reference-architecture.pem" -r ubuntu@<read-client-dns>.eu-west-1.comput
     **4**: ./multiBusyReadGenerator.sh v14.0.0-latency 1 4 1 8080 <readIp1> 8080 <readIp2> 8080 <readIp3> 8080 <readIp4> 8080 <writeIp> 1 30000 2 8 <R>
 <!-- Read ip does not matter for write client -->
 **Write Client**: ./multiConstantWriteGenerator.sh v14.0.0-latency 1 1 8080 <readEuIp1> 8080 <writeIp> 1 50 500 8 10
+
+### Write Throughput
+Multiple clients issue write requests in closed loop to a set of keys.
+
+**Configuration**
+- 50ms inter-write delay
+- Variable number of writes nodes / partitions (1, 2, 4)
+- For each number of nodes, variable number of writers (1, 5, 10, 15, 20, 25)
+- Writers issue writes during 30s 
+
+#### 1 partition
+**Write Node**: ./writeNode.sh v15.0.0-write-throughput 1 8080 1 8080 <readIp>
+**Write Client**: ./multiBusyWriteGenerator.sh v14.0.0-latency 1 1 8080 <readIp> 8080 <writeIp1> 1 8 <W> 30000
+
+#### 2 partitions
+**Write Nodes**: 
+    ./writeNode.sh v15.0.0-write-throughput 2 8080 1 8080 <readIp>
+    ./writeNode.sh v15.0.0-write-throughput 2 8080 2 8080 <readIp>
+**Write Client**: ./multiBusyWriteGenerator.sh v15.0.0-write-throughput 2 2 8080 <readIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 4 <W> 30000
+
+#### 4 partitions
+**Write Nodes**: 
+    ./writeNode.sh v15.0.0-write-throughput 4 8080 1 8080 <readIp>
+    ./writeNode.sh v15.0.0-write-throughput 4 8080 2 8080 <readIp>
+    ./writeNode.sh v15.0.0-write-throughput 4 8080 3 8080 <readIp>
+    ./writeNode.sh v15.0.0-write-throughput 4 8080 4 8080 <readIp>
+**Write Client**: ./multiBusyWriteGenerator.sh v15.0.0-write-throughput 4 4 8080 <readIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 2 <W> 30000
