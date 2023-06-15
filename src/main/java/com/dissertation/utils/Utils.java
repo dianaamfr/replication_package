@@ -4,10 +4,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 
-import com.dissertation.validation.logs.Log;
+import com.dissertation.evaluation.logs.Log;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Status;
@@ -22,13 +27,14 @@ public class Utils {
     public static final int PULL_DELAY = 10000;
     public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
-    public static final int CHECKPOINT_FREQUENCY = 3;
+    public static final int CHECKPOINT_FREQUENCY = 10;
 
     public static final Region DEFAULT_REGION = Region.US_EAST_1;
     public static final String S3_LOG_PREFIX = "Logs/";
     public static final String S3_CLOCK_PREFIX = "Clock/";
     private static final String BUCKET_SUFFIX = System.getProperty("bucketSuffix");
     public static final String S3_CLOCK_BUCKET = "clock" + BUCKET_SUFFIX;
+    public static final String S3_CLOCK_REGION = System.getProperty("clockRegion");
     public static final String S3_PARTITION_FORMAT = "p%d-%s" + BUCKET_SUFFIX;
 
     public static final String LOG_STATE = "state";
@@ -44,6 +50,7 @@ public class Utils {
     public static final int MAX_LOGS = 300;
     public static final long PAYLOAD_START_LONG = 274877906944L;
     public static final long PAYLOAD_END_LONG = 549755813887L;
+    public static final int WRITE_TIME = 120000;
 
     public static final String READ_NODE_ID = "readNode";
     public static final String WRITE_NODE_ID = "writeNode";
@@ -84,6 +91,18 @@ public class Utils {
         return String.format(Utils.S3_PARTITION_FORMAT, partitionId, region);
     }
 
+    public static void logsToFile(List<ArrayDeque<Log>> logsList, String file) {
+        Utils.logToFile(mergeLogs(logsList), file);
+    }
+
+    public static ArrayDeque<Log> mergeLogs(List<ArrayDeque<Log>> logsList) {
+        ArrayDeque<Log> mergedLogs = new ArrayDeque<>();
+        for (ArrayDeque<Log> logs : logsList) {
+            mergedLogs.addAll(logs);
+        }
+        return mergedLogs;
+    }
+
     public static void logToFile(ArrayDeque<Log> logs, String file) {
         FileWriter fw;
         try {
@@ -105,4 +124,31 @@ public class Utils {
         Status status = Status.fromThrowable(e);
         System.err.println(status.getCode() + " : " + status.getDescription());
     }
+
+    public static List<String> generateKeys(List<Address> writeAddresses, int keysPerPartition) {
+        List<String> keys = Arrays.asList(new String[writeAddresses.size() * keysPerPartition]);
+        for (int i = 0; i < writeAddresses.size(); i++) { 
+            int count = 0;
+            for (int j = 0; j < 26; j++) {
+                String key = String.valueOf((char)(j + 1 + 64));
+                if(Utils.getKeyPartitionId(key) == writeAddresses.get(i).getPartitionId()) {
+                    keys.set(i + count * writeAddresses.size(), key);
+                    count++;
+                    if(count == keysPerPartition) {
+                        break;
+                    }
+                }
+            }
+        }
+        return keys;
+    }
+
+    public static List<Set<String>> getReadSets(List<String> keys, int keysPerRead) {
+        List<Set<String>> readSets = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i += keysPerRead) {
+            readSets.add(new HashSet<String>(keys.subList(i, i + keysPerRead)));
+        }
+        return readSets;
+    }
+
 }

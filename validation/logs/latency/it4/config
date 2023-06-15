@@ -1,9 +1,0 @@
-- 1011 writes at constant rate (500ms delay) 
-- 2 regions, 1 partition
-- pull/push delay of 5s
-- checkpoint frequency 12
-- key a
-- 12 bytes payload
-- docker image version 11
-
-(With check-pointing and thread-safety corrections)

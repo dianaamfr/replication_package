@@ -150,7 +150,6 @@
                   </transformers>
                 </configuration>
                 <executions>
-
                     <!-- READ NODE -->
                     <execution>
                         <id>read-node</id>
@@ -191,7 +190,7 @@
                         </goals>
                     </execution>
 
-                    <!-- BUSY READ GENERATOR -->
+                    <!-- SINGLE BUSY READ GENERATOR -->
                     <execution>
                         <id>busy-read-generator</id>
                         <configuration>
@@ -201,7 +200,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.BusyReadGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.BusyReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -211,7 +210,7 @@
                         </goals>
                     </execution>
 
-                    <!-- CONSTANT WRITE GENERATOR -->
+                    <!-- SINGLE CONSTANT WRITE GENERATOR -->
                     <execution>
                         <id>constant-write-generator</id>
                         <configuration>
@@ -221,7 +220,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.ConstantWriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.ConstantWriteGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -241,7 +240,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.ClientInterface</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.ClientInterface</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -251,7 +250,7 @@
                         </goals>
                     </execution>
 
-                    <!-- CONSTANT READ GENERATOR -->
+                    <!-- SINGLE CONSTANT READ GENERATOR -->
                     <execution>
                         <id>constant-read-generator</id>
                         <configuration>
@@ -261,7 +260,7 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.ConstantReadGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.ConstantReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -271,7 +270,7 @@
                         </goals>
                     </execution>
                 
-                    <!-- BUSY WRITE GENERATOR -->
+                    <!-- SINGLE BUSY WRITE GENERATOR -->
                     <execution>
                         <id>busy-write-generator</id>
                         <configuration>
@@ -281,7 +280,47 @@
                                 </transformer>
                                 <transformer
                                     implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.dissertation.validation.BusyWriteGenerator</mainClass>
+                                    <mainClass>com.dissertation.evaluation.singleClient.BusyWriteGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- MULTI CLIENT CONSTANT WRITE GENERATOR -->
+                    <execution>
+                        <id>multi-constant-write-generator</id>
+                        <configuration>
+                            <finalName>multiConstantWriteGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.evaluation.multiClient.ConstantWriteGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- MULTI CLIENT BUSY READ GENERATOR -->
+                    <execution>
+                        <id>multi-busy-read-generator</id>
+                        <configuration>
+                            <finalName>multiBusyReadGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.evaluation.multiClient.BusyReadGenerator</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>
@@ -291,6 +330,45 @@
                         </goals>
                     </execution>
                 
+                    <!-- MULTI CLIENT BUSY WRITE GENERATOR -->
+                    <execution>
+                        <id>multi-busy-write-generator</id>
+                        <configuration>
+                            <finalName>multiBusyWriteGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.evaluation.multiClient.BusyWriteGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+
+                    <!-- MULTI CLIENT CONSTANT READ GENERATOR -->
+                    <execution>
+                        <id>multi-constant-read-generator</id>
+                        <configuration>
+                            <finalName>multiConstantReadGenerator</finalName>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer">
+                                </transformer>
+                                <transformer
+                                    implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.dissertation.evaluation.multiClient.ConstantReadGenerator</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>

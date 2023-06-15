@@ -11,6 +11,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.dissertation.evaluation.logs.WriteRequestLog;
+import com.dissertation.evaluation.logs.WriteResponseLog;
 import com.dissertation.referencearchitecture.StableTimeServiceGrpc;
 import com.dissertation.referencearchitecture.WriteRequest;
 import com.dissertation.referencearchitecture.WriteResponse;
@@ -24,8 +26,6 @@ import com.dissertation.referencearchitecture.compute.storage.WriterStorage;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.utils.Address;
 import com.dissertation.utils.Utils;
-import com.dissertation.validation.logs.WriteRequestLog;
-import com.dissertation.validation.logs.WriteResponseLog;
 import com.google.protobuf.ByteString;
 
 import io.grpc.Server;
@@ -136,8 +136,8 @@ public class WriteNode extends ComputeNode {
             long t2 = System.currentTimeMillis();
 
             if (Utils.VISIBILITY_LOGS) {
-                logs.add(new WriteRequestLog(request.getKey(), partition, t1));
-                logs.add(new WriteResponseLog(request.getKey(), partition, writeTimestamp, t2));
+                logs.add(new WriteRequestLog(partition, writeTimestamp, t1));
+                logs.add(new WriteResponseLog(partition, writeTimestamp, t2));
             }
 
             responseObserver.onNext(responseBuilder.build());
