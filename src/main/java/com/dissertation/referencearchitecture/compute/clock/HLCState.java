@@ -8,23 +8,24 @@ import io.grpc.StatusRuntimeException;
 public class HLCState {
     private final long logicalTime;
     private final long logicalCount;
+    private final boolean writeInProgress;
     private final String lastWrite;
-
-    public HLCState() {
-        this.logicalTime = 0;
-        this.logicalCount = 0;
-        this.lastWrite = "";
-    }
 
     public HLCState(long logicalTime, long logicalCount) {
         this.logicalTime = logicalTime;
         this.logicalCount = logicalCount;
+        this.writeInProgress = false;
         this.lastWrite = Utils.MIN_TIMESTAMP;
     }
 
-    public HLCState(long logicalTime, long logicalCount, String lastWrite) {
+    public HLCState() {
+        this(0,0);
+    }
+
+    public HLCState(long logicalTime, long logicalCount, String lastWrite, boolean writeInProgress) {
         this.logicalTime = logicalTime;
         this.logicalCount = logicalCount;
+        this.writeInProgress = writeInProgress;
         this.lastWrite = lastWrite;
     }
 
@@ -36,16 +37,20 @@ public class HLCState {
         return this.logicalCount;
     }
 
+    public boolean isWriteInProgress() {
+        return this.writeInProgress;
+    }
+
     public String getLastWrite() {
         return this.lastWrite;
     }
 
-    public boolean areNewWritesAvailable() {
-        return !this.lastWrite.equals(Utils.MIN_TIMESTAMP);
+    public boolean newWrites() {
+        return this.newWritesToPush() || this.writeInProgress;
     }
 
-    public boolean noWritesOccurred() {
-        return this.lastWrite.isBlank();
+    public boolean newWritesToPush() {
+        return !this.lastWrite.equals(Utils.MIN_TIMESTAMP);
     }
 
     public static HLCState fromRecvTimestamp(String timestamp) throws StatusRuntimeException {
@@ -58,7 +63,7 @@ public class HLCState {
     }
 
     public static HLCState fromLastWriteTimestamp(String lastStoredTime) {
-        return new HLCState(0, 0, lastStoredTime);
+        return new HLCState(0, 0, lastStoredTime, false);
     }
 
     @Override
