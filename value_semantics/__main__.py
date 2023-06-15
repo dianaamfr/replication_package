@@ -42,12 +42,22 @@ def get_date(timestamp):
     l = re.findall(r'(\d+)-', timestamp)[0]
     return datetime.datetime.fromtimestamp(int(l) / 1000)
 
+def get_date_input(min_date, max_date):
+    while True:
+        date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
+        try:
+            return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+        except ValueError:
+            print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
+
 if __name__ == "__main__":
     df, max_log_version, min_log_version = parse_logs()
 
     max_date = get_date(max_log_version)
     min_date = get_date(min_log_version)
+    print("Max date: {}".format(max_date))
+    print("Min date: {}\n".format(min_date))
 
-    # print(df)
-    print(max_date)
-    print(min_date)
+    get_date_input(min_date, max_date)
+
+
