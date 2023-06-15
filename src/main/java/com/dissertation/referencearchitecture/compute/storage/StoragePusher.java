@@ -49,13 +49,13 @@ public class StoragePusher implements Runnable {
 
         HLCState currentTime = this.hlc.getState();
         // Sync in the absence of writes
-        if (currentTime.noWritesOccurred()) {
+        if (!currentTime.newWrites()) {
             this.sync(currentTime);
             return;
         } 
         
-        // Push if new writes have been made
-        if(currentTime.areNewWritesAvailable()) {
+        // Push new writes
+        if(currentTime.newWritesToPush()) {
             String pushTimestamp = currentTime.getLastWrite();
             this.push(pushTimestamp);
             this.hlc.endPush(HLCState.fromLastWriteTimestamp(pushTimestamp));
@@ -103,7 +103,7 @@ public class StoragePusher implements Runnable {
         HLCState newTime = this.hlc.syncClock(recvTime);
 
         // If a write occurred, abort sync
-        if (!newTime.noWritesOccurred()) {
+        if (newTime.newWrites()) {
             return;
         }
 
