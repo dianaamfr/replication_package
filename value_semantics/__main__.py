@@ -8,6 +8,7 @@ PATH = os.path.dirname(os.path.abspath(__file__)) + '/logs'
 TIMESTAMP_FORMAT = "{:020d}{}{:020d}".format(0, "-", 0)
 MIN_TIMESTAMP = TIMESTAMP_FORMAT
 
+# Parse
 def get_file_data(path):
     with open(path, 'r') as file:
         return file.read()
@@ -46,7 +47,9 @@ def get_date(timestamp):
     l = re.findall(r'(\d+)-', timestamp)[0]
     return datetime.datetime.fromtimestamp(int(l) / 1000)
 
-def get_value_input():
+
+# Get Input
+def get_value_by_date_input():
     while True:
         date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
         keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
@@ -58,22 +61,42 @@ def get_value_input():
         except ValueError:
             print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
 
-def get_history_input():
+def get_value_by_timestamp_input():
+    timestamp = input("Enter timestamp: ")
+    keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
+    print()
+    
+    keys = [value.strip() for value in keys_str.split(',') if value.strip()]
+    return timestamp, keys
+
+def get_history_by_date_input():
     while True:
         date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
         key = input("Enter key: ")
+        print()
         try:
             date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
             return date, key
         except ValueError:
             print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
 
-def get_value(df, default_keys):
-    date, keys = get_value_input()
+def get_history_by_timestamp_input():
+    timestamp = input("Enter timestamp: ")
+    key = input("Enter key: ")
+    print()
+    return timestamp, key
+
+
+# Options
+def get_value(df, default_keys, is_timestamp=False):
+    date, keys = get_value_by_timestamp_input() if is_timestamp else get_value_by_date_input()
+    log_version_col = 'log_version' if is_timestamp else 'log_version_date'
+    timestamp_col = 'timestamp' if is_timestamp else 'timestamp_date'
+    
     if not keys:
         keys = default_keys
     for key in keys:
-        result = df[((df['log_version_date'] <= date) & (df['key'] == key) & (df['timestamp_date'] <= date))].sort_values(by=['log_version', 'timestamp'], ascending=False)
+        result = df[((df[log_version_col] <= date) & (df['key'] == key) & (df[timestamp_col] <= date))].sort_values(by=['log_version', 'timestamp'], ascending=False)
         print("Key = " + key, end=", ")
         if result.empty:
             print("Log version = None")
@@ -86,24 +109,24 @@ def get_value(df, default_keys):
             print(" > date = " + str(version['timestamp_date']))
         print()
 
-def get_history(df):
-    date, key = get_history_input()
-    versions = df[((df['key'] == key) & (df['timestamp_date'] <= date))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
-    styler = versions.style.set_table_styles([{'selector': 'th', 'props': [('text-align', 'left')]}])
+def get_history(df, is_timestamp=False):
+    date, key = get_history_by_timestamp_input() if is_timestamp else get_history_by_date_input()
+    col= 'timestamp' if is_timestamp else 'timestamp_date'
+    versions = df[((df['key'] == key) & (df[col] <= date))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
     print("History of key " + key + ":")
     if versions.empty:
         print(" > No versions available")
     else:
-        print(styler)
+        print(versions.to_string(justify='left'))
 
 def menu(df, keys):
     print("Select an option:")
     while True:
         print("1. Key at datetime")
         print("2. Key history at datetime")
-        # print("3. Key at timestamp")
-        # print("4. Key history at timestamp")
-        print("3. Exit")
+        print("3. Key at timestamp")
+        print("4. Key history at timestamp")
+        print("5. Exit")
         option = input("Enter option: ")
         print()
 
@@ -112,6 +135,10 @@ def menu(df, keys):
         elif option == "2":
             get_history(df)
         elif option == "3":
+            get_value(df, keys, True)
+        elif option == "4":
+            get_history(df, True)
+        elif option == "5":
             return
         print()
 
@@ -121,8 +148,8 @@ if __name__ == "__main__":
     min_date = get_date(min_log_version)
     max_date = get_date(max_log_version)
     keys = df['key'].unique()
-    print("Min date: {}".format(min_date))
-    print("Max date: {}".format(max_date))
+    print("Min log version: {}  /  {}".format(min_date, min_log_version))
+    print("Max log version: {}  /  {}".format(max_date, max_log_version))
     print("Keys: {}\n".format(keys))
 
     menu(df, keys)
