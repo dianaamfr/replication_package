@@ -31,7 +31,11 @@ def parse_logs():
                     for state in data['state']
                     for version in state['versions']]
             df = pd.DataFrame(rows)
+            if(df.empty):
+                continue
             df['log_version'] = log_version
+            df['log_version_date'] = get_date(log_version)
+            df['timestamp_date'] = df['timestamp'].apply(get_date)
             df['partition'] = partition_id
             dfs.append(df)
         max_log_version = max(max_log_version, log_versions[-1])
@@ -42,22 +46,39 @@ def get_date(timestamp):
     l = re.findall(r'(\d+)-', timestamp)[0]
     return datetime.datetime.fromtimestamp(int(l) / 1000)
 
-def get_date_input(min_date, max_date):
+def get_input(min_date, max_date):
     while True:
         date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
+        keys_str = input("Enter keys (a,b,c): ")
         try:
-            return datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+            date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+            keys = [value.strip() for value in keys_str.split(',')]
+            return date, keys
         except ValueError:
             print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
 
 if __name__ == "__main__":
     df, max_log_version, min_log_version = parse_logs()
 
-    max_date = get_date(max_log_version)
     min_date = get_date(min_log_version)
+    max_date = get_date(max_log_version)
+    print("Min date: {}".format(min_date))
     print("Max date: {}".format(max_date))
-    print("Min date: {}\n".format(min_date))
+    print("Keys: {}\n\n".format(df['key'].unique()))
 
-    get_date_input(min_date, max_date)
-
-
+    date, keys = get_input(min_date, max_date)
+    # datetime.datetime(2023, 6, 15, 17, 11, 25, 10), ["x", "y"] 
+    # 2023-06-15 17:11:44.0
+    for key in keys:
+        result = df[((df['log_version_date'] <= date) & (df['key'] == key) & (df['timestamp_date'] <= date))].sort_values(by=['log_version', 'timestamp'], ascending=False)
+        print("Key = " + key, end=", ")
+        if result.empty:
+            print("Log version = None")
+            print(" > value = None")
+        else:
+            version = result.iloc[0]
+            print("Log version = " + version['log_version'])
+            print(" > value = " + version['value'])
+            print(" > timestamp = " + str(version['timestamp']))
+            print(" > date = " + str(version['timestamp_date']))
+        print()
