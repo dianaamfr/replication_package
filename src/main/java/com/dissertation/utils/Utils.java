@@ -24,10 +24,10 @@ public class Utils {
     public static final String TIMESTAMP_SEPARATOR = "-";
     public static final String TIMESTAMP_FORMAT = "%020d%s%020d";
     public static final String MIN_TIMESTAMP = String.format(TIMESTAMP_FORMAT, 0, TIMESTAMP_SEPARATOR, 0);
-    public static final int PULL_DELAY = 5000;
-    public static final int PUSH_DELAY = 5000;
+    public static final int PULL_DELAY = 10000;
+    public static final int PUSH_DELAY = 10000;
     public static final int CLOCK_DELAY = 20000;
-    public static final int CHECKPOINT_FREQUENCY = 3;
+    public static final int CHECKPOINT_FREQUENCY = 10;
 
     public static final Region DEFAULT_REGION = Region.US_EAST_1;
     public static final String S3_LOG_PREFIX = "Logs/";

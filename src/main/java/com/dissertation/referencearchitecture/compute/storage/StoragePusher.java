@@ -41,10 +41,10 @@ public class StoragePusher implements Runnable {
     @Override
     public void run() {
         // Checkpoint
-        // if(this.counter.decrementAndGet() == 0) {
-        //     this.counter.set(Utils.CHECKPOINT_FREQUENCY);
-        //     this.computeCheckpoint();
-        // }
+        if(this.counter.decrementAndGet() == 0) {
+            this.counter.set(Utils.CHECKPOINT_FREQUENCY);
+            this.computeCheckpoint();
+        }
 
 
         HLCState currentTime = this.hlc.getState();
