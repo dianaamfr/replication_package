@@ -32,3 +32,4 @@ evaluation/__pycache__
 evaluation/data_analysis/__pycache__
 evaluation/data_analysis/multi_client/__pycache__
 evaluation/data_analysis/single_client/__pycache__
+value_semantics/__pycache__
