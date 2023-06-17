@@ -3,8 +3,8 @@ import re
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from data_analysis.utils import PATH, LOCAL_REGION, REMOTE_REGION, MARKERS, PALETTE_FULL
-from data_analysis.utils import get_data, get_diff, df_describe
+from utils import PATH, LOCAL_REGION, REMOTE_REGION, MARKERS, PALETTE_FULL
+from utils import get_data, get_diff, df_describe
 import numpy as np
 import math
 

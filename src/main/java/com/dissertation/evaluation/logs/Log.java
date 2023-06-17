@@ -14,7 +14,6 @@ public abstract class Log {
         STABLE_TIME,
         LOG_PULL,
         LOG_PUSH,
-        STORE_VERSION,
         GOODPUT,
         LAST_STABLE_TIME,
         STABLE_TIME_VERSIONS,

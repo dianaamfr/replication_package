@@ -5,8 +5,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from data_analysis.utils import PATH, LOCAL_REGION, MARKERS, PALETTE_FULL
-from data_analysis.utils import get_data, df_describe
+from utils import PATH, LOCAL_REGION, MARKERS, PALETTE_FULL
+from utils import get_data, df_describe
 import math
 
 RAW_PATH = PATH + '/logs/multi_client/read_times/partitions'

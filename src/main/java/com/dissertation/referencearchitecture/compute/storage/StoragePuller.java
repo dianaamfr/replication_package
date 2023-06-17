@@ -2,6 +2,7 @@ package com.dissertation.referencearchitecture.compute.storage;
 
 import java.util.ArrayDeque;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.StreamSupport;
 
 import org.json.JSONObject;
@@ -11,7 +12,6 @@ import com.dissertation.evaluation.logs.Log;
 import com.dissertation.evaluation.logs.S3OperationLog;
 import com.dissertation.evaluation.logs.StableTimeLog;
 import com.dissertation.evaluation.logs.StableTimeVersionsLog;
-import com.dissertation.evaluation.logs.StoreVersionLog;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
@@ -21,19 +21,24 @@ public class StoragePuller implements Runnable {
     private final ReaderStorage storage;
     private final String region;
     private ArrayDeque<Log> s3Logs;
+    private AtomicLong activeTransactions;
 
-    public StoragePuller(S3Helper s3Helper, ReaderStorage storage, String region, ArrayDeque<Log> s3Logs) {
+    public StoragePuller(S3Helper s3Helper, ReaderStorage storage, String region, ArrayDeque<Log> s3Logs, AtomicLong activeTransactions) {
         this.s3Helper = s3Helper;
         this.storage = storage;
         this.region = region;
         this.s3Logs = s3Logs;
+        this.activeTransactions = activeTransactions;
     }
 
     @Override
     public void run() {
         this.pull();
         this.storage.setStableTime();
-        this.storage.pruneState(this.storage.getStableTime());
+        String stableTime = this.storage.getStableTime();
+        if(this.activeTransactions.get() == 0) {
+            this.storage.pruneState(stableTime);
+        }
 
         if (Utils.VISIBILITY_LOGS) {
             this.s3Logs.add(new StableTimeLog(this.storage.getStableTime()));
@@ -82,10 +87,6 @@ public class StoragePuller implements Runnable {
                                 key,
                                 timestamp,
                                 Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
-
-                        // if (Utils.VISIBILITY_LOGS) {
-                        //     this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
-                        // }
                     });
         }
     }

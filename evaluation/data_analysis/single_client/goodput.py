@@ -2,8 +2,8 @@ import pandas as pd
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-from data_analysis.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, PALETTE_SHORT, MARKERS, PAYLOAD_BYTES
-from data_analysis.utils import get_data
+from utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, PALETTE_SHORT, MARKERS, PAYLOAD_BYTES
+from utils import get_data
 
 EC_RAW_PATH = PATH + '/logs/single_client/goodput' + EC_DIR + '/d_'
 CC_RAW_PATH = PATH + '/logs/single_client/goodput' + CC_DIR + '/d_'

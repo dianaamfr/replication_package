@@ -36,6 +36,7 @@ public class ReadNode extends ComputeNode {
     private final ReaderStorage storage;
     private final AtomicLong rotCounter;
     private static final String USAGE = "Usage: ReadNode <port:Int> (<partitionId:Int>)+";
+    private AtomicLong activeTransactions;
 
     public ReadNode(ScheduledThreadPoolExecutor scheduler, S3Helper s3Helper, ReaderStorage storage, Region region)
             throws URISyntaxException {
@@ -43,11 +44,12 @@ public class ReadNode extends ComputeNode {
         this.region = region.toString();
         this.storage = storage;
         this.rotCounter = new AtomicLong(0);
+        this.activeTransactions = new AtomicLong(0);
     }
 
     @Override
     public void init(Server server) throws IOException, InterruptedException {
-        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.s3Helper, this.storage, this.region, this.s3Logs),
+        this.scheduler.scheduleWithFixedDelay(new StoragePuller(this.s3Helper, this.storage, this.region, this.s3Logs, this.activeTransactions),
                 Utils.PULL_DELAY,
                 Utils.PULL_DELAY, TimeUnit.MILLISECONDS);
         super.init(server);
@@ -94,6 +96,7 @@ public class ReadNode extends ComputeNode {
         public void rot(ROTRequest request, StreamObserver<ROTResponse> responseObserver) {
             // Define snapshot
             final long rotId = rotCounter.incrementAndGet();
+            activeTransactions.incrementAndGet();
             final String rotSnapshot = storage.getStableTime();
 
             // Get values within the snapshot
@@ -105,7 +108,7 @@ public class ReadNode extends ComputeNode {
                         .setValue(versionEntry.getValue()).build();
                 values.put(key, version);
             }
-
+            activeTransactions.decrementAndGet();
             responseBuilder.setStableTime(rotSnapshot).putAllVersions(values);
 
             responseObserver.onNext(responseBuilder.build());
