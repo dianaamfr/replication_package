@@ -1,6 +1,6 @@
 import os
-from data_analysis.utils import PATH, LOCAL_REGION, MARKERS, PALETTE_FULL
-from data_analysis.utils import get_data
+from utils import PATH, LOCAL_REGION, MARKERS, PALETTE_FULL
+from utils import get_data
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import re
