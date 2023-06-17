@@ -11,10 +11,6 @@ public abstract class Log {
         ROT_REQUEST,
         WRITE_RESPONSE,
         ROT_RESPONSE,
-        STABLE_TIME,
-        LOG_PULL,
-        LOG_PUSH,
-        STORE_VERSION,
         GOODPUT
     }
 

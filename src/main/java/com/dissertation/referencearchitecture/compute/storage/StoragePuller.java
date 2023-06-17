@@ -11,7 +11,6 @@ import com.dissertation.evaluation.logs.Log;
 import com.dissertation.evaluation.logs.S3OperationLog;
 import com.dissertation.evaluation.logs.StableTimeLog;
 import com.dissertation.evaluation.logs.StableTimeVersionsLog;
-import com.dissertation.evaluation.logs.StoreVersionLog;
 import com.dissertation.referencearchitecture.s3.S3Helper;
 import com.dissertation.referencearchitecture.s3.S3ReadResponse;
 import com.dissertation.utils.Utils;
@@ -82,10 +81,6 @@ public class StoragePuller implements Runnable {
                                 key,
                                 timestamp,
                                 Utils.byteStringFromString(versionJson.getString(Utils.LOG_VALUE)));
-
-                        // if (Utils.VISIBILITY_LOGS) {
-                        //     this.s3Logs.add(new StoreVersionLog(key, partition, timestamp));
-                        // }
                     });
         }
     }
