@@ -3,6 +3,7 @@ import re
 import json
 import pandas as pd
 import datetime
+import argparse
 
 PATH = os.path.dirname(os.path.abspath(__file__)) + '/logs'
 TIMESTAMP_FORMAT = "{:020d}{}{:020d}".format(0, "-", 0)
@@ -56,63 +57,47 @@ def get_date(timestamp):
 
 
 # Get Input
-def get_value_by_date_input(max_date):
-    while True:
-        date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
-        keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
-        print()
-        try:
-            date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
-            if date > max_date:
-                print("Invalid date. Please enter a date less than or equal to " + str(max_date))
-                continue
-            keys = [value.strip() for value in keys_str.split(',') if value.strip()]
-            return date, keys
-        except ValueError:
-            print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
-
-def get_value_by_timestamp_input(max_timestamp):
-    while True:
-        timestamp = input("Enter timestamp: ")
-        keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
-        print()
-
-        if timestamp > max_timestamp:
-            print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
-    
+def get_value_by_date_input(max_date, keys_str, date_str):
+    try:
+        date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+        if date > max_date:
+            print("Invalid date. Please enter a date less than or equal to " + str(max_date))
+            exit(1)
         keys = [value.strip() for value in keys_str.split(',') if value.strip()]
-        return timestamp, keys
+        return date, keys
+    except ValueError:
+        print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
+        exit(1)
 
-def get_history_by_date_input(max_date):
-    while True:
-        date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
-        key = input("Enter key: ")
-        print()
-        try:
-            date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
-            if date > max_date:
-                print("Invalid date. Please enter a date less than or equal to " + str(max_date))
-                continue
-            return date, key
-        except ValueError:
-            print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
+def get_value_by_timestamp_input(max_timestamp, keys_str, timestamp):
+    if timestamp > max_timestamp:
+        print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
+        exit(1)
 
-def get_history_by_timestamp_input(max_timestamp):
-    timestamp = max_timestamp
-    while True:
-        timestamp = input("Enter timestamp: ")
-        key = input("Enter key: ")
-        print()
+    keys = [value.strip() for value in keys_str.split(',') if value.strip()]
+    return timestamp, keys
 
-        if timestamp > max_timestamp:
-            print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
-        else:
-            return timestamp, key
+def get_history_by_date_input(max_date, key, date_str):
+    try:
+        date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+        if date > max_date:
+            print("Invalid date. Please enter a date less than or equal to " + str(max_date))
+            exit(1)
+        return date, key
+    except ValueError:
+        print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
+        exit(1)
+
+def get_history_by_timestamp_input(max_timestamp, key, timestamp):
+    if timestamp > max_timestamp:
+        print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
+        exit(1)
+    return timestamp, key
 
 
 # Options
-def get_value(df, default_keys, max_time, is_timestamp=False):
-    date, keys = get_value_by_timestamp_input(max_time) if is_timestamp else get_value_by_date_input(max_time)
+def get_value(df, default_keys, max_time, keys_arg, time_arg, is_timestamp=False):
+    date, keys = get_value_by_timestamp_input(max_time, keys_arg, time_arg) if is_timestamp else get_value_by_date_input(max_time, keys_arg, time_arg)
     timestamp_col = 'timestamp' if is_timestamp else 'timestamp_date'
     if not keys:
         keys = default_keys
@@ -130,8 +115,8 @@ def get_value(df, default_keys, max_time, is_timestamp=False):
             print(" > date = " + str(version['timestamp_date']))
         print()
 
-def get_history(df, max_time, is_timestamp=False):
-    date, key = get_history_by_timestamp_input(max_time) if is_timestamp else get_history_by_date_input(max_time)
+def get_history(df, max_time, key_arg, time_arg, is_timestamp=False):
+    date, key = get_history_by_timestamp_input(max_time, key_arg, time_arg) if is_timestamp else get_history_by_date_input(max_time, key_arg, time_arg)
     col= 'timestamp' if is_timestamp else 'timestamp_date'
     versions = df[((df['key'] == key) & (df[col] <= date))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
     print("History of key " + key + ":")
@@ -140,37 +125,50 @@ def get_history(df, max_time, is_timestamp=False):
     else:
         print(versions.to_string(justify='left'))
 
-def menu(df, keys, max_timestamp, max_date):
-    print("Select an option:")
-    while True:
-        print("1. Key at datetime")
-        print("2. Key history at datetime")
-        print("3. Key at timestamp")
-        print("4. Key history at timestamp")
-        print("5. Exit")
-        option = input("Enter option: ")
-        print()
-
-        if option == "1":
-            get_value(df, keys, max_date)
-        elif option == "2":
-            get_history(df, max_date)
-        elif option == "3":
-            get_value(df, keys, max_timestamp, True)
-        elif option == "4":
-            get_history(df, max_timestamp, True)
-        elif option == "5":
-            return
-        print()
+def process_args(df, keys, max_timestamp, max_date, args):
+    print()
+    if args.history and args.keys:
+        if args.date:
+            get_history(df, max_date, args.keys, args.date)
+        elif args.timestamp:
+            get_history(df, max_timestamp, args.keys, args.timestamp, True)
+    elif args.date:
+        get_value(df, keys, max_date, args.keys, args.date)
+    elif args.timestamp:
+        get_value(df, keys, max_timestamp, args.keys, args.timestamp, True)
 
 if __name__ == "__main__":
-    df, max_timestamp, min_timestamp = parse_logs()
+    df, max_timestamp, min_timestamp = parse_logs() 
+
+    parser = argparse.ArgumentParser()
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-d', '--date', help='Date in YYYY-MM-DD HH:MM:SS.sss format')
+    group.add_argument('-t', '--timestamp', help='Timestamp')
+
+    parser.add_argument('-i', '--info', help='Show info about log file', action='store_true')
+
+    group2 = parser.add_mutually_exclusive_group()
+    group2.add_argument('-hist', '--history', help='Show history of key at date or timestamp', action='store_true')
+    group2.add_argument('-v', '--version', help='Show version of key at date or timestamp', action='store_true')
+   
+    parser.add_argument('-k', '--keys', help='Keys to search for, separated by commas')
+    args = parser.parse_args()
+    print(args)
 
     min_date = get_date(min_timestamp)
     max_date = get_date(max_timestamp)
     keys = df['key'].unique()
-    print("Min time: {}  /  {}".format(min_date, min_timestamp))
-    print("Max time: {}  /  {}".format(max_date, max_timestamp))
-    print("Keys: {}\n".format(keys))
 
-    menu(df, keys, max_timestamp, max_date)
+    if args.info:
+        print("Min time: {}  /  {}".format(min_date, min_timestamp))
+        print("Max time: {}  /  {}".format(max_date, max_timestamp))
+        print("Keys: {}".format(keys))
+
+    if (not args.keys) and (args.history or args.version or args.date or args.timestamp):
+        parser.error("Must specify keys to search for")
+
+    if (args.history or args.version) and not (args.date or args.timestamp):
+        parser.error("Must specify date or timestamp")
+
+    process_args(df, keys, max_timestamp, max_date, args)

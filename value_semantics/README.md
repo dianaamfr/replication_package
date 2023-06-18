@@ -24,9 +24,13 @@ In order to verify how the system enables value semantics, this experiment allow
 2. Extract the logs to the appropriate subdirectory of the [logs directory](./logs/).
 
 ## Run value semantics experiment
-1. run `python3 .` inside the current `value_semantics` directory.
-2. Use the CMD to:
-    - **Option 1**: retrieve the value of a set of keys by date.
-    - **Option 2**: retrieve the history of a key up until a given date.
-    - **Option 3**: retrieve the value of a set of keys by timestamp.
-    - **Option 4**: retrieve the history of a key up until a given timestamp.
+1. Run `python3 .` inside the current `value_semantics` directory specifying the necessary arguments to perform one of these operations:
+    - Get info about the time range of the logs and the available keys with the `-i` flag *(e.g. `python3 . -i`)
+    - Retrieve the value of a set of keys by date, specifying the `-k` (keys), `-d` (date) and `-v`(get version) flags 
+    > e.g. `python3 . -v -k a,b -d "2023-06-18 13:25:00.0"`
+    - Retrieve the history of a key up until a given date, specifying the `-k` (a single key), `-d` (date) and `-hist`(get history) flags 
+    > e.g. `python3 . -hist -k a -d "2023-06-18 13:25:00.0"`
+    - Retrieve the value of a set of keys by timestamp, specifying the `-k` (keys), `-t` (timestamp) and `-v`(get version) flags 
+    > e.g. `python3 . -v -k a,b -t 00000001687091029107-00000000000000000000`
+    - Retrieve the history of a key up until a given timestamp, specifying the `-k` (a single key), `-t` (timestamp) and `-hist`(get history) flags 
+    > e.g. `python3 . -hist -k a -t 00000001687091029107-00000000000000000000`
