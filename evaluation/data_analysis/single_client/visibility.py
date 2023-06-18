@@ -2,8 +2,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
-from data_analysis.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, PALETTE_SHORT, MARKERS
-from data_analysis.utils import get_data, get_diff, df_describe
+from utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, REMOTE_REGION, DELAYS, PALETTE_SHORT, MARKERS
+from utils import get_data, get_diff, df_describe
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)

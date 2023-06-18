@@ -1,5 +1,4 @@
-from data_analysis.utils import get_data
-from data_analysis.utils import PATH, LOCAL_REGION
+from utils import get_data, PATH, LOCAL_REGION
 import os
 import pandas as pd
 import matplotlib.pyplot as plt

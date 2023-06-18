@@ -8,7 +8,7 @@ This repository holds a prototype implementation of a candidate reference archit
 
 For a more detailed description of the reference architecture please refer to [Reference Architecture](#candidate-reference-architecture).
 
-This repository also holds an eventually consistent version of the prototype which served as baseline for comparison with the causally consistent prototype. Finally, it contains the necessary scripts to test the prototype in AWS, the scripts used for the evaluation and the plots and tables that resulted from our analysis.
+This repository also holds a version of the prototype where clients issue requests directly to the underlying storage service, serving as baseline for comparison with the causally consistent prototype. Finally, it contains the necessary scripts to test the prototype in AWS, the scripts used for the evaluation and the plots and tables that resulted from our analysis.
 
 ## Prototype Features
 ### Features
@@ -48,8 +48,8 @@ A Maven project with the following structure:
             - `BusyWriteGenerator`: A multi-threaded writer that  uses a client instance per thread to issue write requests with no delay.
 - `proto`: Holds the Protocol Buffers file that defines the services provided by read and write nodes.
 
-### Eventually Consistent Baseline
-For comparison with our causally consistent prototype, which uses S3 as the storage layer, we developed an eventually consistent baseline where clients issue read and write requests directly to S3. It consists of a Maven project with the following structure:
+### Baseline
+For comparison with our causally consistent prototype, which uses S3 as the storage layer, we developed a baseline version where clients issue read and write requests directly to S3. It consists of a Maven project with the following structure:
 
 `eventual/src/main/java/com/dissertation`:
 - `eventual`: Comprises the classes that implement the eventually consistent baseline
@@ -88,27 +88,29 @@ Holds the scripts that were used to evaluate the prototype in AWS and the source
 ### LocalStack (locally)
 The project can be tested locally using LocalStack.
 
-> For simplicity we provide some predefined commands in the `Makefile` of the root folder to test the prototype and also in the `Makefile` of the `eventual` folder to test the baseline.
+> For simplicity we provide some predefined commands in the `Makefile` of the root folder to test the prototype and also in the `Makefile` of the `eventual` folder to test the baseline. We refer to some of their commands as an example.
 
 #### Causally Consistent Prototype
 **Setup S3 buckets and servers**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
-3. Build the project: `mvn package`
-4. Create the buckets for each partition, always using the same suffix:
-    `awslocal s3api create-bucket --bucket p<partitionId>-<region><suffix> --region <region>`
-    *e.g. `awslocal s3api create-bucket --bucket p1-us-east-1-reference-architecture --region us-east-1` for partition 1* 
-5. Create the clock bucket using the same suffix:
-    `awslocal s3api create-bucket --bucket clock-reference-architecture --region <region>`
-6. Start the Read Nodes, specifying the total number of partitions in the system (`nPartitions`) and the ids of the partitions that the read node keeps a copy of:
+3. Build the project: `make`
+4. Create the buckets:
+    a. For each partition: `awslocal s3api create-bucket --bucket p<partitionId>-<region><suffix> --region <region>`
+    b. For the clock values: `awslocal s3api create-bucket --bucket clock-reference-architecture --region <region>`
+    > *e.g.* `make createBuckets` creates the buckets for partitions 1 and 2 and for the clock values using the suffix `-reference-architecture`.
+6. Start the read nodes, specifying the total number of partitions in the system (`nPartitions`) and the ids of the partitions that the read node keeps a copy of:
     `java -Ds3Endpoint=http://localhost:4566 -Dpartitions=<nPartitions> -DbucketSuffix=<suffix> -jar target/readNode.jar <readPort> <partitionId>*`
-7. Start the Write Nodes, specifying the total number of partitions in the system (`nPartitions`), the id of the partition that the write node is responsible for and the read nodes that track his partition:
+    > *e.g.* `make readNode` creates a read node that tracks partitions 1 and 2.
+7. Start the write nodes, specifying the total number of partitions in the system (`nPartitions`), the id of the partition that the write node is responsible for and the read nodes that track his partition:
     `java -Ds3Endpoint=http://localhost:4566 -Dpartitions=<nPartitions> -DbucketSuffix=<suffix> -jar target/writeNode.jar <partitionId> <writePort> <readPort> <readIp>`
+    > *e.g.* `make writeNode1` and `make writeNode2` create the write nodes responsible for partitions 1 and 2, respectively.
 
 **Issue read and write requests**:
 Using the command-line interface, you can test the behavior of the prototype locally.
 1. Start the desired number of clients:
     `java -Dpartitions=<nPartitions> -DbucketSuffix=$(suffix) -jar target/clientInterface.jar <readPort> <readIp> (<writePort> <writeIp> <partitionId>)*`
+    > *e.g.* `make client` starts a client.
 2. Issue the desired ROT, write or atomic write requests:
     - ROT: `R x y` (reads the values of keys x and y)
     - Write: `W x 3` (writes the value 3 to key x)
@@ -116,22 +118,31 @@ Using the command-line interface, you can test the behavior of the prototype loc
     - Atomic write type B: `WB x 3 00000001685206329008-00000000000000000038 4` (writes the value 3 to key x if the current version of x has the specified timestamp and the value 4)
     - Atomic write type C: `WC x 3 4` (writes the value 3 to key x if the current version of x has the value 4)
 
-#### Eventually Consistent Baseline
+**Clean the buckets**:
+`awslocal s3 rm s3://<bucketName> --recursive`
+> *e.g.* `make emptyBuckets`
+
+#### Baseline
 **Setup S3 buckets**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the `eventual` folder
-3. Build the project: `mvn package`
+3. Build the project: `make`
 4. Create the buckets for each partition, always using the same suffix:
     `awslocal s3api create-bucket --bucket p<partitionId>-<region><suffix> --region <region>`
-    *e.g. `awslocal s3api create-bucket --bucket p1-us-east-1-reference-architecture --region us-east-1` for partition 1* 
+    > *e.g. `make createBuckets` creates the buckets for partitions 1 and 2.* 
 
 **Issue read and write requests**:
 Using the command-line interface, you can test the behavior of the baseline locally.
 1. Start the desired number of clients:
     `java -Ds3Endpoint=http://localhost:4566 -Dpartitions=<nPartitions> -DbucketSuffix=<suffix> -jar target/clientInterface.jar`
+    > *e.g.* `make client`
 2. Issue the desired read and write requests:
     - Read: `R x` (reads the value of key x)
     - Write: `W x 3` (writes the value 3 to key x)
+
+**Clean the buckets**:
+`awslocal s3 rm s3://<bucketName> --recursive`
+> *e.g.* `make emptyBuckets`
 
 ### AWS
 For the evaluation in AWS, we built a Docker image for the prototype and for the baseline, namely `dianaamfreitas/dissertation` and `dianaamfreitas/dissertation-eventual`. The images supports linux/amd64 and linux/arm64 and our tests were performed using Ubuntu 22.04 LTS arm64.
@@ -140,48 +151,56 @@ To test goodput we used the image with tag `v14.0.0-goodput`. To test visibility
 #### Causally Consistent Prototype
 1. Create an EC2 instance for each system component (read and write nodes and cli or load generators) setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
 2. Set the IAM Role of read and write nodes' instances to enable access to S3 buckets.
-3. Update the `BUCKET_SUFFIX` of each component's script in `aws_scripts`. 
+3. Update the `BUCKET_SUFFIX` of each component's script in `aws_scripts` directory ([here](./evaluation/aws_scripts/)). 
 4. Setup the buckets using the `BUCKET_SUFFIX` defined above (e.g. the bucket of partition 1 must be named p1-region`BUCKET_SUFFIX`, and the clock bucket must be named clock`BUCKET_SUFFIX`). Setup the replication between buckets.
-5. Connect to each instance and use the provided `aws_scripts` to run the read and write nodes:
-    - **Read Node**: 
-    `./readNode.sh <imageTag> <totalPartitions> <port> <regionPartitionsIds>`
-    - **Write Node**: 
-    `./writeNode.sh <imageTag> <totalPartitions> <port> <partitionId> (<readPort> <readIp>)+`
+5. Connect to each instance and use the provided scripts to run the read and write nodes:
+    - **Read Node**: `./readNode.sh <imageTag> <totalPartitions> <port> <regionPartitionsIds>`
+    - **Write Node**: `./writeNode.sh <imageTag> <totalPartitions> <port> <partitionId> (<readPort> <readIp>)+`
 6. Run the CLI or the load generators provided in the `aws_scripts` directory:
-    - **CLI**: 
-    `./cli.sh <imageTag> <totalPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+`
-    - Single-client generators:
-        - **BusyReadGenerator**: 
-        `./busyReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <expectedWrites> <keysPerRead> <key>+` 
-        - **ConstantWriteGenerator**: ``
-        - **BusyWriteGenerator**: 
-        `./busyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <key>+`
-        - **ConstantReadGenerator**: 
-        `./constantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <readTime> <keysPerRead> <key>+`
-    - Multi-client generators: 
-        - **BusyReadGenerator**: 
-        `./multiBusyReadGenerator.sh <imageTag> <totalPartitions> <regionReadNodes> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readTime> <keysPerRead> <keysPerPartition> <readClients>`
-        - **ConstantWriteGenerator**: 
-        `./multiConstantWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <delay> <writesPerClient> <keysPerPartition> <writeClients>`
-        - **BusyWriteGenerator**: 
-        `./multiBusyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <keysPerPartition> <writeClients>`
-        - **ConstantReadGenerator**: 
-        `./multiConstantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <readTime> <keysPerRead> <keyPerPartition> <readClients>`
-> To replicate the experiments that generated our results, please refer to the `README` of the `evaluation` directory available [here](https://github.com/dianaamfr/Dissertation-Work/tree/evaluation/README.md).
+    - **CLI**: `./cli.sh <imageTag> <totalPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+`
+    - **Single-client generators** (a single client issues read requests and another write requests):
+        1. Read in a closed loop and write at a constant rate:
+            - **BusyReadGenerator**: `./busyReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <expectedWrites> <keysPerRead> <key>+` 
+            - **ConstantWriteGenerator**: `./constantWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <delay> <totalWrites> <key>+`
+        2. Write in closed loop and read at a constant rate:
+            - **BusyWriteGenerator**: `./busyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <key>+`
+            - **ConstantReadGenerator**: `./constantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <readTime> <keysPerRead> <key>+`
+    - **Multi-client generators** (multiple clients issue ROTs and several others issue write requests): 
+        1. Read in a closed loop and write at a constant rate:
+            - **BusyReadGenerator**: `./multiBusyReadGenerator.sh <imageTag> <totalPartitions> <regionReadNodes> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readTime> <keysPerRead> <keysPerPartition> <readClients>`
+            - **ConstantWriteGenerator**: `./multiConstantWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <delay> <writesPerClient> <keysPerPartition> <writeClients>`
+        2. Write in closed loop and read at a constant rate:
+            - **BusyWriteGenerator**: 
+            `./multiBusyWriteGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <keysPerPartition> <writeClients>`
+            - **ConstantReadGenerator**: 
+            `./multiConstantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <readTime> <keysPerRead> <keyPerPartition> <readClients>`
 
-### Eventually Consistent Baseline
-<!-- TODO -->
+> To replicate the experiments that generated our results, please refer to the `README` of the `evaluation` directory available [here](./evaluation/README.md).
+
+#### Baseline
+1. Create an EC2 instance for each client, setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
+2. Set the IAM Role of these instances to enable access to S3 buckets.
+3. Update the `BUCKET_SUFFIX` of each component's script in `aws_scripts` directory ([here](./evaluation/aws_scripts/)). 
+4. Setup the buckets using the `BUCKET_SUFFIX` defined above (e.g. the bucket of partition 1 must be named p1-region`BUCKET_SUFFIX`). Setup the replication between buckets.
+5. Connect to each instance and use the provided scripts to run the cli or the load generators:
+    - **Cli**: `./evCli.sh <imageTag> <totalPartitions>`
+    - **Load generators**: 
+        1. Read in a closed loop and write at a constant rate
+            - **BusyReadGenerator**: `./evBusyReadGenerator.sh <imageTag> <totalPartitions> <expectedWrites> <key>+`
+            - **ConstantWriteGenerator**: `./evConstantWriteGenerator.sh <imageTag> <totalPartitions> <delay> <totalWrites> <key>+`
+        2. Write in closed loop and read at a constant rate
+            - **BusyWriteGenerator**: `./evBusyWriteGenerator.sh <imageTag> <totalPartitions> <key>+`
+            - **ConstantReadGenerator**: `./evConstantReadGenerator.sh <imageTag> <totalPartitions> <readDelay> <readTime> <key>+`
 
 ## Candidate Reference Architecture
-<!-- TODO: update according to the thesis document and update image too -->
 
 ![Candidate Reference Architecture](images/reference-architecture.png)
+<!-- TODO: update according to the thesis document -->
 
-**Clock**: 
-Hybrid Logical Clock
+**Clock**: Hybrid Logical Clock
 
 **Assumptions**: 
-- The Eventually consistent Data Store (ECDS) allows writing to a specific region/partition.
+- The eventually consistent Data Store (ECDS) allows writing to a specific region/partition.
 - The ECDS allows reading by region, partition and timestamp.
 - A *Read Node* in region R must only respond to read requests for partitions stored in region R.
 - A *Write Node P* must only perform write requests in partition P. 

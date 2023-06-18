@@ -46,7 +46,6 @@ public class StoragePusher implements Runnable {
             this.computeCheckpoint();
         }
 
-
         HLCState currentTime = this.hlc.getState();
         // Sync in the absence of writes
         if (!currentTime.newWrites()) {

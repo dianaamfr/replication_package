@@ -3,8 +3,8 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from data_analysis.utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, PALETTE_SHORT, MARKERS
-from data_analysis.utils import get_data, df_describe
+from utils import PATH, CC_DIR, EC_DIR, LOCAL_REGION, DELAYS, PALETTE_SHORT, MARKERS
+from utils import get_data, df_describe
 import math
 
 EC_RAW_PATH = PATH + '/logs/single_client/read_latency' + EC_DIR + '/d_'
