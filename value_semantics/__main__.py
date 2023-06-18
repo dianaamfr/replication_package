@@ -15,8 +15,6 @@ def get_file_data(path):
 
 def parse_logs():
     dfs = []
-    max_log_version = MIN_TIMESTAMP
-    min_log_version = None
 
     partitions = [name for name in os.listdir(PATH) if os.path.isdir(os.path.join(PATH, name))]
     for partition in partitions:
@@ -35,13 +33,22 @@ def parse_logs():
             if(df.empty):
                 continue
             df['log_version'] = log_version
-            df['log_version_date'] = get_date(log_version)
-            df['timestamp_date'] = df['timestamp'].apply(get_date)
             df['partition'] = partition_id
             dfs.append(df)
-        max_log_version = max(max_log_version, log_versions[-1])
-        min_log_version = min(min_log_version, log_versions[0]) if min_log_version else log_versions[0]
-    return pd.concat(dfs), max_log_version, min_log_version
+
+    df = pd.concat(dfs)
+
+    # Get max log version seen from all partitions
+    max_timestamp = (df.groupby('partition')['log_version'].max()).min()
+
+    # Get min timestamp
+    df = df.groupby(['key', 'value', 'timestamp', 'partition']).apply(lambda x: x.sort_values('log_version').head(1)).reset_index(drop=True)
+    min_timestamp = df['timestamp'].min()
+
+    df['log_version_date'] = get_date(log_version)
+    df['timestamp_date'] = df['timestamp'].apply(get_date)
+
+    return df, max_timestamp, min_timestamp
 
 def get_date(timestamp):
     l = re.findall(r'(\d+)-', timestamp)[0]
@@ -49,54 +56,68 @@ def get_date(timestamp):
 
 
 # Get Input
-def get_value_by_date_input():
+def get_value_by_date_input(max_date):
     while True:
         date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
         keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
         print()
         try:
             date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+            if date > max_date:
+                print("Invalid date. Please enter a date less than or equal to " + str(max_date))
+                continue
             keys = [value.strip() for value in keys_str.split(',') if value.strip()]
             return date, keys
         except ValueError:
             print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
 
-def get_value_by_timestamp_input():
-    timestamp = input("Enter timestamp: ")
-    keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
-    print()
-    
-    keys = [value.strip() for value in keys_str.split(',') if value.strip()]
-    return timestamp, keys
+def get_value_by_timestamp_input(max_timestamp):
+    while True:
+        timestamp = input("Enter timestamp: ")
+        keys_str = input("Enter keys (e.g. a,b,c) or nothing to see all keys): ")
+        print()
 
-def get_history_by_date_input():
+        if timestamp > max_timestamp:
+            print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
+    
+        keys = [value.strip() for value in keys_str.split(',') if value.strip()]
+        return timestamp, keys
+
+def get_history_by_date_input(max_date):
     while True:
         date_str = input("Enter date & time (YYYY-MM-DD HH:MM:SS.sss): ")
         key = input("Enter key: ")
         print()
         try:
             date = datetime.datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S.%f")
+            if date > max_date:
+                print("Invalid date. Please enter a date less than or equal to " + str(max_date))
+                continue
             return date, key
         except ValueError:
             print("Invalid date and time format. Please enter a date and time in YYYY-MM-DD HH:MM:SS.sss format.")
 
-def get_history_by_timestamp_input():
-    timestamp = input("Enter timestamp: ")
-    key = input("Enter key: ")
-    print()
-    return timestamp, key
+def get_history_by_timestamp_input(max_timestamp):
+    timestamp = max_timestamp
+    while True:
+        timestamp = input("Enter timestamp: ")
+        key = input("Enter key: ")
+        print()
+
+        if timestamp > max_timestamp:
+            print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
+        else:
+            return timestamp, key
 
 
 # Options
-def get_value(df, default_keys, is_timestamp=False):
-    date, keys = get_value_by_timestamp_input() if is_timestamp else get_value_by_date_input()
-    log_version_col = 'log_version' if is_timestamp else 'log_version_date'
+def get_value(df, default_keys, max_time, is_timestamp=False):
+    date, keys = get_value_by_timestamp_input(max_time) if is_timestamp else get_value_by_date_input(max_time)
     timestamp_col = 'timestamp' if is_timestamp else 'timestamp_date'
-    
     if not keys:
         keys = default_keys
     for key in keys:
-        result = df[((df[log_version_col] <= date) & (df['key'] == key) & (df[timestamp_col] <= date))].sort_values(by=['log_version', 'timestamp'], ascending=False)
+        result = df[((df['key'] == key) & (df[timestamp_col] <= date))].sort_values(by=['log_version', 'timestamp'], ascending=False)
         print("Key = " + key, end=", ")
         if result.empty:
             print("Log version = None")
@@ -109,8 +130,8 @@ def get_value(df, default_keys, is_timestamp=False):
             print(" > date = " + str(version['timestamp_date']))
         print()
 
-def get_history(df, is_timestamp=False):
-    date, key = get_history_by_timestamp_input() if is_timestamp else get_history_by_date_input()
+def get_history(df, max_time, is_timestamp=False):
+    date, key = get_history_by_timestamp_input(max_time) if is_timestamp else get_history_by_date_input(max_time)
     col= 'timestamp' if is_timestamp else 'timestamp_date'
     versions = df[((df['key'] == key) & (df[col] <= date))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
     print("History of key " + key + ":")
@@ -119,7 +140,7 @@ def get_history(df, is_timestamp=False):
     else:
         print(versions.to_string(justify='left'))
 
-def menu(df, keys):
+def menu(df, keys, max_timestamp, max_date):
     print("Select an option:")
     while True:
         print("1. Key at datetime")
@@ -131,25 +152,25 @@ def menu(df, keys):
         print()
 
         if option == "1":
-            get_value(df, keys)
+            get_value(df, keys, max_date)
         elif option == "2":
-            get_history(df)
+            get_history(df, max_date)
         elif option == "3":
-            get_value(df, keys, True)
+            get_value(df, keys, max_timestamp, True)
         elif option == "4":
-            get_history(df, True)
+            get_history(df, max_timestamp, True)
         elif option == "5":
             return
         print()
 
 if __name__ == "__main__":
-    df, max_log_version, min_log_version = parse_logs()
+    df, max_timestamp, min_timestamp = parse_logs()
 
-    min_date = get_date(min_log_version)
-    max_date = get_date(max_log_version)
+    min_date = get_date(min_timestamp)
+    max_date = get_date(max_timestamp)
     keys = df['key'].unique()
-    print("Min log version: {}  /  {}".format(min_date, min_log_version))
-    print("Max log version: {}  /  {}".format(max_date, max_log_version))
+    print("Min time: {}  /  {}".format(min_date, min_timestamp))
+    print("Max time: {}  /  {}".format(max_date, max_timestamp))
     print("Keys: {}\n".format(keys))
 
-    menu(df, keys)
+    menu(df, keys, max_timestamp, max_date)
