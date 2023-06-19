@@ -77,7 +77,6 @@ def parse_logs(timestamp):
 
 
 def parse_log(partition, timestamp, history=False):
-    print(timestamp)
     partition_dir = os.path.join(PATH, 'p' + str(partition))
     log_versions = [name for name in os.listdir(partition_dir) if os.path.isfile(os.path.join(partition_dir, name)) and (name >= timestamp)]
 
@@ -160,15 +159,15 @@ def get_value(keys_arg, time_arg):
 
         result = log_df[((log_df['key'] == key) & (log_df['timestamp'] <= time_arg))].sort_values(by=['timestamp'], ascending=False)
         
-        print("Key = " + key, end=", ")
+        print("Key = " + key)
         if result.empty:
-            print("Log version = None")
             print(" > value = None")
         else:
             version = result.iloc[0]
-            print("Log version = " + version['log_version'])
             print(" > value = " + version['value'])
             print(" > timestamp = " + str(version['timestamp']))
+            print(" > log version = " + version['log_version'])
+            print(" > partition = " + str(partition))
         print()
 
 def get_history(df, max_time, key_arg, time_arg, is_timestamp=False):
@@ -188,12 +187,12 @@ def process_args(args):
         timestamp = get_timestamp(args.date)
         if args.history:
             get_history(args.keys, timestamp)
-        elif args.timestamp:
-            get_history(args.keys, args.timestamp)
+        else:
+            get_value(args.keys, timestamp)
     elif args.timestamp:
         if args.history:
-            get_value(args.keys, timestamp)
-        elif args.timestamp:
+            get_history(args.keys, args.timestamp)
+        else:
             get_value(args.keys, args.timestamp)
 
 def set_parser(parser):
