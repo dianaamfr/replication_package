@@ -38,86 +38,46 @@ def get_log_limits():
         min_log_versions.append(log_versions[0])
     return max(max_log_versions), min(min_log_versions)
 
-def parse_logs(timestamp):
-    dfs = []
+def parse_log(partition, timestamp):
+    df = pd.DataFrame(columns=['key', 'value', 'timestamp'])
 
-    partitions = [name for name in os.listdir(PATH) if os.path.isdir(os.path.join(PATH, name))]
-    for partition in partitions:
-        partition_id = re.findall(r'p(\d+)', partition)[0]
-        partition_dir = os.path.join(PATH, partition)
-
-        log_versions = [name for name in os.listdir(partition_dir) if os.path.isfile(os.path.join(partition_dir, name))]
-        log_versions.sort()
-        for log_version in log_versions:
-            log_path = os.path.join(partition_dir, log_version)
-            data = json.loads(get_file_data((log_path)))
-            rows = [{'key': state['key'], 'value': version['value'], 'timestamp': version['timestamp']}
-                    for state in data['state']
-                    for version in state['versions']]
-            df = pd.DataFrame(rows)
-            if(df.empty):
-                continue
-            df['log_version'] = log_version
-            df['partition'] = partition_id
-            dfs.append(df)
-
-    df = pd.concat(dfs)
-
-    # Get max log version seen from all partitions
-    max_timestamp = (df.groupby('partition')['log_version'].max()).min()
-
-    # Get min timestamp
-    df = df.groupby(['key', 'value', 'timestamp', 'partition']).apply(lambda x: x.sort_values('log_version').head(1)).reset_index(drop=True)
-    min_timestamp = df['timestamp'].min()
-
-    df['log_version_date'] = get_date(log_version)
-    df['timestamp_date'] = df['timestamp'].apply(get_date)
-
-    return df, max_timestamp, min_timestamp
-
-
-def parse_log(partition, timestamp, history=False):
     partition_dir = os.path.join(PATH, 'p' + str(partition))
     log_versions = [name for name in os.listdir(partition_dir) if os.path.isfile(os.path.join(partition_dir, name)) and (name >= timestamp)]
 
     if not log_versions:
-        print("No log versions found for partition " + str(partition) + " at timestamp " + timestamp)
-        exit(1)
+        return df
     
-    if not history:
-        log_version = min(log_versions)
+    log_version = min(log_versions)
+    log_path = os.path.join(partition_dir, log_version)
+    data = json.loads(get_file_data((log_path)))
+    rows = [{'key': state['key'], 'value': version['value'], 'timestamp': version['timestamp']}
+        for state in data['state']
+        for version in state['versions']]
+    df = df.append(rows, ignore_index=True)
+
+    df['log_version'] = log_version
+    return df
+
+def parse_logs(partition, timestamp):
+    df = pd.DataFrame(columns=['key', 'value', 'timestamp'])
+
+    partition_dir = os.path.join(PATH, 'p' + str(partition))
+    log_versions = [name for name in os.listdir(partition_dir) if os.path.isfile(os.path.join(partition_dir, name)) and (name >= timestamp)]
+
+    if not log_versions:
+        return df
+    
+    for log_version in log_versions:
         log_path = os.path.join(partition_dir, log_version)
         data = json.loads(get_file_data((log_path)))
         rows = [{'key': state['key'], 'value': version['value'], 'timestamp': version['timestamp']}
             for state in data['state']
             for version in state['versions']]
-        df = pd.DataFrame(rows)
+        df = df.append(rows, ignore_index=True)
         df['log_version'] = log_version
-        if(df.empty):
-            print("No data found for partition " + str(partition) + " at timestamp " + timestamp)
-            exit(1)
-        return df
 
-    # dfs = []
-    # for log_version in log_versions:
-    #     if log_version > timestamp:
-    #         continue
-    #     log_path = os.path.join(partition_dir, log_version)
-    #     data = json.loads(get_file_data((log_path)))
-    #     rows = [{'key': state['key'], 'value': version['value'], 'timestamp': version['timestamp']}
-    #             for state in data['state']
-    #             for version in state['versions']]
-    #     df = pd.DataFrame(rows)
-    #     if(df.empty):
-    #         continue
-    #     df['log_version'] = log_version
-    #     df['partition'] = partition
-    #     dfs.append(df)
-
-    # df = pd.concat(dfs)
-    # df['log_version_date'] = get_date(log_version)
-    # df['timestamp_date'] = df['timestamp'].apply(get_date)
-    # return df
+    df = df.groupby(['key', 'value', 'timestamp']).apply(lambda x: x.sort_values('log_version').head(1)).reset_index(drop=True)
+    return df
 
 def get_date(timestamp):
     l = re.findall(r'(\d+)-', timestamp)[0]
@@ -131,16 +91,10 @@ def get_timestamp(date):
         exit(1)
     return TIMESTAMP_FORMAT.format(int(date.timestamp() * 1000), TIMESTAMP_SEPARATOR, 0)
 
-def get_history_input(keys_str, timestamp):
-    if timestamp > max_timestamp:
-        print("Invalid timestamp. Please enter a timestamp less than or equal to " + max_timestamp)
-        exit(1)
-    return timestamp, key
-
 
 # Options
-def get_value(keys_arg, time_arg):
-    keys = [value.strip() for value in keys_arg.split(',') if value.strip()]
+def get_value(keys, timestamp):
+    keys = [value.strip() for value in keys.split(',') if value.strip()]
     if not keys:
         print("Invalid keys. Please enter at least one key.")
         exit(1)
@@ -152,12 +106,12 @@ def get_value(keys_arg, time_arg):
 
         log_df = None
         if not contains_partition:
-            log_df = parse_log(partition, time_arg)
+            log_df = parse_log(partition, timestamp)
             logs_dfs.append((partition, log_df))
         else:
             log_df = [log_df[1] for log_df in logs_dfs if log_df[0] == partition][0]
 
-        result = log_df[((log_df['key'] == key) & (log_df['timestamp'] <= time_arg))].sort_values(by=['timestamp'], ascending=False)
+        result = log_df[((log_df['key'] == key) & (log_df['timestamp'] <= timestamp))].sort_values(by=['timestamp'], ascending=False)
         
         print("Key = " + key)
         if result.empty:
@@ -170,10 +124,11 @@ def get_value(keys_arg, time_arg):
             print(" > partition = " + str(partition))
         print()
 
-def get_history(df, max_time, key_arg, time_arg, is_timestamp=False):
-    date, key = get_history_by_timestamp_input(max_time, key_arg, time_arg) if is_timestamp else get_history_by_date_input(max_time, key_arg, time_arg)
-    col= 'timestamp' if is_timestamp else 'timestamp_date'
-    versions = df[((df['key'] == key) & (df[col] <= date))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
+def get_history(key, timestamp):
+    partition = get_key_partition(key)
+    log_df = parse_logs(partition, timestamp)
+
+    versions = log_df[((log_df['key'] == key) & (log_df['timestamp'] <= timestamp))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
     print("History of key " + key + ":")
     if versions.empty:
         print(" > No versions available")
