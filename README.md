@@ -90,7 +90,7 @@ Source code and logs used to demonstrate how enabling value semantics facilitate
 ## Execution Instructions
 In this section, we provide instructions for testing the prototype system and the baseline system either locally using LocalStack or in AWS.
 
-> If you wish to replicate the validation performed in our dissertation, **please read the instructions below on how to set up the components in AWS** and then refer to the README in the [evaluation directory](./evaluation/README.md) or, if you wish to replicate the value semantics experiment refer to the README of the [value_semantics directory](./value_semantics/README.md).
+> If you wish to replicate the validation performed in our dissertation, **please read the instructions below on how to set up the components in AWS** and then refer to the README in the [evaluation directory](./evaluation/README.md) or to the README of the [value_semantics directory](./value_semantics/README.md).
 
 ### AWS
 
@@ -120,7 +120,7 @@ If you wish to build you own docker images instead you can also choose to do tha
 3. Update the image name in the scripts of the [aws_scripts directory](./evaluation/aws_scripts/).
 
 
-#### 2. Deploy Causally Consistent Prototype
+#### 2. Deploy Prototype
 1. Create an EC2 instance for each system component (read and write nodes and cli or load generators) setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
 2. Set the IAM Role of read and write nodes' instances to enable access to S3 buckets.
 3. Update the `BUCKET_SUFFIX` of each component's script in [aws_scripts directory ](./evaluation/aws_scripts/). 
@@ -148,7 +148,7 @@ If you wish to build you own docker images instead you can also choose to do tha
             - **ConstantReadGenerator**: 
             `./multiConstantReadGenerator.sh <imageTag> <totalPartitions> <regionPartitions> <readPort> <readIP> (<writePort> <writeIP> <partitionId>)+ <readDelay> <readTime> <keysPerRead> <keyPerPartition> <readClients>`
 
-#### Baseline
+#### 3. Deploy Baseline
 1. Create an EC2 instance for each client, setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
 2. Set the IAM Role of these instances to enable access to S3 buckets.
 3. Update the `BUCKET_SUFFIX` of each component's script in [aws_scripts directory ](./evaluation/aws_scripts/). 
@@ -205,7 +205,7 @@ The project can be tested locally using LocalStack.
 **Issue read and write requests**:
 Using the command-line interface, you can test the behavior of the prototype locally.
 1. Start the desired number of clients:
-    `java -Dpartitions=<nPartitions> -DbucketSuffix=<suffix> -jar target/clientInterface.jar <readPort> <readIp> (<writePort> <writeIp> <partitionId>)*`
+    `java -DlogDelay=<logDelay> -Dpartitions=<nPartitions> -DbucketSuffix=<suffix> -jar target/clientInterface.jar <readPort> <readIp> (<writePort> <writeIp> <partitionId>)*`
     > e.g. `make client` starts a client.
 2. Issue the desired ROT, write or atomic write requests:
     - ROT: `R x y` (reads the values of keys x and y)
