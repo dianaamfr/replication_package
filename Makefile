@@ -6,6 +6,8 @@ partition2Bucket = p2-us-east-1$(suffix)
 clockBucket = clock$(suffix)
 s3Endpoint = http://localhost:4566
 region = us-east-1
+logDelay = 10000
+checkpointing = false
 
 partitions = 2
 regionPartitions = 2
@@ -52,13 +54,13 @@ emptyBuckets:
 #################
 
 readNode:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
+	java -Ds3Endpoint=$(s3Endpoint) -DlogDelay=$(logDelay) -Dcheckpointing=$(checkpointing) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1) $(readAddress)
+	java -Ds3Endpoint=$(s3Endpoint) -DlogDelay=$(logDelay) -Dcheckpointing=$(checkpointing) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1) $(readAddress)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2) $(readAddress)
+	java -Ds3Endpoint=$(s3Endpoint) -DlogDelay=$(logDelay) -Dcheckpointing=$(checkpointing) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2) $(readAddress)
 
 #######
 # CLI #
