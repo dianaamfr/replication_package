@@ -124,9 +124,9 @@ def get_value(keys, timestamp):
             print(" > partition = " + str(partition))
         print()
 
-def get_history(key, timestamp):
+def get_history(key, timestamp, checkpointing=False):
     partition = get_key_partition(key)
-    log_df = parse_logs(partition, timestamp)
+    log_df = parse_logs(partition, timestamp) if checkpointing else parse_log(partition, timestamp)
 
     versions = log_df[((log_df['key'] == key) & (log_df['timestamp'] <= timestamp))][['timestamp', 'value']].drop_duplicates().sort_values('timestamp').reset_index(drop=True)
     print("History of key " + key + ":")
@@ -141,12 +141,12 @@ def process_args(args):
     if args.date:
         timestamp = get_timestamp(args.date)
         if args.history:
-            get_history(args.keys, timestamp)
+            get_history(args.keys, timestamp, args.checkpointing)
         else:
             get_value(args.keys, timestamp)
     elif args.timestamp:
         if args.history:
-            get_history(args.keys, args.timestamp)
+            get_history(args.keys, args.timestamp, args.checkpointing)
         else:
             get_value(args.keys, args.timestamp)
 
@@ -155,7 +155,8 @@ def set_parser(parser):
     group.add_argument('-d', '--date', help='Date in YYYY-MM-DD HH:MM:SS.sss format')
     group.add_argument('-t', '--timestamp', help='Timestamp')
 
-    parser.add_argument('-i', '--info', help='Show info about log file', action='store_true')
+    parser.add_argument('-i', '--info', help='Show info about log file', action='store_true', default=False)
+    parser.add_argument('-c', '--checkpointing', help='Indicates that checkpointing was active', action='store_true')
 
     group2 = parser.add_mutually_exclusive_group()
     group2.add_argument('-hist', '--history', help='Show history of key at date or timestamp', action='store_true')
