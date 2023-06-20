@@ -73,7 +73,7 @@ Source code and logs used to demonstrate how enabling value semantics facilitate
 `value_semantics`:
 - `logs`: The logs used to perform the experiment.
 - `__main__.py`: A python script that, given a set of keys and a timestamp/data-time can retrieve from the logs the value of the keys at that time or the history of a key up until that time.
-- `REAME.md`: Describes the configuration used to obtain the logs and perform the experiment and the commands that can be used to replicate it.
+- `README.md`: Describes the configuration used to obtain the logs and performs the experiment and the commands that can be used to replicate it.
 
 ## Dependencies
 ### To test locally
@@ -81,7 +81,7 @@ Source code and logs used to demonstrate how enabling value semantics facilitate
 - OpenJDK
 - Maven
 - make *(optional)*
-- python, matplotlib, seaborn, re, pandas, numpy *(for the validation and value semantics experiment)*
+- Python 3, matplotlib, seaborn, re, pandas, numpy *(for the validation and value semantics experiment)*
 
 ### To test in AWS
 - EC2 instances must have docker installed, expose port 8080 and have access to S3 buckets.
@@ -121,7 +121,7 @@ If you wish to build you own docker images instead you can also choose to do tha
 
 
 #### 2. Deploy Prototype
-1. Create an EC2 instance for each system component (read and write nodes and cli or load generators) setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 accepts TCP requests from the client instances.
+1. Create an EC2 instance for each system component (read and write nodes and cli or load generators) setting the user data to the contents of `docker-install.sh`, which installs docker on the instance. Make sure to set the security group's inbound rules so that port 8080 (or other) accepts TCP requests from the client instances.
 2. Set the IAM Role of read and write nodes' instances to enable access to S3 buckets.
 3. Update the `BUCKET_SUFFIX` of each component's script in [aws_scripts directory ](./evaluation/aws_scripts/). 
 4. Setup the buckets using the `BUCKET_SUFFIX` defined above (e.g. the bucket of partition 1 must be named p1-region`BUCKET_SUFFIX`, and the clock bucket must be named clock`BUCKET_SUFFIX`). Setup the replication between buckets.

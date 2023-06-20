@@ -118,7 +118,7 @@ Multiple clients issue read requests in closed loop. Multiple clients issue writ
 
 **Configuration**:
 - 50ms inter-write delay 
-- Readers-Writers tests: R1-W2, R5-W10, R10-W20, R16-R18, R19-R38
+- Readers-Writers tests: R1-W2, R5-W10, R10-W20, R16-W32 (16R + 3W / 29W), R19-R38 (19R + 9W / 29W)
 - 1000 writes per client
 - Read for 60s in EU (Local Region) and 90s in US (Remote Region)
 - 2 keys per read
@@ -126,13 +126,12 @@ Multiple clients issue read requests in closed loop. Multiple clients issue writ
 ##### EU-WEST-1
 **Read Node**: `./readNode.sh final-visibility 1 8080 1`  
 **Write Node**: `./writeNode.sh final-visibility 1 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
-**Read Client**: `./multiBusyReadGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp1> 1 60000 2 8 <R>`  
-**Write Client**: `./multiConstantWriteGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp1> 1 50 1000 8 <W>`  
+**Read Client**: `./multiBusyReadGenerator.sh final-visibility 1 1 1 8080 <readEuIp> 8080 <writeIp> 1 60000 2 8 <R>`  
+**Write Client**: `./multiConstantWriteGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 50 1000 8 <W>`  
 
 ##### US-EAST-1
 **Read Node**: `./readNode.sh final-visibility 1 8080 1`  
-**Write Node**: `./writeNode.sh final-visibility 1 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
-**Read Client**: `./multiBusyReadGenerator.sh final-visibility 1 1 8080 <readUsIp> 8080 <writeIp1> 1 90000 2 8 <R>`  
+**Read Client**: `./multiBusyReadGenerator.sh final-visibility 1 1 1 8080 <readUsIp> 8080 <writeIp> 1 90000 2 8 <R>`  
 
 #### Change number of partitions
 
@@ -149,9 +148,9 @@ Multiple clients issue read requests in closed loop. Multiple clients issue writ
 **Write Nodes**:   
 - **eu**: `./writeNode.sh final-visibility 2 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
 - **us**: `./writeNode.sh final-visibility 2 8080 2 8080 <readEuIp> 8080 <readUsIp>`  
-**Read Client EU**: `./multiBusyReadGenerator.sh final-visibility 2 2 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 60000 2 4 5`  
+**Read Client EU**: `./multiBusyReadGenerator.sh final-visibility 2 1 2 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 60000 2 4 5`  
 **Write Client EU**: `./multiConstantWriteGenerator.sh final-visibility 2 2 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 50 1000 4 10`   
-**Read Client US**: `./multiBusyReadGenerator.sh final-visibility 2 2 8080 54.234.187.202 8080 <writeIp1> 1 8080 <writeIp2> 2 60000 2 4 5`    
+**Read Client US**: `./multiBusyReadGenerator.sh final-visibility 2 1 2 8080 <readUsIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 60000 2 4 5`    
 
 ##### 4 partitions
 **Read Nodes**: `./readNode.sh final-visibility 4 8080 1 2 3 4`  
@@ -161,9 +160,9 @@ Multiple clients issue read requests in closed loop. Multiple clients issue writ
 - **eu**: `./writeNode.sh final-visibility 4 8080 3 8080 <readEuIp> 8080 <readUsIp>`  
 - **us**: `./writeNode.sh final-visibility 4 8080 4 8080 <readEuIp> 8080 <readUsIp>`  
 
-**Read Client EU**: `./multiBusyReadGenerator.sh final-visibility 4 4 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 60000 2 2 5`  
+**Read Client EU**: `./multiBusyReadGenerator.sh final-visibility 4 1 4 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 60000 2 2 5`  
 **Write Client EU**: `./multiConstantWriteGenerator.sh final-visibility 4 4 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 50 1000 2 10`  
-**Read Client US**: `./multiBusyReadGenerator.sh final-visibility 4 4 8080 <readUsIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 60000 2 2 5`
+**Read Client US**: `./multiBusyReadGenerator.sh final-visibility 4 1 4 8080 <readUsIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 60000 2 2 5`
 
 #### Get Logs
 1. Extract the logs from each container:
