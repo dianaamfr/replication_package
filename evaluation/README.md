@@ -4,7 +4,7 @@ This document describes the experiments performed in our evaluation, making the 
 
 To run the evaluation source code with the current logs and generate the results of all our experiments, please run `python3 data_analysis` from this directory.
 
-> **Note 1**: All references to files or directories are relative to the `evaluation` directory.
+> **Note 1**: All references to files or directories are relative to the `evaluation` directory.  
 > **Note 2**: This commands assume your key pair files are named `reference-architecture.pem` (**EU-WEST-1**) and `reference-architecture-us.pem`  (**US_EAST-1**).
 
 ## Single Client
@@ -72,12 +72,12 @@ A single client issues read requests in closed loop. A single client issues writ
 
 #### Prototype
 ##### EU-WEST-1 (Local)
-**Read Node**: `./readNode.sh final-visibility 1 8080 1`
-**Constant Write Generator**: `./constantWriteGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 <delay> 110 a`
-**Busy Read Generator**: `./busyReadGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 110 1 a`
-**Write Node**: `./writeNode.sh final-visibility 1 8080 1 8080 <readEuIp> 8080 <readUsIp>`
+**Read Node**: `./readNode.sh final-visibility 1 8080 1`  
+**Constant Write Generator**: `./constantWriteGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 <delay> 110 a`  
+**Busy Read Generator**: `./busyReadGenerator.sh final-visibility 1 1 8080 <readEuIp> 8080 <writeIp> 1 110 1 a`  
+**Write Node**: `./writeNode.sh final-visibility 1 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
 
-##### US-EAST-1 (Remote)
+##### US-EAST-1 (Remote)  
 **Read Node**: `./readNode.sh final-visibility 1 8080 1`  
 **Busy Read Generator**: `./busyReadGenerator.sh final-visibility 1 1 8080 <readUsIp> 8080 <writeIp> 1 110 1 a`  
 
@@ -147,8 +147,8 @@ Multiple clients issue read requests in closed loop. Multiple clients issue writ
 ##### 2 partitions
 **Read Nodes**: `./readNode.sh final-visibility 2 8080 1 2`  
 **Write Nodes**:   
-    **eu**: `./writeNode.sh final-visibility 2 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
-    **us**: `./writeNode.sh final-visibility 2 8080 2 8080 <readEuIp> 8080 <readUsIp>`  
+- **eu**: `./writeNode.sh final-visibility 2 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
+- **us**: `./writeNode.sh final-visibility 2 8080 2 8080 <readEuIp> 8080 <readUsIp>`  
 **Read Client EU**: `./multiBusyReadGenerator.sh final-visibility 2 2 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 60000 2 4 5`  
 **Write Client EU**: `./multiConstantWriteGenerator.sh final-visibility 2 2 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 50 1000 4 10`   
 **Read Client US**: `./multiBusyReadGenerator.sh final-visibility 2 2 8080 54.234.187.202 8080 <writeIp1> 1 8080 <writeIp2> 2 60000 2 4 5`    
@@ -156,10 +156,10 @@ Multiple clients issue read requests in closed loop. Multiple clients issue writ
 ##### 4 partitions
 **Read Nodes**: `./readNode.sh final-visibility 4 8080 1 2 3 4`  
 **Write Nodes**:  
-    **eu**: `./writeNode.sh final-visibility 4 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
-    **us**: `./writeNode.sh final-visibility 4 8080 2 8080 <readEuIp> 8080 <readUsIp>`  
-    **eu**: `./writeNode.sh final-visibility 4 8080 3 8080 <readEuIp> 8080 <readUsIp>`  
-    **us**: `./writeNode.sh final-visibility 4 8080 4 8080 <readEuIp> 8080 <readUsIp>`  
+- **eu**: `./writeNode.sh final-visibility 4 8080 1 8080 <readEuIp> 8080 <readUsIp>`  
+- **us**: `./writeNode.sh final-visibility 4 8080 2 8080 <readEuIp> 8080 <readUsIp>`  
+- **eu**: `./writeNode.sh final-visibility 4 8080 3 8080 <readEuIp> 8080 <readUsIp>`  
+- **us**: `./writeNode.sh final-visibility 4 8080 4 8080 <readEuIp> 8080 <readUsIp>`  
 
 **Read Client EU**: `./multiBusyReadGenerator.sh final-visibility 4 4 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 60000 2 2 5`  
 **Write Client EU**: `./multiConstantWriteGenerator.sh final-visibility 4 4 8080 <readEuIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 8080 <writeIp3> 3 8080 <writeIp4> 4 50 1000 2 10`  
