@@ -36,7 +36,8 @@ public class StoragePuller implements Runnable {
         this.pull();
         this.storage.setStableTime();
         String stableTime = this.storage.getStableTime();
-        if(this.activeTransactions.get() == 0) {
+
+        if(Utils.CHECKPOINTING && this.activeTransactions.get() == 0) {
             this.storage.pruneState(stableTime);
         }
 

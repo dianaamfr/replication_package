@@ -24,8 +24,8 @@ public class Utils {
     public static final String TIMESTAMP_SEPARATOR = "-";
     public static final String TIMESTAMP_FORMAT = "%020d%s%020d";
     public static final String MIN_TIMESTAMP = String.format(TIMESTAMP_FORMAT, 0, TIMESTAMP_SEPARATOR, 0);
-    public static final int PULL_DELAY = 10000;
-    public static final int PUSH_DELAY = 10000;
+    public static final int PULL_DELAY = Integer.parseInt(System.getProperty("logDelay"));
+    public static final int PUSH_DELAY = Integer.parseInt(System.getProperty("logDelay"));
     public static final int CLOCK_DELAY = 20000;
     public static final int CHECKPOINT_FREQUENCY = 10;
 
@@ -47,6 +47,7 @@ public class Utils {
     public static final int NUM_PARTITIONS = Integer.parseInt(System.getProperty("partitions"));
     public static final boolean VISIBILITY_LOGS = Boolean.parseBoolean(System.getProperty("visibilityLogs"));
     public static final boolean GOODPUT_LOGS = Boolean.parseBoolean(System.getProperty("goodputLogs"));
+    public static final boolean CHECKPOINTING = Boolean.parseBoolean(System.getProperty("checkpointing"));
     public static final int MAX_LOGS = 300;
     public static final long PAYLOAD_START_LONG = 274877906944L;
     public static final long PAYLOAD_END_LONG = 549755813887L;

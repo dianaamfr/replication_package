@@ -14,14 +14,13 @@ RESULTS_PATH = PATH + '/results/multi_client/read_latency'
 pattern = r"r(\d+)_w(\d+)"
 
 def latency_evaluation():
-    latency_with_clients('32cores_12keys')
-    latency_with_clients('32cores_8keys')
-    reads_with_clients_barplot('32cores_8keys')
-    latency_with_partitions('32cores_8keys', 'r5_w10')
+    latency_with_clients()
+    reads_with_clients_barplot()
+    latency_with_partitions('r5_w10')
 
 
-def latency_with_clients(subdir):
-    dir = os.path.join(RAW_PATH, 'p1', subdir)
+def latency_with_clients():
+    dir = os.path.join(RAW_PATH, 'p1')
     test_names = [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))]
     dfs = []
     read_throughput = []
@@ -31,11 +30,11 @@ def latency_with_clients(subdir):
         dfs.append(df)
         read_throughput.append(get_read_throughput(file_path))
 
-    latency_distribution(test_names, dfs, read_throughput, subdir)
+    latency_distribution(test_names, dfs, read_throughput)
 
 
-def reads_with_clients_barplot(subdir):
-    dir = os.path.join(RAW_PATH, 'p1', subdir)
+def reads_with_clients_barplot():
+    dir = os.path.join(RAW_PATH, 'p1')
     test_names = [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))]
     dfs = []
     for test_name in test_names:
@@ -91,7 +90,7 @@ def get_latency_times(path):
     return df_result.sort_values('id').reset_index(drop=True)
 
 
-def latency_distribution(test_names, dfs, read_throughput, filename):
+def latency_distribution(test_names, dfs, read_throughput):
     df_results = []
     for i, df in enumerate(dfs):
         df_stats = df_describe(df, 'latency').round(2)
@@ -113,7 +112,7 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
     plt.axis('off')
     plt.annotate('Latency (ms)', (0.5, 0.9), xycoords='axes fraction',
                  ha='center', va='bottom', fontsize=10)
-    plt.savefig(RESULTS_PATH + '/clients_latency_table_' + filename + '.png', dpi=300, bbox_inches='tight')
+    plt.savefig(RESULTS_PATH + '/clients_latency_table.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -138,16 +137,16 @@ def latency_distribution(test_names, dfs, read_throughput, filename):
 
     plt.xticks(np.arange(1, math.ceil(max(x_coords)) + 0.5, 0.5), labels=[int(x) if x.is_integer() else '' for x in np.arange(1, math.ceil(max(x_coords)) + 0.5, 0.5)])
 
-    plt.savefig(RESULTS_PATH + '/clients_latency_plot_avg_' + filename + '.png', dpi=300, bbox_inches='tight')
+    plt.savefig(RESULTS_PATH + '/clients_latency_plot_avg.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
 
-def latency_with_partitions(subdir, test_name):
+def latency_with_partitions(test_name):
     dfs = []
     partition_dirs = [name for name in os.listdir(RAW_PATH) if os.path.isdir(os.path.join(RAW_PATH, name))]
     for partition_dir in partition_dirs:
-        file_path = os.path.join(RAW_PATH, partition_dir , subdir, test_name)
+        file_path = os.path.join(RAW_PATH, partition_dir , test_name)
         df = get_latency_times(file_path)
         df['partitions'] = re.findall(r"p(\d+)", partition_dir)[0]
         dfs.append(df)
@@ -161,6 +160,6 @@ def latency_with_partitions(subdir, test_name):
     ax.set_ylabel("Read Latency (ms)", labelpad=5)
     ax.set_yticks(range(0, math.ceil(df_result['latency'].max()) + 2, 2))
   
-    plt.savefig(RESULTS_PATH + '/latency_with_partitions_' + subdir + '.png', dpi=300)
+    plt.savefig(RESULTS_PATH + '/latency_with_partitions.png', dpi=300)
     plt.clf()
     plt.close()

@@ -14,8 +14,12 @@ RUN mkdir logs
 
 ARG visibility_logs
 ARG goodput_logs
+ARG checkpointing
+ARG log_delay
 
 ENV VISIBILITY_LOGS $visibility_logs
 ENV GOODPUT_LOGS $goodput_logs
+ENV CHECKPOINTING $checkpointing
+ENV LOG_DELAY $log_delay
 
 ENTRYPOINT ["./entrypoint.sh"]

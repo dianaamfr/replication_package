@@ -1,6 +1,6 @@
 import seaborn as sns
 from single_client import latency_evaluation, goodput_evaluation, visibility_evaluation
-from multi_client import latency_evaluation as m_latency_evaluation, read_throughout_evaluation, goodput_evaluation as m_goodput_evaluation, visibility_evaluation as m_visibility_evaluation, write_throughout_evaluation
+from multi_client import latency_evaluation as m_latency_evaluation, read_throughout_evaluation, visibility_evaluation as m_visibility_evaluation, write_throughout_evaluation
 from utils import PALETTE_FULL, PALETTE_SHORT
 
 sns.set(style="whitegrid", rc={"axes.edgecolor": "black", "axes.linewidth": 1})
@@ -18,6 +18,5 @@ sns.set_palette(PALETTE_FULL)
 
 m_latency_evaluation()
 read_throughout_evaluation()
-m_goodput_evaluation()
 m_visibility_evaluation()
 write_throughout_evaluation()

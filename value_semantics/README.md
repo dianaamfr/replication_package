@@ -15,10 +15,10 @@ To generate the current logs we used the following configuration:
 ## AWS execution instructions
 > Note: follow the execution instructions on the [main README](../README.md) to create and setup the instances and S3 buckets.
 
-**Write Node 1**: `./writeNode.sh v15.0.0 2 8080 1 8080 <readIp>`
-**Write Node 2**: `./writeNode.sh v15.0.0 2 8080 2 8080 <readIp>`
-**Write Client 1**: `./constantWriteGenerator.sh v15.0.0 2 2 8080 <readIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 3000 100 a b c d`
-**Write Client 2**: `./constantWriteGenerator.sh v15.0.0 2 2 8080 <readIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 3000 100 a b c d`
+**Write Node 1**: `./writeNode.sh final 2 8080 1 8080 <readIp>`  
+**Write Node 2**: `./writeNode.sh final 2 8080 2 8080 <readIp>`  
+**Write Client 1**: `./constantWriteGenerator.sh final 2 2 8080 <readIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 3000 100 a b c d`  
+**Write Client 2**: `./constantWriteGenerator.sh final 2 2 8080 <readIp> 8080 <writeIp1> 1 8080 <writeIp2> 2 3000 100 a b c d`  
 
 ## Get logs
 Use S3's interface or CLI to extract the logs to the appropriate subdirectory of the [logs directory](./logs/) (e.g. if the logs correspond to partition 1, store them in `logs/p1`).

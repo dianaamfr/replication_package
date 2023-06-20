@@ -14,11 +14,11 @@ MAX_REQUESTS = 500
 pattern = r"r(\d+)_w(\d+)"
 
 def visibility_evaluation():
-    visibility_with_clients('32cores_8keys')
-    visibility_with_partitions('32cores_8keys', 'r5_w10')
+    visibility_with_clients()
+    visibility_with_partitions('r5_w10')
 
-def visibility_with_clients(subdir):
-    dir = os.path.join(RAW_PATH, 'p1', subdir)
+def visibility_with_clients():
+    dir = os.path.join(RAW_PATH, 'p1')
     test_names = [name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))]
     dfs = []
 
@@ -61,12 +61,12 @@ def visibility_with_clients(subdir):
     plt.close()
 
 
-def visibility_with_partitions(subdir, test_name):
+def visibility_with_partitions(test_name):
     dfs = []
     partition_dirs = [name for name in os.listdir(RAW_PATH) if os.path.isdir(os.path.join(RAW_PATH, name))]
     for partition_dir in partition_dirs:
         partitions = int(re.findall(r"p(\d+)", partition_dir)[0])
-        file_path = os.path.join(RAW_PATH, partition_dir , subdir, test_name)
+        file_path = os.path.join(RAW_PATH, partition_dir , test_name)
         df_eu, df_us = get_visibility_times(file_path)
         df_eu['partitions'] = partitions
         df_us['partitions'] = partitions

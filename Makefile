@@ -6,6 +6,8 @@ partition2Bucket = p2-us-east-1$(suffix)
 clockBucket = clock$(suffix)
 s3Endpoint = http://localhost:4566
 region = us-east-1
+logDelay = 10000
+checkpointing = false
 
 partitions = 2
 regionPartitions = 2
@@ -52,20 +54,20 @@ emptyBuckets:
 #################
 
 readNode:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
+	java -Ds3Endpoint=$(s3Endpoint) -DlogDelay=$(logDelay) -Dcheckpointing=$(checkpointing) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/readNode.jar $(readPort1) $(partitionId1) $(partitionId2)
 
 writeNode1:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1) $(readAddress)
+	java -Ds3Endpoint=$(s3Endpoint) -DlogDelay=$(logDelay) -Dcheckpointing=$(checkpointing) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId1) $(writePort1) $(readAddress)
 
 writeNode2:
-	java -Ds3Endpoint=$(s3Endpoint) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2) $(readAddress)
+	java -Ds3Endpoint=$(s3Endpoint) -DlogDelay=$(logDelay) -Dcheckpointing=$(checkpointing) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/writeNode.jar $(partitionId2) $(writePort2) $(readAddress)
 
 #######
 # CLI #
 #######
 
 client:
-	java -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
+	java -Dpartitions=$(partitions) -DlogDelay=$(logDelay) -DbucketSuffix=$(suffix) -jar target/clientInterface.jar $(readAddress) $(writeAddresses)
 
 
 #################################
@@ -82,18 +84,18 @@ readTime = 20000
 
 # Single client read and write generators to measure latency with constant throughput 
 singleBusyRead:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keysPerRead) $(keys)
+	java -DvisibilityLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(totalWrites) $(keysPerRead) $(keys)
 
 singleConstantWrite:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
+	java -DvisibilityLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(totalWrites) $(keys)
 
 
 # Single client read and write generators to measure goodput with constant latency
 singleConstantRead:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(readTime) $(keysPerRead) $(keys)
+	java -DgoodputLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/constantReadGenerator.jar $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(readTime) $(keysPerRead) $(keys)
 
 singleBusyWrite:
-	java -DgoodputLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)
+	java -DgoodputLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/busyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keys)
 
 
 ##############################################
@@ -111,14 +113,14 @@ readClients = 1
 
 # Multi client read and write generators to measure latency with constant throughput 
 multiBusyRead:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyReadGenerator.jar $(regionReadNodes) $(regionPartitions) $(readAddress) $(writeAddresses) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
+	java -DvisibilityLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyReadGenerator.jar $(regionReadNodes) $(regionPartitions) $(readAddress) $(writeAddresses) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
 
 multiConstantWrite:
 	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(writeDelay) $(writesPerClient) $(keysPerPartition) $(writeClients)
 
 # Multi client read and write generators to measure goodput with constant latency
 multiConstantRead:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantReadGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
+	java -DvisibilityLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiConstantReadGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(readDelay) $(multiReadTime) $(keysPerRead) $(keysPerPartition) $(readClients)
 
 multiBusyWrite:
-	java -DvisibilityLogs=true -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keysPerPartition) $(writeClients)
+	java -DvisibilityLogs=true -DlogDelay=$(logDelay) -Dpartitions=$(partitions) -DbucketSuffix=$(suffix) -jar target/multiBusyWriteGenerator.jar  $(regionPartitions) $(readAddress) $(writeAddresses) $(keysPerPartition) $(writeClients)
