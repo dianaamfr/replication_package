@@ -129,16 +129,3 @@ def goodput_with_read_delay(df):
     plt.savefig(RESULTS_PATH + '/goodput_with_read_delay.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
-
-
-#   plt.gca().xaxis.grid(True)
-# plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(base=interval))
-# plt.xlabel("Inter-Write Delay (ms)", labelpad=8, fontsize=15)
-# plt.ylabel("Read Latency (ms)", labelpad=8, fontsize=15)
-# handles, labels = plt.gca().get_legend_handles_labels()
-# plt.legend(handles, [label.capitalize() for label in labels], loc="upper right", fontsize=13)
-# plt.tick_params(axis='x', labelsize=12)
-# plt.tick_params(axis='y', labelsize=12)
-# plt.savefig(RESULTS_PATH + '/latency_boxplot' + ('_outliers' if outliers else '') + '.png', dpi=300, bbox_inches='tight')
-# plt.clf()
-# plt.close()

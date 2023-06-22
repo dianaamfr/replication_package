@@ -14,8 +14,8 @@ RESULTS_PATH = PATH + '/results/multi_client/read_latency'
 pattern = r"r(\d+)_w(\d+)"
 
 def latency_evaluation():
-    # latency_with_clients()
-    # reads_with_clients_barplot()
+    latency_with_clients()
+    reads_with_clients_barplot()
     latency_with_partitions('r5_w10')
 
 

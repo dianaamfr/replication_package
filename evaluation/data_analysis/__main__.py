@@ -18,7 +18,7 @@ visibility_evaluation()
 # Multi-client data analysis
 sns.set_palette(PALETTE_FULL)
 
-# m_latency_evaluation()
-# read_throughout_evaluation()
+m_latency_evaluation()
+read_throughout_evaluation()
 m_visibility_evaluation()
-# write_throughout_evaluation()
+write_throughout_evaluation()
