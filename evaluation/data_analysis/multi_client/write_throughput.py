@@ -11,7 +11,7 @@ WRITE_TIME = 30
 
 def write_throughout_evaluation():
     node_dirs = sorted([name for name in os.listdir(RAW_PATH) if os.path.isdir(os.path.join(RAW_PATH, name))])
-    _, ax = plt.subplots(figsize=(10, 5))
+    _, ax = plt.subplots(figsize=(11, 5))
 
     for i, node_dir in enumerate(node_dirs):
         node_dir = os.path.join(RAW_PATH, node_dir)
@@ -19,13 +19,15 @@ def write_throughout_evaluation():
         
         y_coords = [t[0] for t in total_writes]
         x_coords = [t[1] for t in total_writes]
-        plt.plot(x_coords, y_coords, marker=MARKERS[1], markersize=9, linewidth=2, linestyle='-', color=PALETTE_FULL[i], markeredgewidth=1, markeredgecolor='w')
+        plt.plot(x_coords, y_coords, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_FULL[i], markeredgewidth=1, markeredgecolor='w')
     
     ax.xaxis.grid(True)
-    ax.set_ylabel("Write Throughput (1000 x ROT/s)", labelpad=10)
-    ax.set_xlabel("Client Writing Threads", labelpad=10)
+    ax.set_ylabel("Write Throughput (1000 x ROT/s)", labelpad=8, fontsize=14)
+    ax.set_xlabel("Client Writing Threads", labelpad=8, fontsize=14)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: '{:.0f}'.format(y/1000)))
-    ax.legend(['1', '2', '4'], loc='upper left', title = 'Partitions')
+    ax.legend(['1', '2', '4'], loc='upper left', title = 'Partitions', fontsize=12)
+    plt.tick_params(axis='x', labelsize=12)
+    plt.tick_params(axis='y', labelsize=12)
     plt.savefig(RESULTS_PATH + '/write_throughput_partitions.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()

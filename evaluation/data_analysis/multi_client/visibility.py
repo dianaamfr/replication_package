@@ -48,15 +48,21 @@ def visibility_with_clients():
 
     df_result = pd.concat(dfs, ignore_index=True).sort_values(by=['read_clients', 'write_clients']).reset_index(drop=True)
 
-    g = sns.FacetGrid(df_result, col="region", height=4, aspect=2, margin_titles=True)
+    g = sns.FacetGrid(df_result, col="region", height=5, aspect=1.4, margin_titles=True)
     g.map(sns.barplot, "rw", "mean", width=0.6, linewidth=1, edgecolor='black', alpha=0.9, errorbar=None)
-    g.add_legend()  
+    g.add_legend(fontsize=18)  
     g.set(yscale="log", yticks=[math.pow(10, i) for i in range(3, 6)])
-    g.set_axis_labels("Readers : Writers (ms)", "Average Staleness (ms)")
-    g.axes[0][0].set_title("Local Region (EU)", pad=5)
-    g.axes[0][1].set_title("Remote Region (US)", pad=5)
+    g.set_axis_labels("Readers : Writers (ms)", "Average Staleness (ms)", fontsize=20, labelpad=8)
+    g.axes[0][0].set_title("Local Region (EU)", pad=8, fontsize=20)
+    g.axes[0][1].set_title("Remote Region (US)", pad=8, fontsize=20)
+    g.axes[0][0].tick_params(axis='x', labelsize=18)
+    g.axes[0][0].tick_params(axis='y', labelsize=18)
+    g.axes[0][1].tick_params(axis='x', labelsize=18)
+    g.axes[0][1].tick_params(axis='y', labelsize=18)
+    for ax in g.axes.flat:
+        ax.grid(True, linestyle="--", linewidth=0.8)
 
-    plt.savefig(RESULT_PATH + '/visibility_with_clients.png', dpi=300)
+    plt.savefig(RESULT_PATH + '/visibility_with_clients.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -76,15 +82,20 @@ def visibility_with_partitions(test_name):
     df_result = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
 
     # Visibility
-    g = sns.FacetGrid(df_result, col="region", height=5, aspect=0.8, margin_titles=True)
-    g.map(sns.barplot, "partitions", "read_time", width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
-    g.add_legend()  
+    g = sns.FacetGrid(df_result, col="region", height=5, aspect=1, margin_titles=True)
+    g.map(sns.barplot, "partitions", "read_time", width=0.6, linewidth=0.8, edgecolor='black', alpha=0.9)
     g.set(yscale="log", yticks=[math.pow(10, i) for i in range(3, 6)])
-    g.set_axis_labels("Inter-Write Delay (ms)", "Visibility (ms)")
-    g.axes[0][0].set_title("Local Region (EU)", pad=5)
-    g.axes[0][1].set_title("Remote Region (US)", pad=5)
+    g.set_axis_labels("Partitions", "Average Staleness (ms)",fontsize=23, labelpad=8)
+    g.axes[0][0].set_title("Local Region (EU)", pad=8, fontsize=23)
+    g.axes[0][1].set_title("Remote Region (US)", pad=8, fontsize=23)
+    g.axes[0][0].tick_params(axis='x', labelsize=20)
+    g.axes[0][0].tick_params(axis='y', labelsize=20)
+    g.axes[0][1].tick_params(axis='x', labelsize=20)
+    g.axes[0][1].tick_params(axis='y', labelsize=20)
+    for ax in g.axes.flat:
+        ax.grid(True, linestyle="--", linewidth=0.8)
 
-    plt.savefig(RESULT_PATH + '/visibility_with_partitions.png', dpi=300)
+    plt.savefig(RESULT_PATH + '/visibility_with_partitions.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 

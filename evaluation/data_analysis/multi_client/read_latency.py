@@ -14,8 +14,8 @@ RESULTS_PATH = PATH + '/results/multi_client/read_latency'
 pattern = r"r(\d+)_w(\d+)"
 
 def latency_evaluation():
-    latency_with_clients()
-    reads_with_clients_barplot()
+    # latency_with_clients()
+    # reads_with_clients_barplot()
     latency_with_partitions('r5_w10')
 
 
@@ -55,20 +55,24 @@ def reads_with_clients_barplot():
     read_percentage = list(df_avg['read_percentage'])
     
     # Read Latency with Read Percentage
-    _, ax = plt.subplots(figsize=(8, 5))
+    _, ax = plt.subplots(figsize=(5.5, 4))
     sns.barplot(x='rw', y='latency', data=df_result, ax=ax, width=0.6, linewidth=1, edgecolor='black', alpha=0.9, palette=PALETTE_FULL, errorbar=None, zorder=1)
-    ax.set_xlabel("Readers : Writers", labelpad=5)
-    ax.set_ylabel('Average Latency (ms)', labelpad=5)
+    ax.set_xlabel("Readers : Writers", labelpad=8, fontsize=16)
+    ax.set_ylabel('Average Latency (ms)', labelpad=8, fontsize=16)
 
     ax2 = ax.twiny()
     ax2.set_xlim(ax.get_xlim())
     ax2.set_xticks(np.arange(len(read_percentage)))
-    ax2.set_xlabel("Read %", labelpad=5)
+    ax2.set_xlabel("Read %", labelpad=8, fontsize=16)
     ax2.set_xticklabels(read_percentage)
-    ax.grid(True, which='both', axis='y', zorder=0)
+    ax.grid(True, which='both', zorder=0)
     ax2.grid(False)
+    ax.tick_params(axis='x', labelsize=14)
+    ax.tick_params(axis='y', labelsize=14)
+    ax2.tick_params(axis='x', labelsize=14)
+    ax2.tick_params(axis='y', labelsize=14)
 
-    plt.savefig(RESULTS_PATH + '/' + 'latency_with_clients_barplot.png', dpi=300)
+    plt.savefig(RESULTS_PATH + '/' + 'latency_with_clients_barplot.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -117,7 +121,7 @@ def latency_distribution(test_names, dfs, read_throughput):
     plt.close()
 
     # Scatterplot
-    _, ax = plt.subplots(figsize=(6, 3))
+    _, ax = plt.subplots(figsize=(5.5, 4))
     
     y_coords = []
     x_coords = []
@@ -126,17 +130,18 @@ def latency_distribution(test_names, dfs, read_throughput):
         x_coords.append(row['mean'])
 
     # Average Read Latency
-    plt.plot(x_coords, y_coords, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_FULL[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(x_coords, y_coords, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_FULL[0], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
-    ax.set_ylabel(" (1000 x ROT/s)", labelpad=10)
-    ax.set_xlabel("Average Read Latency (ms)", labelpad=10)
+    ax.set_ylabel(" (1000 x ROT/s)", labelpad=8, fontsize=16)
+    ax.set_xlabel("Average Read Latency (ms)", labelpad=8, fontsize=16)
 
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, pos: '{:.0f}'.format(x/1000)))
     plt.yticks(range(0, math.ceil(max(y_coords)) + 2000, 2000))
 
     plt.xticks(np.arange(1, math.ceil(max(x_coords)) + 0.5, 0.5), labels=[int(x) if x.is_integer() else '' for x in np.arange(1, math.ceil(max(x_coords)) + 0.5, 0.5)])
-
+    plt.tick_params(axis='x', labelsize=14)
+    plt.tick_params(axis='y', labelsize=14)
     plt.savefig(RESULTS_PATH + '/clients_latency_plot_avg.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
@@ -153,13 +158,14 @@ def latency_with_partitions(test_name):
 
     df_result = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
     
-    _, ax = plt.subplots(figsize=(5, 6))
-    sns.boxplot(data=df_result, x="partitions", y="latency", showfliers=True)
-    ax.xaxis.grid(True)
-    ax.set_xlabel("Partitions", labelpad=5)
-    ax.set_ylabel("Read Latency (ms)", labelpad=5)
-    ax.set_yticks(range(0, math.ceil(df_result['latency'].max()) + 2, 2))
-  
-    plt.savefig(RESULTS_PATH + '/latency_with_partitions.png', dpi=300)
+    _, ax = plt.subplots(figsize=(4, 3.5))
+    sns.barplot(data=df_result, x="partitions", y="latency", width=0.5, linewidth=1, edgecolor='black', alpha=0.9, errorbar=None, zorder=1)
+    ax.grid(True, which='both', zorder=0)
+    ax.set_xlabel("Partitions", labelpad=8, fontsize=16)
+    ax.set_ylabel("Read Latency (ms)", labelpad=8, fontsize=16)
+    ax.set_ylim(0, 2)
+    plt.tick_params(axis='x', labelsize=14)
+    plt.tick_params(axis='y', labelsize=14)
+    plt.savefig(RESULTS_PATH + '/latency_with_partitions.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()

@@ -10,15 +10,15 @@ plt.rcParams['font.family'] = 'serif'
 # Single-client data analysis
 sns.set_palette(PALETTE_SHORT)
 
-# latency_evaluation()
-# goodput_evaluation()
+latency_evaluation()
+goodput_evaluation()
 visibility_evaluation()
 
 
-# # Multi-client data analysis
-# sns.set_palette(PALETTE_FULL)
+# Multi-client data analysis
+sns.set_palette(PALETTE_FULL)
 
 # m_latency_evaluation()
 # read_throughout_evaluation()
-# m_visibility_evaluation()
+m_visibility_evaluation()
 # write_throughout_evaluation()
