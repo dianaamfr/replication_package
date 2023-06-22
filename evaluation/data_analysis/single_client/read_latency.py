@@ -16,11 +16,11 @@ def latency_evaluation():
 
     for delay in DELAYS:
         df_ec_latency = get_latency_times(EC_RAW_PATH, delay)
-        df_ec_latency['consistency'] = 'EC'
+        df_ec_latency['consistency'] = 'Baseline'
         df_ec_latency['delay'] = delay
 
         df_cc_latency = get_latency_times(CC_RAW_PATH, delay)
-        df_cc_latency['consistency'] = 'CC'
+        df_cc_latency['consistency'] = 'Prototype'
         df_cc_latency['delay'] = delay
 
         dfs.append(df_ec_latency)
@@ -29,7 +29,7 @@ def latency_evaluation():
         latency_distribution_table(df_ec_latency, df_cc_latency, delay)
 
     df = pd.concat(dfs).reset_index(drop=True)
-    latency_boxplot(df, outliers=False, interval=5, fig_size=(7, 5))
+    latency_boxplot(df, outliers=False, interval=5, fig_size=(12, 4))
     latency_boxplot(df, outliers=True, interval=10, fig_size=(8, 10))
 
     latency_average_barplot(df)
@@ -51,8 +51,8 @@ def latency_distribution_table(df_ec_latency, df_cc_latency, delay):
     df_ec_stats = df_describe(df_ec_latency, 'latency').round(2)
     df_cc_stats = df_describe(df_cc_latency, 'latency').round(2)
 
-    df_ec_stats.index = ['EC']
-    df_cc_stats.index = ['CC']
+    df_ec_stats.index = ['Baseline']
+    df_cc_stats.index = ['Prototype']
 
     df_result = pd.concat([df_ec_stats, df_cc_stats])
     df_result['consistency'] = df_result.index
@@ -74,17 +74,17 @@ def latency_distribution_table(df_ec_latency, df_cc_latency, delay):
 def latency_boxplot(df, outliers=False, interval=5, fig_size=(7, 4)):
     plt.figure(figsize=fig_size)
     df_result = df.copy()
-    df_result['consistency'] = df['consistency'].replace({'EC': 'Eventual', 'CC': 'Causal'})
     sns.boxplot(data=df_result, x="delay", y="latency",
-                hue="consistency", hue_order=['Eventual','Causal'], showfliers=outliers, order=DELAYS, dodge=2, width=0.6, linewidth=1)
+                hue="consistency", hue_order=['Baseline','Prototype'], showfliers=outliers, order=DELAYS, dodge=0.1, width=0.4, linewidth=1)
     plt.gca().xaxis.grid(True)
     plt.gca().yaxis.set_major_locator(ticker.MultipleLocator(base=interval))
-    plt.xlabel("Inter-Write Delay (ms)", labelpad=10)
-    plt.ylabel("Read Latency (ms)", labelpad=10)
+    plt.xlabel("Inter-Write Delay (ms)", labelpad=8, fontsize=16)
+    plt.ylabel("Read Latency (ms)", labelpad=8, fontsize=16)
     handles, labels = plt.gca().get_legend_handles_labels()
-    plt.legend(handles, [label.capitalize() for label in labels], loc="upper right")
-    plt.subplots_adjust(bottom=0.2)
-    plt.savefig(RESULTS_PATH + '/latency_boxplot' + ('_outliers' if outliers else '') + '.png', dpi=300)
+    plt.legend(handles, [label.capitalize() for label in labels], loc="upper right", fontsize=13)
+    plt.tick_params(axis='x', labelsize=14)
+    plt.tick_params(axis='y', labelsize=14)
+    plt.savefig(RESULTS_PATH + '/latency_boxplot' + ('_outliers' if outliers else '') + '.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -95,7 +95,7 @@ def latency_average_barplot(df):
     average_latency = grouped_data.mean().reset_index()
 
     sns.barplot(data=average_latency, x="delay", y="latency",
-                hue="consistency", hue_order = ['EC','CC'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
+                hue="consistency", hue_order = ['Baseline','Prototype'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
     ax.xaxis.grid(True)
     ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
     ax.set_ylabel("Read Latency (ms)", labelpad=10)
@@ -109,11 +109,11 @@ def latency_average_barplot(df):
 
 
 def latency_with_write_delay(df):
-    df_ec_mean = df[df['consistency'] == 'EC'].groupby('delay').mean().sort_index().reset_index()
-    df_cc_mean = df[df['consistency'] == 'CC'].groupby('delay').mean().sort_index().reset_index()
+    df_ec_mean = df[df['consistency'] == 'Baseline'].groupby('delay').mean().sort_index().reset_index()
+    df_cc_mean = df[df['consistency'] == 'Prototype'].groupby('delay').mean().sort_index().reset_index()
 
-    df_ec_99 = df[df['consistency'] == 'EC'].groupby('delay')['latency'].apply(lambda x: np.percentile(x, 99)).sort_index().reset_index(name='percentile_99')
-    df_cc_99 = df[df['consistency'] == 'CC'].groupby('delay')['latency'].apply(lambda x: np.percentile(x, 99)).sort_index().reset_index(name='percentile_99')
+    df_ec_99 = df[df['consistency'] == 'Baseline'].groupby('delay')['latency'].apply(lambda x: np.percentile(x, 99)).sort_index().reset_index(name='percentile_99')
+    df_cc_99 = df[df['consistency'] == 'Prototype'].groupby('delay')['latency'].apply(lambda x: np.percentile(x, 99)).sort_index().reset_index(name='percentile_99')
 
     y_coords_ec_mean, y_coords_cc_mean = [], []
     y_coords_ec_99, y_coords_cc_99 = [], []
@@ -124,35 +124,37 @@ def latency_with_write_delay(df):
         y_coords_cc_99.append(df_cc_99[df_cc_99['delay'] == delay]['percentile_99'].values[0])
 
     # Average Read Latency
-    _, ax = plt.subplots(figsize=(6, 4))
+    _, ax = plt.subplots(figsize=(5.5, 4))
 
-    plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
-    plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_ec_mean, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_cc_mean, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
-    ax.set_ylabel("Average Read Latency (ms)", labelpad=10)
-    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
-    plt.yticks(range(0, math.ceil(max(y_coords_cc_mean + y_coords_ec_mean)) + 5, 5))
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=8, fontsize=16)
+    ax.set_ylabel("Average Read Latency (ms)", labelpad=8, fontsize=16)
     ax.xaxis.set_major_locator(ticker.MultipleLocator(base=25))
-    plt.legend(['Eventual', 'Causal'], loc="upper right")
+    plt.yticks(range(0, math.ceil(max(y_coords_cc_mean + y_coords_ec_mean)) + 5, 5))
+    plt.legend(['Baseline', 'Prototype'], loc="upper right", fontsize=13)
+    plt.tick_params(axis='x', labelsize=14)
+    plt.tick_params(axis='y', labelsize=14)
     plt.savefig(RESULTS_PATH + '/latency_with_write_delay.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
     # 99th Percentile Read Latency
-    _, ax = plt.subplots(figsize=(6, 4))
+    _, ax = plt.subplots(figsize=(5.5, 4))
 
-    plt.plot(DELAYS, y_coords_ec_99, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
-    plt.plot(DELAYS, y_coords_cc_99, marker=MARKERS[1], markersize=8, linewidth=2, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_ec_99, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[0], markeredgewidth=1, markeredgecolor='w')
+    plt.plot(DELAYS, y_coords_cc_99, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_SHORT[1], markeredgewidth=1, markeredgecolor='w')
 
     ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
-    ax.set_ylabel("99th Percentile Read Latency (ms)", labelpad=10)
-    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%.0f'))
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=8, fontsize=16)
+    ax.set_ylabel("P99 Read Latency (ms)", labelpad=8, fontsize=16)
     ax.xaxis.set_major_locator(ticker.MultipleLocator(base=25))
     plt.yticks(range(0, math.ceil(max(y_coords_cc_99 + y_coords_ec_99)) + 10, 10))
-    plt.legend(['Eventual', 'Causal'], loc="upper right")
+    plt.legend(['Baseline', 'Prototype'], loc="upper right", fontsize=13)
+    plt.tick_params(axis='x', labelsize=14)
+    plt.tick_params(axis='y', labelsize=14)
     plt.savefig(RESULTS_PATH + '/latency_99_with_write_delay.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
