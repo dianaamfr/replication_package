@@ -75,13 +75,13 @@ def get_ec_visibility_times(delay):
 
     pd_result_eu = get_time_diff_ec(
         pd_result_eu.tail(100)).reset_index(drop=True)
-    pd_result_eu['consistency'] = 'EC'
+    pd_result_eu['consistency'] = 'Baseline'
     pd_result_eu['delay'] = delay
     pd_result_eu['region'] = LOCAL_REGION
 
     pd_result_us = get_time_diff_ec(
         pd_result_us.tail(100)).reset_index(drop=True)
-    pd_result_us['consistency'] = 'EC'
+    pd_result_us['consistency'] = 'Baseline'
     pd_result_us['delay'] = delay
     pd_result_us['region'] = REMOTE_REGION
 
@@ -160,13 +160,13 @@ def get_cc_visibility_times(delay):
 
     pd_result_eu = get_time_diff_cc(
         pd_result_eu.tail(100)).reset_index(drop=True)
-    pd_result_eu['consistency'] = 'CC'
+    pd_result_eu['consistency'] = 'Prototype'
     pd_result_eu['delay'] = delay
     pd_result_eu['region'] = LOCAL_REGION
 
     pd_result_us = get_time_diff_cc(
         pd_result_us.tail(100)).reset_index(drop=True)
-    pd_result_us['consistency'] = 'CC'
+    pd_result_us['consistency'] = 'Prototype'
     pd_result_us['delay'] = delay
     pd_result_us['region'] = REMOTE_REGION
 
@@ -233,8 +233,8 @@ def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, del
     df_ec_stats = df_ec_stats.round(2)
     df_cc_stats = df_cc_stats.round(2)
 
-    df_ec_stats.index = ['EC']
-    df_cc_stats.index = ['CC']
+    df_ec_stats.index = ['Baseline']
+    df_cc_stats.index = ['Prototype']
 
     df_result = pd.concat([df_ec_stats, df_cc_stats])
     df_result['consistency'] = df_result.index
@@ -255,22 +255,27 @@ def visibility_distribution_table(df_ec_stats, df_cc_stats, title, filename, del
 
 def visibility_barplot(df):
     df_result = df.copy()
-    df_result['consistency'] = df_result['consistency'].replace({'EC': 'Eventual', 'CC': 'Causal'})
     grouped_data = df_result.groupby(["delay", "consistency", "region"])[
         "read_time"]
     average_visibility = grouped_data.mean().reset_index()
 
     g = sns.FacetGrid(average_visibility, col="region",
-                      height=5, aspect=1, margin_titles=True)
+                      height=5, aspect=1.4, margin_titles=True)
     g.map(sns.barplot, "delay", "read_time", "consistency",
-          order=DELAYS, hue_order=['Eventual', 'Causal'], palette=PALETTE_SHORT, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
+          order=DELAYS, hue_order=['Baseline', 'Prototype'], palette=PALETTE_SHORT, width=0.6, linewidth=1, edgecolor='black', alpha=0.9)
     g.set(yscale='log', ylim=(1, get_log_y_lim(average_visibility['read_time'])))    
-    g.add_legend()  
-    g.set_axis_labels("Inter-Write Delay (ms)", "Average Staleness (ms)")
-    g.axes[0][0].set_title("Local Region (EU)", pad=5)
-    g.axes[0][1].set_title("Remote Region (US)", pad=5)
+    g.add_legend(fontsize=20)  
+    g.set_axis_labels("Inter-Write Delay (ms)", "Average Staleness (ms)", fontsize=22, labelpad=8)
+    g.axes[0][0].set_title("Local Region (EU)", pad=8, fontsize=22)
+    g.axes[0][1].set_title("Remote Region (US)", pad=8, fontsize=22)
+    g.axes[0][0].tick_params(axis='x', labelsize=20)
+    g.axes[0][0].tick_params(axis='y', labelsize=20)
+    g.axes[0][1].tick_params(axis='x', labelsize=20)
+    g.axes[0][1].tick_params(axis='y', labelsize=20)
+    for ax in g.axes.flat:
+        ax.grid(True, linestyle="--", linewidth=0.8)
 
-    plt.savefig(RESULT_PATH + '/visibility_barplot.png', dpi=300)
+    plt.savefig(RESULT_PATH + '/visibility_barplot.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -278,17 +283,16 @@ def visibility_barplot(df):
 def write_response_barplot(df):
     df_result = df.copy()
     df_result = df_result[df_result["region"] == LOCAL_REGION]
-    df_result['consistency'] = df_result['consistency'].replace({'EC': 'Eventual', 'CC': 'Causal'})
-    _, ax = plt.subplots(figsize=(7, 6))
+    _, ax = plt.subplots(figsize=(5.5, 4))
     grouped_data = df_result.groupby(["delay", "consistency"])[
         "response_time"]
     average_visibility = grouped_data.mean().reset_index()
 
     sns.barplot(data=average_visibility, x="delay", y='response_time',
-                hue="consistency", hue_order = ['Eventual','Causal'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
+                hue="consistency", hue_order = ['Baseline','Prototype'], width=0.6, linewidth=1, edgecolor='black', order=DELAYS, alpha=0.9)
     ax.xaxis.grid(True)
-    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=10)
-    ax.set_ylabel('Write Latency (ms)', labelpad=10)
+    ax.set_xlabel("Inter-Write Delay (ms)", labelpad=8, fontsize=16)
+    ax.set_ylabel('Write Latency (ms)', labelpad=8, fontsize=16)
     plt.yscale('log')
 
     y_max = get_log_y_lim(average_visibility['response_time'])
@@ -296,9 +300,10 @@ def write_response_barplot(df):
 
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, [label.capitalize()
-              for label in labels], loc="upper right")
-
-    plt.savefig(RESULT_PATH + '/write_response_barplot.png', dpi=300)
+              for label in labels], loc="upper right", fontsize=13)
+    plt.tick_params(axis='x', labelsize=14)
+    plt.tick_params(axis='y', labelsize=14)
+    plt.savefig(RESULT_PATH + '/write_response_barplot.png', dpi=300, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -307,8 +312,8 @@ def visibility_with_write_delay(df):
     g = sns.FacetGrid(df, col="region", col_order=[LOCAL_REGION, REMOTE_REGION], height=5, aspect=1, margin_titles=True)
 
     for ax, (_, subdata) in zip(g.axes.flat, df.groupby('region')):
-        df_ec_mean = subdata[subdata['consistency'] == 'EC'].groupby('delay').mean().sort_index().reset_index()
-        df_cc_mean = subdata[subdata['consistency'] == 'CC'].groupby('delay').mean().sort_index().reset_index()
+        df_ec_mean = subdata[subdata['consistency'] == 'Baseline'].groupby('delay').mean().sort_index().reset_index()
+        df_cc_mean = subdata[subdata['consistency'] == 'Prototype'].groupby('delay').mean().sort_index().reset_index()
 
         y_coords_ec_mean, y_coords_cc_mean = [], []
         for delay in DELAYS:
