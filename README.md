@@ -183,7 +183,7 @@ The project can be tested locally using LocalStack.
     b. For the clock values: `awslocal s3api create-bucket --bucket clock-<suffix> --region <region>`
     > e.g. `make createBuckets` creates the buckets for partitions 1 and 2 and for the clock values using the suffix `-reference-architecture`.
 
-6. Start the read nodes, specifying:
+5. Start the read nodes, specifying:
     - the log push/pull delay (`<logDelay>`);
     - if checkpointing is enabled or disabled (`<checkpointing>`);
     - the total number of partitions in the system (`<nPartitions>`);
@@ -194,7 +194,7 @@ The project can be tested locally using LocalStack.
     `java -Ds3Endpoint=http://localhost:4566 -DlogDelay=<logDelay> -Dcheckpointing=<checkpointing> -Dpartitions=<nPartitions> -DbucketSuffix=<suffix> -jar target/readNode.jar <readPort> <partitionId>*`
     > e.g. `make readNode` creates a read node that tracks partitions 1 and 2.
 
-7. Start the write nodes, specifying:
+6. Start the write nodes, specifying:
     - the log push/pull delay (`<logDelay>`);
     - if checkpointing is enabled or disabled (`<checkpointing>`);
     - the total number of partitions in the system (`<nPartitions>`);
