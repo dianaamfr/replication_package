@@ -13,7 +13,7 @@ To generate the current logs we used the following configuration:
 - 100 writes per client
 
 ## AWS execution instructions
-> Note: follow the execution instructions on the [main README](../README.md) to create and setup the instances and S3 buckets.
+> Note: Please follow the execution instructions on the [main README](../README.md) to create and setup the instances and S3 buckets necessary for this experiment.
 
 **Write Node 1**: `./writeNode.sh final 2 8080 1 8080 <readIp>`  
 **Write Node 2**: `./writeNode.sh final 2 8080 2 8080 <readIp>`  

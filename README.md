@@ -1,10 +1,11 @@
-# Dissertation Work
-A prototype implementation of a cloud-native causally consistent system. 
+# Towards Causal Consistency in Read-Heavy Cloud-Native Systems - Replication Package 
+
+This repository contains the source code and instructions necessary for replicating the validation and verification of the prototype developed for my Master's thesis (*Towards Causal Consistency in Read-Heavy Cloud-Native Systems*), ensuring the reproducibility of the research process.
 
 ## Description
 This repository holds a prototype implementation of a cloud-native causally consistent read-heavy system. It represents part of the work developed for my Master's dissertation and aimed to study the feasibility of the proposed reference architecture and identify any impediments and possible improvements in its design.
 
-This repository also holds a prototype version where clients issue requests directly to the underlying storage service, serving as a baseline for comparison with the causally consistent prototype. Finally, it contains the necessary scripts to test the prototype in AWS, the scripts used for the evaluation, and the plots and tables that resulted from our analysis. Finally, it also comprises a short experiment that aims to demonstrate how the system can be easily audited through its logs.
+This repository also holds a version of the system where clients issue requests directly to the underlying storage service, serving as a baseline for comparison with the causally consistent prototype. Finally, it contains the necessary scripts to test the prototype in AWS, the scripts used for the evaluation, and the plots and tables that resulted from our analysis. Finally, it comprises a short experiment demonstrating how the system can be easily audited through its logs.
 
 > For a more detailed description of the prototype, please refer to the [Prototype System section](#prototype-system).
 
@@ -12,9 +13,9 @@ This repository also holds a prototype version where clients issue requests dire
 
 This repository holds:
 1. The prototype system
-2. The baseline version
-3. The validation source code, logs, results and instructions
-4. An experiment that aims to verify the usefulness of value semantics for auditing 
+2. The baseline version.
+3. The validation source code, logs, results and instructions.
+4. An experiment that aims to verify the usefulness of value semantics for auditing.
 
 ### 1. Prototype
 A Maven project with the following structure:
@@ -22,7 +23,7 @@ A Maven project with the following structure:
 `src/main` comprises the project's source code and follows the structure below:
 - `java/com/dissertation`:
     - `referencearchitecture`: Comprises the classes that implement the candidate reference architecture.
-        - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and his last write timestamp.
+        - `client`: Contains the `Client` class, which can be used to issue ROTs and write operations. It connects with the `ReadNode` of its region and with the `WriteNodes` of its region's partitions through gRPC. It keeps a "cache" with its unstable writes and its last write timestamp.
         - `compute`: Contains the `ReadNode` and `WriteNode`, respectively responsible for handling ROTs of a region and writes of a partition. Also contains the `storage` package, which comprises the classes used to store the log in-memory and to pull and push the log to the data store. Furthermore, it stores the classes related to the implementation of the Hybrid Logical Clock in the `clock` package.
         - `s3`: Provides the necessary functions to perform put and get operations in AWS S3.
     - `utils`: Util functions, constants and classes.
@@ -39,7 +40,7 @@ A Maven project with the following structure:
             - `ConstantWriteGenerator`: A multi-threaded writer that uses a client instance per thread to issue write requests at a fixed rate.
             - `ConstantReadGenerator`: A multi-threaded reader that uses a client instance per thread to issue read requests with a fixed delay for the given amount of time.
             - `BusyWriteGenerator`: A multi-threaded writer that  uses a client instance per thread to issue write requests with no delay.
-- `proto`: Holds the Protocol Buffers file that defines the services provided by read and write nodes.
+- `proto`: Holds the Protocol Buffers file that defines the message format and the services provided by read and write nodes.
 
 ### 2. Baseline
 For comparison with our causally consistent prototype, which uses S3 as the storage layer, we developed a baseline version where clients issue read and write requests directly to S3. It consists of a Maven project with the following structure:
@@ -78,19 +79,22 @@ Source code and logs used to demonstrate how enabling value semantics facilitate
 ## Dependencies
 ### To test locally
 - [LocalStack CLI](https://docs.localstack.cloud/getting-started/installation/) and [AWS Command Line Interface](https://docs.localstack.cloud/user-guide/integrations/aws-cli/).
-- OpenJDK
-- Maven
-- make *(optional)*
-- Python 3, matplotlib, seaborn, re, pandas, numpy *(for the validation and value semantics experiment)*
+- OpenJDK.
+- Maven.
+- make *(optional)*.
+- Python 3, matplotlib, seaborn, re, pandas, numpy *(for the validation and value semantics experiment)*.
 
 ### To test in AWS
 - EC2 instances must have docker installed, expose port 8080 and have access to S3 buckets.
 - S3 buckets for each partition.
 
 ## Execution Instructions
-In this section, we provide instructions for testing the prototype system and the baseline system either locally using LocalStack or in AWS.
+In this section, we provide instructions for testing the prototype system and the baseline system either locally (using LocalStack) or in AWS.
 
-> If you wish to replicate the validation performed in our dissertation, **please read the instructions below on how to set up the components in AWS** and then refer to the README in the [evaluation directory](./evaluation/README.md) or to the README of the [value_semantics directory](./value_semantics/README.md).
+> If you wish to replicate the validation performed in our dissertation:
+    1. First, read the instructions below on how to set up the components in AWS.
+    2. Then, if you want to replicate the **empirical validation** refer to the [README of the evaluation directory](./evaluation/README.md).
+    3. Then, if you want to run the **value semantics verification** refer to the [README of the value_semantics directory](./value_semantics/README.md).
 
 ### AWS
 
@@ -99,7 +103,7 @@ For deploying the systems in AWS, we built the following docker images:
 1. `dianaamfreitas/dissertation` for the prototype system
 2. `dianaamfreitas/dissertation-eventual` for the baseline system
 
-The images supports linux/amd64 and linux/arm64 and our tests were performed using Ubuntu 22.04 LTS arm64.
+The images support linux/amd64 and linux/arm64 and our tests were performed using Ubuntu 22.04 LTS arm64.
 
 For the prototype, we built several image versions: 
 1. `dianaamfreitas/dissertation:final` Without checkpointing, to evaluate latency and throughput or use the command-line interface.
@@ -107,7 +111,7 @@ For the prototype, we built several image versions:
 3. `dianaamfreitas/dissertation:final-visibility` Without checkpointing, to evaluate visibility.
 4. `dianaamfreitas/dissertation:final-checkpointing` With checkpointing/garbage collection of the nodes storage.
 
-For the baseline we have only one: `dissertation-eventual:final`
+For the baseline we have only one image version: `dissertation-eventual:final`
 
 If you wish to build you own docker images instead you can also choose to do that. How?
 1. For the prototype system, you can run: 
@@ -169,7 +173,7 @@ The project can be tested locally using LocalStack.
 
 > For simplicity we provide some predefined commands in the `Makefile` of the root folder to test the prototype and also in the `Makefile` of the `eventual` folder to test the baseline. We refer to some of these commands as an example.
 
-#### Prototype
+#### 1. Prototype
 **Setup S3 buckets and servers**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the root folder
@@ -218,7 +222,7 @@ Using the command-line interface, you can test the behavior of the prototype loc
 `awslocal s3 rm s3://<bucketName> --recursive`
 > e.g. `make emptyBuckets`
 
-#### Baseline
+#### 2. Baseline
 **Setup S3 buckets**:
 1. Open a terminal and start LocalStack: `localstack start` 
 2. Open a new terminal in the `eventual` folder

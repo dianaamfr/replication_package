@@ -2,10 +2,10 @@
 
 This document describes the experiments performed in our evaluation, making the process reproducible. After running each of these experiments, we extracted the generated log files to [logs directory](./logs/) and analyzed them through the source code in the [data_analysis directory](./data_analysis/), producing the tables and plots in the [results directory](./results/).
 
-To run the evaluation source code with the current logs and generate the results of all our experiments, please run `python3 data_analysis` from this directory.
+**To run the evaluation source code** with the current logs and generate the results of all our experiments, please run the following command from this directory: `python3 data_analysis`
 
-> **Note 1**: All references to files or directories are relative to the `evaluation` directory.  
-> **Note 2**: This commands assume your key pair files are named `reference-architecture.pem` (**EU-WEST-1**) and `reference-architecture-us.pem`  (**US_EAST-1**).
+> Note 1: This commands assume your key pair files are named `reference-architecture.pem` (**EU-WEST-1**) and `reference-architecture-us.pem`  (**US-EAST-1**).
+> Note 2: Please follow the execution instructions on the [main README](../README.md) to create and setup the instances and S3 buckets necessary for each experiment.
 
 ## Single Client
 Used to compare the baseline with the prototype.

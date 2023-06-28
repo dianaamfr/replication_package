@@ -22,7 +22,7 @@ def write_throughout_evaluation():
         plt.plot(x_coords, y_coords, marker=MARKERS[1], markersize=9, linewidth=3, linestyle='-', color=PALETTE_FULL[i], markeredgewidth=1, markeredgecolor='w')
     
     ax.xaxis.grid(True)
-    ax.set_ylabel("Write Throughput (1000 x ROT/s)", labelpad=8, fontsize=14)
+    ax.set_ylabel("Write Throughput (1000 x writes/s)", labelpad=8, fontsize=14)
     ax.set_xlabel("Client Writing Threads", labelpad=8, fontsize=14)
     ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda y, pos: '{:.0f}'.format(y/1000)))
     ax.legend(['1', '2', '4'], loc='upper left', title = 'Partitions', fontsize=12)
